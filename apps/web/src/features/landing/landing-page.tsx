@@ -1,16 +1,6 @@
-import type { MouseEvent, KeyboardEvent } from "react";
+import { LandingHeader, LandingFooter } from "./landing-shell";
+import { PricingSection } from "./pricing";
 import { useLandingMotion } from "./use-landing-motion";
-
-function closeMobileMenu(event: MouseEvent<HTMLDivElement>) {
-  if ((event.target as HTMLElement).closest("a"))
-    event.currentTarget.querySelector("details")?.removeAttribute("open");
-}
-function dismissMobileMenu(event: KeyboardEvent<HTMLDivElement>) {
-  if (event.key === "Escape") {
-    event.currentTarget.querySelector("details")?.removeAttribute("open");
-    event.currentTarget.querySelector("summary")?.focus();
-  }
-}
 
 export function LandingPage({ hosted = false }: { hosted?: boolean }) {
   const motionRoot = useLandingMotion();
@@ -23,75 +13,13 @@ export function LandingPage({ hosted = false }: { hosted?: boolean }) {
       <main id="top">
         <Hero hosted={hosted} />
         <Features />
+        <PricingSection hosted={hosted} />
         <Ownership />
         <Setup />
-        <Questions />
+        <Questions hosted={hosted} />
       </main>
       <LandingFooter />
     </div>
-  );
-}
-
-function LandingHeader({ hosted }: { hosted: boolean }) {
-  return (
-    <header>
-      <div className="wrap nav">
-        <div className="wordmark">
-          <a href="#top" aria-label="Yaap homepage">
-            <img
-              className="brand-lockup"
-              src="/brand/logo-light.svg"
-              alt=""
-              width="209"
-              height="64"
-            />
-          </a>
-        </div>
-        <nav aria-label="Main">
-          <a href="#product">Product</a>
-          <a href="#ownership">Self-hosting</a>
-          <a href="#questions">Questions</a>
-        </nav>
-        <div className="nav-end">
-          <a href={hosted ? "/signup" : "/app"}>
-            {hosted ? "Sign up" : "Sign in"} <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-        <a
-          className="github-button"
-          href="https://github.com/dagurleo/yaap"
-          title="Yaap on GitHub"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M12 .75a11.25 11.25 0 0 0-3.56 21.92c.56.1.77-.24.77-.54v-2.1c-3.13.68-3.79-1.33-3.79-1.33-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.4-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.29-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15A10.8 10.8 0 0 1 12 6.16c.96 0 1.91.13 2.81.38 2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.69.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.04.76 2.1v3.09c0 .3.2.65.78.54A11.25 11.25 0 0 0 12 .75Z" />
-          </svg>
-          <span>GitHub</span>
-        </a>
-        <div
-          className="mobile-menu"
-          onClick={closeMobileMenu}
-          onKeyDown={dismissMobileMenu}
-        >
-          <details>
-            <summary>Menu</summary>
-            <nav aria-label="Mobile">
-              <a href={hosted ? "/signup" : "/app"}>
-                {hosted ? "Sign up" : "Sign in"}
-              </a>
-              <a href="#product">Product</a>
-              <a href="#ownership">Self-hosting</a>
-              <a href="#questions">Questions</a>
-            </nav>
-          </details>
-        </div>
-      </div>
-    </header>
   );
 }
 
@@ -476,7 +404,7 @@ function Setup() {
   );
 }
 
-function Questions() {
+function Questions({ hosted }: { hosted: boolean }) {
   return (
     <section className="faq" id="questions">
       <div className="wrap faq-grid">
@@ -501,38 +429,13 @@ function Questions() {
           <details>
             <summary>Is this a hosted subscription?</summary>
             <p>
-              Yaap is self-hosted. You operate the deployment and cover your own
-              Cloudflare infrastructure costs.
+              {hosted
+                ? "You can start a hosted subscription with a 14-day trial, or self-host Yaap and cover your own infrastructure costs."
+                : "Hosted plans are coming soon. You can already self-host Yaap and cover your own Cloudflare infrastructure costs."}
             </p>
           </details>
         </div>
       </div>
     </section>
-  );
-}
-
-function LandingFooter() {
-  return (
-    <footer>
-      <div className="wrap footer">
-        <div className="wordmark">
-          <a href="#top" aria-label="Yaap homepage">
-            <img
-              className="brand-lockup"
-              src="/brand/logo-light.svg"
-              alt=""
-              width="209"
-              height="64"
-            />
-          </a>
-        </div>
-        <p>
-          Yet another analytics platform.
-          <br />
-          Your data deserves a place of its own.
-        </p>
-        <a href="#top">Back to top ↑</a>
-      </div>
-    </footer>
   );
 }

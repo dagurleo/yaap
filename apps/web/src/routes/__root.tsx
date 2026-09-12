@@ -63,7 +63,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootLayout() {
   const isLanding = useMatches({
-    select: (matches) => matches.some((match) => match.routeId === "/"),
+    select: (matches) =>
+      matches.some(
+        (match) => match.routeId === "/" || match.routeId === "/pricing",
+      ),
   });
   const isDashboard = useRouterState({
     select: (state) => /^\/app\/[^/]+/.test(state.location.pathname),
