@@ -1,7 +1,7 @@
 import type { Analytics, AnalyticsOptions, EventProperties } from "./types.js";
 
-// Replace with the hosted service origin before the first public npm release.
-export const DEFAULT_HOST = "http://localhost:8790";
+// Keep this endpoint reachable for clients installed from older package versions.
+export const DEFAULT_HOST = "https://yaap.dagurleo.workers.dev";
 
 /** Start one tracker per page. Importing this module does not access browser globals. */
 export function init(options: AnalyticsOptions): Analytics | undefined {

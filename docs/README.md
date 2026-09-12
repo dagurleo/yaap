@@ -37,6 +37,7 @@
 - [Hosted infrastructure costs](HOSTED_INFRASTRUCTURE_COSTS.md): Cloudflare and PlanetScale rates, local event storage measurements, retention economics and revised pricing candidates.
 - [Hosted Polar catalog](HOSTED_POLAR_CATALOG.md): latest product structure, event tiers, included features, trial and subscription-change proposal.
 - [Hosted billing implementation plan](HOSTED_BILLING_IMPLEMENTATION_PLAN.md): staged implementation of pricing, trial/usage accounting, Polar checkout, limit-triggered upgrades and billing lifecycle tests.
+- [Account registration scope](ACCOUNT_REGISTRATION_SCOPE.md): invitation-flow gaps, hosted public signup, verification, account provisioning and password recovery.
 - [Website sharing feature](WEBSITE_SHARING_FEATURE.md): implementation handoff for lightweight accounts, site-specific Viewer invitations, access rules and provider-parity tests.
 
 The guides describe the current implementation. Test counts and dated verification notes live in the implementation plan; local verification does not establish live deployment readiness.

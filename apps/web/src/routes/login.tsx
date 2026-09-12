@@ -12,6 +12,17 @@ export const Route = createFileRoute("/login")({
     if (access.user && search.returnTo)
       throw redirect({ href: search.returnTo });
     if (access.user) throw redirect({ to: "/app" });
+    return access;
   },
-  component: () => <AuthForm returnTo={Route.useSearch().returnTo} />,
+  component: LoginPage,
 });
+
+function LoginPage() {
+  const { registrationAvailable } = Route.useRouteContext();
+  return (
+    <AuthForm
+      returnTo={Route.useSearch().returnTo}
+      registrationAvailable={registrationAvailable}
+    />
+  );
+}

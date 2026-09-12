@@ -7,6 +7,8 @@ import { createAuth } from "../auth";
 import { HttpError } from "../http";
 import type { Env } from "../types";
 import { listAccessibleSites, requireSiteView } from "./access";
+import { billingConfig } from "./billing/config";
+import { activateHostedTrialForVerifiedOwner } from "./billing/trial";
 
 export function appOrigin(request: Request, env: Env) {
   const origin = env.BETTER_AUTH_URL || new URL(request.url).origin;
@@ -14,6 +16,14 @@ export function appOrigin(request: Request, env: Env) {
     throw new Error("Invalid BETTER_AUTH_URL");
   return origin;
 }
+
+export async function hostedRegistrationAvailable(env: Env) {
+  return (
+    billingConfig(env).mode === "hosted" &&
+    (await createDb(env).ownershipInitialized())
+  );
+}
+
 export async function getAccess(request: Request, env: Env) {
   const db = createDb(env);
   const setupRequired = !(await db.ownershipInitialized());
@@ -31,8 +41,28 @@ export async function getAccess(request: Request, env: Env) {
           ownsAccount: !!(await db.workspaceForOwner(session.user.id)),
         }
       : null,
+    registrationAvailable:
+      billingConfig(env).mode === "hosted" && !setupRequired,
     origin: appOrigin(request, env),
   };
+}
+
+export async function provisionHostedAccount(
+  env: Env,
+  user: { id: string; emailVerified: boolean },
+) {
+  if (billingConfig(env).mode !== "hosted")
+    throw new HttpError(404, "Account registration is not available");
+  if (!user.emailVerified)
+    throw new HttpError(403, "Verify your email before creating an account");
+  const db = createDb(env);
+  if (!(await db.ownershipInitialized()))
+    throw new HttpError(409, "Installation setup is required");
+  const existing = await db.workspaceForOwner(user.id);
+  const workspace = existing ?? (await db.createWorkspace(user.id));
+  if (!workspace) throw new HttpError(503, "Account could not be provisioned");
+  await activateHostedTrialForVerifiedOwner(env, user.id);
+  return { workspaceId: workspace.id, created: !existing };
 }
 export async function requireUser(request: Request, env: Env) {
   const session = await createAuth(env, appOrigin(request, env)).api.getSession(

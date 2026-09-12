@@ -18,9 +18,11 @@ import { useTheme } from "./theme-provider";
 export function AccountMenu({
   name,
   ownsAccount = false,
+  canCreateAccount = false,
 }: {
   name: string;
   ownsAccount?: boolean;
+  canCreateAccount?: boolean;
 }) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
@@ -37,6 +39,27 @@ export function AccountMenu({
       await router.navigate({ to: "/login" });
     } catch (error) {
       setError(error instanceof Error ? error.message : "Sign out failed");
+    } finally {
+      setPending(false);
+    }
+  }
+  async function createAccount() {
+    setPending(true);
+    setError("");
+    try {
+      const response = await fetch("/api/account", { method: "POST" });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok)
+        throw new Error(result.error || "Could not create your account");
+      router.options.context.queryClient.clear();
+      await router.invalidate();
+      await router.navigate({ to: "/app" });
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not create your account",
+      );
     } finally {
       setPending(false);
     }
@@ -75,6 +98,20 @@ export function AccountMenu({
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/app/access">API & MCP access</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        {canCreateAccount && (
+          <>
+            <DropdownMenuItem
+              disabled={pending}
+              onSelect={(event) => {
+                event.preventDefault();
+                void createAccount();
+              }}
+            >
+              Create your own account
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>
@@ -125,11 +162,20 @@ export function AccountMenu({
 }
 
 export function HeaderAccount() {
-  const user = useMatches({
+  const access = useMatches({
     select: (matches) =>
-      matches.find((match) => match.routeId === "/_app")?.context.access?.user,
+      matches.find((match) => match.routeId === "/_app")?.context.access,
   });
+  const user = access?.user;
   return user ? (
-    <AccountMenu name={user.name} ownsAccount={user.ownsAccount} />
+    <AccountMenu
+      name={user.name}
+      ownsAccount={user.ownsAccount}
+      canCreateAccount={
+        !!user.emailVerified &&
+        !user.ownsAccount &&
+        !!access.registrationAvailable
+      }
+    />
   ) : null;
 }

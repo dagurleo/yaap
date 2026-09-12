@@ -64,6 +64,9 @@ import {
   reconcileHostedBilling,
 } from "./server/billing/provider-service";
 import { polarWebhook } from "./server/billing/webhooks";
+import { billingConfig } from "./server/billing/config";
+import { normalizeEmail } from "./lib/email";
+import { provisionHostedAccount } from "./server/services";
 
 function sameOrigin(request: Request, origin: string) {
   if (request.headers.get("origin") !== origin)
@@ -141,6 +144,87 @@ export async function route(
     if (!(await db.ownershipInitialized())) {
       await db.run(sql`delete from request_limits where key=${claimKey}`);
       throw new HttpError(503, "Owner account could not be provisioned");
+    }
+    return response;
+  }
+
+  if (url.pathname === "/api/registration" && method === "POST") {
+    sameOrigin(request, origin);
+    await limitRequest(request, env, "hosted-registration", 8);
+    if (billingConfig(env).mode !== "hosted")
+      throw new HttpError(404, "Account registration is not available");
+    if (!(await db.ownershipInitialized()))
+      throw new HttpError(409, "Installation setup is required");
+    const body = await readJson(request);
+    let email: string;
+    try {
+      email = normalizeEmail(requiredString(body, "email", 254));
+    } catch {
+      throw new HttpError(400, "Invalid email");
+    }
+    const [existingIdentity] = await db.all<{
+      id: string;
+      emailVerified: boolean | number;
+    }>(
+      sql`select id,email_verified as "emailVerified" from "user" where lower(email)=${email} limit 1`,
+    );
+    const signup = new Request(new URL("/api/auth/sign-up/email", origin), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: origin,
+        "cf-connecting-ip":
+          request.headers.get("cf-connecting-ip") ?? "127.0.0.1",
+      },
+      body: JSON.stringify({
+        name: requiredString(body, "name", 120),
+        email,
+        password: requiredString(body, "password", 128),
+        callbackURL: "/check-email",
+      }),
+    });
+    const response = await createAuth(env, origin, { kind: "hosted" }).handler(
+      signup,
+    );
+    if (response.ok && existingIdentity) {
+      if (!existingIdentity.emailVerified)
+        await db.createWorkspace(existingIdentity.id);
+      const resend = new Request(
+        new URL("/api/auth/send-verification-email", origin),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: origin,
+            "cf-connecting-ip":
+              request.headers.get("cf-connecting-ip") ?? "127.0.0.1",
+          },
+          body: JSON.stringify({ email, callbackURL: "/check-email" }),
+        },
+      );
+      await createAuth(env, origin).handler(resend);
+    }
+    if (response.ok)
+      return json({ message: "Check your email to continue." }, 202);
+
+    // A retry after an ambiguous email failure must be able to resend without
+    // revealing whether the identity already existed.
+    if ([403, 409, 422].includes(response.status)) {
+      const resend = new Request(
+        new URL("/api/auth/send-verification-email", origin),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: origin,
+            "cf-connecting-ip":
+              request.headers.get("cf-connecting-ip") ?? "127.0.0.1",
+          },
+          body: JSON.stringify({ email, callbackURL: "/check-email" }),
+        },
+      );
+      await createAuth(env, origin).handler(resend);
+      return json({ message: "Check your email to continue." }, 202);
     }
     return response;
   }
@@ -243,6 +327,9 @@ export async function route(
           decodePathParam(invitationAccept[1]),
         ),
       );
+
+    if (url.pathname === "/api/account" && method === "POST")
+      return json(await provisionHostedAccount(env, session.user), 201);
 
     if (url.pathname === "/api/sites" && method === "GET") {
       return json(await listSites(env, session.user.id));

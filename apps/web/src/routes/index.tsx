@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LandingPage } from "@/features/landing/landing-page";
 import landingStyles from "@/features/landing/landing.css?url";
+import { registrationAvailableFn } from "@/features/dashboard/functions";
 
 export const Route = createFileRoute("/")({
+  loader: () => registrationAvailableFn(),
   head: () => ({
     meta: [
       { title: "Yaap — Yet another analytics platform" },
@@ -14,5 +16,5 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "stylesheet", href: landingStyles }],
   }),
-  component: LandingPage,
+  component: () => <LandingPage hosted={Route.useLoaderData()} />,
 });

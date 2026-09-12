@@ -599,14 +599,20 @@ test("destroy preserves third-party globals and subsequently installed history w
 });
 
 if (moduleEntry) {
-  test("npm initialization defaults to the local YAAP server when host is omitted", async () => {
+  test("npm initialization defaults to the public YAAP server when host is omitted", async () => {
     const b = browser({ clientOptions: { host: undefined } });
     await flush();
     assert.equal(b.sent.length, 1);
-    assert.equal(b.sent[0].endpoint, "http://localhost:8790/ingest");
+    assert.equal(
+      b.sent[0].endpoint,
+      "https://yaap.dagurleo.workers.dev/ingest",
+    );
     assert.equal(b.sent[0].body.siteId, "site-one");
     assert.equal(await b.ctx.osAnalytics.track("signup"), true);
-    assert.equal(b.sent.at(-1).endpoint, "http://localhost:8790/ingest");
+    assert.equal(
+      b.sent.at(-1).endpoint,
+      "https://yaap.dagurleo.workers.dev/ingest",
+    );
     b.ctx.osAnalytics.destroy();
   });
 

@@ -29,6 +29,7 @@ function InvitationPage() {
   const { token } = Route.useParams();
   const router = useRouter();
   const [error, setError] = useState("");
+  const [verificationSent, setVerificationSent] = useState(false);
   const [registering, setRegistering] = useState(false);
   const returnTo = `/invite/${encodeURIComponent(token)}`;
   const accept = useMutation({
@@ -132,6 +133,7 @@ function InvitationPage() {
             variant="primary"
             onClick={async () => {
               setError("");
+              setVerificationSent(false);
               const result = await authClient.sendVerificationEmail({
                 email: preview.actorEmail ?? "",
                 callbackURL: returnTo,
@@ -140,10 +142,14 @@ function InvitationPage() {
                 setError(
                   result.error.message ?? "Could not send verification email.",
                 );
+              else setVerificationSent(true);
             }}
           >
             Send verification email
           </Button>
+          {verificationSent && (
+            <p role="status">Verification email sent. Check your inbox.</p>
+          )}
         </div>
       )}
 

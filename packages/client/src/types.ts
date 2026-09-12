@@ -3,7 +3,7 @@ export type EventProperties = Record<string, string | number | boolean>;
 
 export interface AnalyticsOptions {
   siteId: string;
-  /** YAAP server URL. Defaults to http://localhost:8790 until the hosted service launches. */
+  /** YAAP server URL. Defaults to https://yaap.dagurleo.workers.dev. */
   host?: string;
   /** Enable visitor/session identifiers. Defaults to true. */
   identifiers?: boolean;

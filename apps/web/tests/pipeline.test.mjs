@@ -207,6 +207,15 @@ test("registration requires setup secret and same origin; concurrent setup creat
     body,
   });
   assert.ok(publicSignup.status >= 400);
+  assert.equal(
+    (
+      await request("/api/registration", {
+        method: "POST",
+        body,
+      })
+    ).status,
+    404,
+  );
   const responses = await Promise.all([
     request("/api/setup", { method: "POST", body }),
     request("/api/setup", {

@@ -2,7 +2,7 @@
 
 The browser tracker for [YAAP](https://github.com/dagurleo/yaap). This package and your installation's `/script.js` use the same implementation. It has no runtime dependencies.
 
-The package is prepared for its first release; it has not been published yet. After publication:
+Install from npm:
 
 ```sh
 npm install @yaap/client
@@ -18,7 +18,7 @@ const analytics = init({
 await analytics?.track("signup", { plan: "pro", seats: 3, trial: false });
 ```
 
-Register your website's exact origin in YAAP first and copy its site ID. With no `host`, the npm client currently sends events to **`http://localhost:8790/ingest`**. This is a temporary development default; it will be replaced with YAAP's hosted URL before the first public npm release. In a visitor's browser, localhost means that visitor's machine, so use an explicit server URL when installing on a live website.
+Register your website's exact origin in YAAP first and copy its site ID. With no `host`, the npm client sends events to **`https://yaap.dagurleo.workers.dev/ingest`**. Your site ID must belong to the YAAP server you send events to.
 
 For a self-hosted YAAP server, override `host`:
 
@@ -86,8 +86,10 @@ The standalone build is also exported as `@yaap/client/script.js`. When hosting 
 
 From the repository root, run `npm ci`, `npm run build:client`, and `npm run check:client`. Both entry points run through the same behavior tests. A packaging test installs the tarball in a temporary project and checks server-side imports and TypeScript consumers.
 
-Before the first public release, set `DEFAULT_HOST` in `src/index.ts` to the hosted service origin and update its endpoint test and documentation. Script-tag installs always use the origin of their own script URL, regardless of this npm default.
+When changing the hosted service origin, update `DEFAULT_HOST` in `src/index.ts`, its type documentation, the endpoint test, and this guide. Keep previous endpoints reachable for older installed versions. Script-tag installs always use the origin of their own script URL, regardless of this npm default. For local development, pass `host: "http://localhost:8790"` explicitly.
 
 Version this package independently in `packages/client/package.json`. When changing its version, update the matching dependency in `apps/web/package.json` and run `npm install` from the root to refresh the shared lockfile. Preview the release with `npm pack --workspace @yaap/client`; publishing is a separate, deliberate step.
+
+See the repository's [npm release guide](https://github.com/dagurleo/yaap/blob/main/docs/NPM_RELEASE.md) for the first publish and subsequent releases.
 
 Licensed under Elastic License 2.0; see [LICENSE.md](LICENSE.md).

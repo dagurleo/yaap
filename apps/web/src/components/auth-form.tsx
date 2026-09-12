@@ -3,9 +3,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, type FormEvent } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { authClient } from "../auth/client";
-export function AuthForm({ setup = false, returnTo }: { setup?: boolean; returnTo?: string }) {
+export function AuthForm({
+  setup = false,
+  returnTo,
+  registrationAvailable = false,
+}: {
+  setup?: boolean;
+  returnTo?: string;
+  registrationAvailable?: boolean;
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -38,7 +46,10 @@ export function AuthForm({ setup = false, returnTo }: { setup?: boolean; returnT
           throw new Error(result.error.message || "Sign in failed");
       }
       const destination = loginReturn(returnTo);
-      if (destination) { window.location.assign(destination); return; }
+      if (destination) {
+        window.location.assign(destination);
+        return;
+      }
       router.options.context.queryClient.clear();
       await router.invalidate();
       await router.navigate({ to: "/app" });
@@ -101,12 +112,27 @@ export function AuthForm({ setup = false, returnTo }: { setup?: boolean; returnT
               ? "Create owner account"
               : "Sign in"}
         </Button>
+        {!setup && (
+          <p className="text-sm">
+            <Link to="/forgot-password" className="underline">
+              Forgot your password?
+            </Link>
+          </p>
+        )}
         {error && (
           <p className="text-destructive" role="alert">
             {error}
           </p>
         )}
       </form>
+      {!setup && registrationAvailable && (
+        <p className="text-sm text-muted-foreground">
+          New to Yaap?{" "}
+          <Link to="/signup" className="underline">
+            Create an account
+          </Link>
+        </p>
+      )}
     </section>
   );
 }

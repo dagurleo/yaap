@@ -12,16 +12,16 @@ function dismissMobileMenu(event: KeyboardEvent<HTMLDivElement>) {
   }
 }
 
-export function LandingPage() {
+export function LandingPage({ hosted = false }: { hosted?: boolean }) {
   const motionRoot = useLandingMotion();
   return (
     <div className="yaap-landing" ref={motionRoot}>
       <a className="skip-link" href="#top">
         Skip to content
       </a>
-      <LandingHeader />
+      <LandingHeader hosted={hosted} />
       <main id="top">
-        <Hero />
+        <Hero hosted={hosted} />
         <Features />
         <Ownership />
         <Setup />
@@ -32,7 +32,7 @@ export function LandingPage() {
   );
 }
 
-function LandingHeader() {
+function LandingHeader({ hosted }: { hosted: boolean }) {
   return (
     <header>
       <div className="wrap nav">
@@ -53,8 +53,8 @@ function LandingHeader() {
           <a href="#questions">Questions</a>
         </nav>
         <div className="nav-end">
-          <a href="/app">
-            Sign in <span aria-hidden="true">↗</span>
+          <a href={hosted ? "/signup" : "/app"}>
+            {hosted ? "Sign up" : "Sign in"} <span aria-hidden="true">↗</span>
           </a>
         </div>
         <a
@@ -81,7 +81,9 @@ function LandingHeader() {
           <details>
             <summary>Menu</summary>
             <nav aria-label="Mobile">
-              <a href="/app">Sign in</a>
+              <a href={hosted ? "/signup" : "/app"}>
+                {hosted ? "Sign up" : "Sign in"}
+              </a>
               <a href="#product">Product</a>
               <a href="#ownership">Self-hosting</a>
               <a href="#questions">Questions</a>
@@ -93,7 +95,7 @@ function LandingHeader() {
   );
 }
 
-function Hero() {
+function Hero({ hosted }: { hosted: boolean }) {
   return (
     <section className="hero">
       <div className="wrap">
@@ -107,12 +109,14 @@ function Hero() {
         <div className="hero-bottom">
           <p>
             Open-source web analytics, from first visit to revenue.
-            <br className="desktop-break" /> Self-hosted on your own Cloudflare
-            account.
+            <br className="desktop-break" />{" "}
+            {hosted
+              ? "Start hosted, with a 14-day trial."
+              : "Self-hosted on your own Cloudflare account."}
           </p>
           <div className="actions">
-            <a className="button primary" href="/app">
-              Make it yours
+            <a className="button primary" href={hosted ? "/signup" : "/app"}>
+              {hosted ? "Start your trial" : "Make it yours"}
               <svg
                 viewBox="0 0 24 24"
                 width="16"

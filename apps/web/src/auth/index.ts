@@ -10,7 +10,9 @@ import { billingConfig } from "../server/billing/config";
 import { activateHostedTrialForVerifiedOwner } from "../server/billing/trial";
 
 export type RegistrationContext =
-  { kind: "owner" } | { kind: "invitation"; email: string };
+  | { kind: "owner" }
+  | { kind: "invitation"; email: string }
+  | { kind: "hosted" };
 
 export function createAuth(
   env: Env,
@@ -33,6 +35,15 @@ export function createAuth(
       ...authOptions.emailAndPassword,
       disableSignUp: !registration,
       requireEmailVerification: hosting.mode === "hosted",
+      revokeSessionsOnPasswordReset: true,
+      resetPasswordTokenExpiresIn: 60 * 60,
+      sendResetPassword: async ({ user, url }) => {
+        await sendEmail(env, {
+          to: user.email,
+          subject: "Reset your Yaap password",
+          text: `Reset your password:\n\n${url}\n\nThis link expires in one hour. If you did not request this, you can ignore this email.`,
+        });
+      },
     },
     emailVerification: {
       expiresIn: 60 * 60,
@@ -65,7 +76,10 @@ export function createAuth(
                   : undefined;
               },
               after: async (user) => {
-                if (registration.kind === "owner")
+                if (
+                  registration.kind === "owner" ||
+                  registration.kind === "hosted"
+                )
                   await createDb(env).createWorkspace(user.id);
               },
             },

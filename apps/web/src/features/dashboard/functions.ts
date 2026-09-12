@@ -43,6 +43,7 @@ import {
   siteEvents,
   siteLive,
   appOrigin,
+  hostedRegistrationAvailable,
 } from "../../server/services";
 import { billingOverview } from "../../server/billing/service";
 import {
@@ -74,6 +75,9 @@ async function actor(env: Env) {
 export const accessFn = createServerFn({ method: "GET" }).handler(
   ({ context }) => getAccess(getRequest(), context.env),
 );
+export const registrationAvailableFn = createServerFn({
+  method: "GET",
+}).handler(({ context }) => hostedRegistrationAvailable(context.env));
 export const sitesFn = createServerFn({ method: "GET" }).handler(
   async ({ context }) => listSites(context.env, await actor(context.env)),
 );
