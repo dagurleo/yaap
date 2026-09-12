@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+
+.tanstack/
+.react-email/
+
+# Built from packages/client; served at the existing URL.
+/apps/web/public/script.js
+*.tgz

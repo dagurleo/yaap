@@ -1,0 +1,104 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789030651120,
+      "tag": "0000_blue_harrier",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789030741467,
+      "tag": "0001_event_maintenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789030742415,
+      "tag": "0002_traffic_lookup",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789036788232,
+      "tag": "0003_event_properties",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789038681349,
+      "tag": "0004_conversion_conditions",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789048512945,
+      "tag": "0005_visitor_dimensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789051747212,
+      "tag": "0006_public_api",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789094021439,
+      "tag": "0007_payment_attribution",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789185229121,
+      "tag": "0009_website_sharing",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789188072044,
+      "tag": "0010_billing_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789188962868,
+      "tag": "0011_billing_usage_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789188979637,
+      "tag": "0012_billing_usage_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789191454078,
+      "tag": "0013_billing_checkout_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789192801000,
+      "tag": "0014_billing_trial_grace",
+      "breakpoints": true
+    }
+  ]
+}

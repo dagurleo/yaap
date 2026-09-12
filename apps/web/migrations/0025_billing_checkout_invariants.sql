@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX `billing_operations_open_checkout` ON `billing_operations` (`workspace_id`) WHERE "billing_operations"."kind"='checkout' and "billing_operations"."state" in ('pending','unknown');--> statement-breakpoint
+CREATE UNIQUE INDEX `billing_operations_provider_checkout` ON `billing_operations` (`provider_checkout_id`) WHERE "billing_operations"."provider_checkout_id" is not null and "billing_operations"."state" in ('pending','unknown');

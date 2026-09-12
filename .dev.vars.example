@@ -1,0 +1,4 @@
+# Generate each value separately with openssl rand -hex 32.
+# Save BOOTSTRAP_SECRET for /setup. Keep BETTER_AUTH_SECRET stable on upgrades.
+BETTER_AUTH_SECRET=
+BOOTSTRAP_SECRET=

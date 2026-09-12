@@ -1,0 +1,27 @@
+
+/* Yaap brand accent: cobalt blue over the existing Graphite foundation. */
+:root{--brand:#2458eb;--brand-hover:#1945c7;--brand-soft:#edf2ff;--brand-mid:#8faafa}
+.brand-dot,h1 em{color:var(--brand)}h1 em{font-style:normal}
+.hero>.wrap>.eyebrow .dot{background:var(--brand)}
+.primary{background:var(--brand);box-shadow:0 2px 3px #1745cd1a}
+.primary:hover{background:var(--brand-hover)}
+a:focus-visible,summary:focus-visible{outline-color:var(--brand)}
+.text-link:hover,.nav a:hover{color:var(--brand)}
+.side-active{background:var(--brand-soft);color:#2348a8}
+.tabs strong{border-bottom-color:var(--brand)}
+.current{stroke:var(--brand);stroke-width:2.25}.area{fill:#2458eb0b}
+.metrics>div:first-child{background:var(--brand-soft)}
+.feature-number{color:#2453c7}
+.bar-one{background:var(--brand)}.bar-two{background:#7898f4}.bar-three{background:#b2c3f9}
+.funnel>div{background:#edf2ff;border-left-color:var(--brand)}
+.revenue>div:not(.receipt){color:#2453c7}
+.architecture{background:#1745cd;border:1px solid #1745cd;color:white}
+.architecture-title{color:#ffffffb8}
+.worker{background:#ffffff;border-color:#ffffff20;color:#262c32}
+.worker strong{color:#2458eb}
+.connect-line{border-left-color:#ffffff60}
+.infra-grid>div{background:#ffffff0d;border-color:#ffffff38;color:white}
+.infra-grid span{color:#e1e9ff}
+.architecture p:not(.eyebrow){color:#e1e9ff}
+.steps li>span{color:#2453c7}
+

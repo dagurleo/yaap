@@ -1,0 +1,22 @@
+export const scopes = [
+  "sites:read",
+  "sites:create",
+  "sites:write",
+  "reports:read",
+  "events:read",
+  "visitors:read",
+  "goals:read",
+  "goals:write",
+  "funnels:read",
+  "funnels:write",
+  "revenue:read",
+  "payments:read",
+  "settings:read",
+  "settings:write",
+  "retention:write",
+  "integrations:read",
+  "integrations:write",
+  "operations:read",
+  "audit:read",
+] as const;
+export type Scope = (typeof scopes)[number];

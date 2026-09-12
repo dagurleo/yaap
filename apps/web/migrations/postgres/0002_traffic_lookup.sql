@@ -1,0 +1,2 @@
+ALTER TABLE "daily_traffic" DROP CONSTRAINT "daily_traffic_site_id_dimension_day_key_pk";--> statement-breakpoint
+CREATE INDEX "daily_traffic_lookup" ON "daily_traffic" USING btree ("site_id","dimension","day");

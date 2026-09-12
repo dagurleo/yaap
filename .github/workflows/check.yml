@@ -1,0 +1,39 @@
+name: Check
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PG_TEST_URL: postgresql://postgres:test-only-password@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install all workspaces from the root lockfile
+        run: npm ci
+      - name: Check app, both tracker entry points, and packed npm client
+        run: npm run check
+      - run: npm run test:postgres
+      - run: npm run test:hyperdrive
+      - run: npm run db:migrate:local
+      - run: npm run db:migrate:local
+      - name: Verify fresh and repeat migrations from the production template build
+        run: |
+          npx wrangler d1 migrations apply DB --local --config apps/web/dist/server/wrangler.json --persist-to "$RUNNER_TEMP/yaap-template"
+          npx wrangler d1 migrations apply DB --local --config apps/web/dist/server/wrangler.json --persist-to "$RUNNER_TEMP/yaap-template"
+      - name: Verify production template deployment bundle without deploying
+        run: npx wrangler deploy --dry-run --config apps/web/dist/server/wrangler.json

@@ -1,0 +1,1 @@
+ALTER TABLE `events` ADD `properties` text DEFAULT '{}' NOT NULL;

@@ -1,0 +1,45 @@
+{
+  "name": "@yaap/client",
+  "version": "0.1.0",
+  "description": "Typed browser analytics client for YAAP",
+  "license": "Elastic-2.0",
+  "type": "module",
+  "sideEffects": [
+    "./dist/script.js"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./script.js": "./dist/script.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagurleo/yaap.git",
+    "directory": "packages/client"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run build",
+    "test": "node --test tests/*.test.mjs && YAAP_CLIENT_ENTRY=module node --test tests/tracker.test.mjs",
+    "check": "prettier --check src scripts tests package.json tsconfig.json && npm run typecheck && npm run test",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2",
+    "prettier": "3.9.6"
+  }
+}

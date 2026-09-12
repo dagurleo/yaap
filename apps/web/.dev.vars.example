@@ -1,0 +1,22 @@
+# Replace both values with different, randomly generated secrets before deployment.
+BETTER_AUTH_SECRET=
+BOOTSTRAP_SECRET=
+
+# Optional outbound email. Local sends are simulated (no remote email binding).
+# Production EMAIL_FROM must belong to a domain onboarded to Email Sending.
+EMAIL_FROM=
+# EMAIL_REPLY_TO=support@example.com
+# Hosted operators receive a one-time notice when an account's trial ends.
+# BILLING_ALERT_EMAIL=billing@example.com
+
+# Default: D1. For local Postgres, run npm run db:setup:postgres.
+# DATABASE_PROVIDER=postgres
+# DATABASE_URL=postgresql://your-user@127.0.0.1:5432/yaap_local
+# Production Postgres uses the HYPERDRIVE binding instead of DATABASE_URL.
+
+# Hosted billing is opt-in. The default is self_hosted and needs no Polar data.
+# YAAP_HOSTING_MODE=hosted
+# POLAR_ENVIRONMENT=sandbox
+# POLAR_ACCESS_TOKEN=
+# POLAR_WEBHOOK_SECRET=
+# POLAR_PRODUCT_IDS={"hosted_100k_monthly_v1":"...","hosted_500k_monthly_v1":"...","hosted_1m_monthly_v1":"...","hosted_2m_monthly_v1":"...","hosted_5m_monthly_v1":"...","hosted_10m_monthly_v1":"..."}

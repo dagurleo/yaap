@@ -1,0 +1,207 @@
+@import "@fontsource-variable/inter/standard.css";
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./graphite.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  color-scheme: light;
+  --background: #f4f5f6;
+  --foreground: #262c32;
+  --card: #ffffff;
+  --card-foreground: #262c32;
+  --popover: #ffffff;
+  --popover-foreground: #262c32;
+  --primary: #2458eb;
+  --primary-foreground: #ffffff;
+  --primary-hover: #1945c7;
+  --secondary: #e7ebee;
+  --secondary-foreground: #4f5962;
+  --muted: #f7f8f9;
+  --muted-foreground: #67717b;
+  --accent: #edf2ff;
+  --accent-foreground: #2348a8;
+  --control: #ffffff;
+  --selected: #edf2ff;
+  --selected-border: #2458eb40;
+  --destructive: #b42318;
+  --success: #218057;
+  --success-muted: #e6f4ed;
+  --border: #262c3212;
+  --input: #262c321a;
+  --ring: #2458eb;
+  --chart-1: #2458eb;
+  --chart-previous: #b6bdc4;
+  --chart-grid: #262c320c;
+  --chart-area: #2458eb12;
+  --chart-bar: #2458eb14;
+  --radius: 0.625rem;
+}
+
+.invitation-page {
+  display: grid;
+  gap: 24px;
+  max-width: 520px;
+  margin: 56px auto;
+  padding: 28px;
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 1px 2px #0000000d;
+  outline: 1px solid var(--border);
+}
+.invitation-icon svg {
+  width: 24px;
+  height: 24px;
+  color: var(--success);
+}
+.invitation-heading,
+.invitation-actions,
+.invitation-registration {
+  display: grid;
+  gap: 12px;
+}
+.invitation-heading > p:first-child {
+  color: var(--primary);
+  font-weight: 500;
+}
+.invitation-heading h1 {
+  max-width: 24ch;
+}
+.invitation-scope {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 10px;
+  background: var(--muted);
+}
+.invitation-scope strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.invitation-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+@media (max-width: 639px) {
+  .invitation-page {
+    margin: 24px auto;
+    padding: 22px;
+  }
+  .invitation-heading > p:first-child,
+  .invitation-scope strong {
+    font-size: 16px;
+  }
+}
+
+/* The resolved theme also styles native inputs and portalled menus. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #101214;
+  --foreground: #e5e9ed;
+  --card: #171a1d;
+  --card-foreground: #e5e9ed;
+  --popover: #1f2327;
+  --popover-foreground: #e5e9ed;
+  --primary: #3263df;
+  --primary-foreground: #ffffff;
+  --primary-hover: #2956c9;
+  --secondary: #2a3036;
+  --secondary-foreground: #bbc4cc;
+  --muted: #1f2327;
+  --muted-foreground: #98a3ad;
+  --accent: #202d47;
+  --accent-foreground: #a8c0ff;
+  --control: #20252a;
+  --selected: #1c2b49;
+  --selected-border: #82a4ff50;
+  --destructive: #f28b82;
+  --success: #7cd9a7;
+  --success-muted: #19372a;
+  --border: #ffffff12;
+  --input: #ffffff15;
+  --ring: #82a4ff;
+  --chart-1: #82a4ff;
+  --chart-previous: #6b7782;
+  --chart-grid: #ffffff09;
+  --chart-area: #82a4ff14;
+  --chart-bar: #82a4ff1c;
+}
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  --color-control: var(--control);
+  --color-selected: var(--selected);
+  --color-selected-border: var(--selected-border);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-previous: var(--chart-previous);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-area: var(--chart-area);
+  --color-chart-bar: var(--chart-bar);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 10px);
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply m-0 bg-background font-sans text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01", "ss03";
+  }
+  h1 {
+    @apply text-2xl font-semibold tracking-tight text-balance;
+  }
+  h2 {
+    @apply text-lg font-semibold text-balance;
+  }
+  h3,
+  h4 {
+    @apply text-sm font-semibold text-balance;
+  }
+  p {
+    @apply text-base text-muted-foreground text-pretty sm:text-sm;
+  }
+  small {
+    @apply text-xs font-normal text-muted-foreground;
+  }
+  pre {
+    @apply my-4 overflow-x-auto rounded-xl bg-muted p-4 text-xs leading-6 whitespace-pre-wrap wrap-anywhere;
+  }
+  form {
+    @apply grid gap-5;
+  }
+  summary {
+    @apply cursor-pointer rounded-md py-2 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  a {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+  [hidden] {
+    display: none !important;
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1788932008501,
+      "tag": "0000_exotic_bloodaxe",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788941483405,
+      "tag": "0001_crazy_lorna_dane",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788944833465,
+      "tag": "0002_friendly_young_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788949347466,
+      "tag": "0003_youthful_giant_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788954172959,
+      "tag": "0004_conversion_funnels",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788956097298,
+      "tag": "0005_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788959798873,
+      "tag": "0006_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1788971433421,
+      "tag": "0007_session_lookup",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788971810313,
+      "tag": "0008_daily_traffic",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788972260168,
+      "tag": "0009_rollup_pending",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1789004724611,
+      "tag": "0010_activity_summaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1789005030804,
+      "tag": "0011_session_summaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1789010458433,
+      "tag": "0012_dusty_switch",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1789026822296,
+      "tag": "0013_visitor_presence",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1789027396930,
+      "tag": "0014_website_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1789036787606,
+      "tag": "0015_event_properties",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1789038680632,
+      "tag": "0016_conversion_conditions",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1789048512034,
+      "tag": "0017_visitor_dimensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1789051619757,
+      "tag": "0018_public_api",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1789094015088,
+      "tag": "0019_payment_attribution",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1789185187761,
+      "tag": "0021_website_sharing",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1789188071319,
+      "tag": "0022_billing_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1789188961962,
+      "tag": "0023_billing_usage_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1789188978787,
+      "tag": "0024_billing_usage_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1789191453048,
+      "tag": "0025_billing_checkout_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1789192800000,
+      "tag": "0026_billing_trial_grace",
+      "breakpoints": true
+    }
+  ]
+}

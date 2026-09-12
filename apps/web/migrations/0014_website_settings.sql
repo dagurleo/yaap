@@ -1,0 +1,1 @@
+ALTER TABLE `sites` ADD `tracking_rules` text DEFAULT '{"additionalOrigins":[],"allowAllDomains":false,"excludedPaths":[],"excludedHostnames":[]}' NOT NULL;

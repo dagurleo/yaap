@@ -1,0 +1,75 @@
+{
+  "name": "yaap",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Elastic-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dagurleo/yaap.git"
+  },
+  "homepage": "https://github.com/dagurleo/yaap#readme",
+  "bugs": {
+    "url": "https://github.com/dagurleo/yaap/issues"
+  },
+  "overrides": {
+    "sharp": "0.35.4",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.28.2"
+    }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "email:dev": "npm run email:dev --workspace @yaap/web --",
+    "billing:tunnel": "cloudflared tunnel --no-autoupdate --http-host-header localhost:8790 --url http://localhost:8790",
+    "dev": "cd apps/web && npm run dev --",
+    "build": "cd apps/web && npm run build --",
+    "typecheck": "cd apps/web && npm run typecheck && cd ../../packages/client && npm run typecheck",
+    "db:generate": "cd apps/web && npm run db:generate --",
+    "db:migrate:local": "cd apps/web && npm run db:migrate:local --",
+    "db:seed": "cd apps/web && npm run db:seed --",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --config wrangler.jsonc",
+    "deploy": "cd apps/web && node scripts/deploy.mjs",
+    "test": "cd apps/web && npm run test && cd ../../packages/client && npm run test",
+    "check": "cd apps/web && npm run check && cd ../../packages/client && npm run check",
+    "preview": "cd apps/web && npm run preview --",
+    "check:deploy": "cd apps/web && npm run check:deploy --",
+    "db:rollup:local": "cd apps/web && npm run db:rollup:local --",
+    "db:rollup:postgres": "cd apps/web && npm run db:rollup:postgres --",
+    "db:generate:postgres": "cd apps/web && npm run db:generate:postgres --",
+    "db:migrate:postgres": "cd apps/web && npm run db:migrate:postgres --",
+    "test:postgres": "cd apps/web && npm run test:postgres --",
+    "db:setup:postgres": "cd apps/web && npm run db:setup:postgres --",
+    "test:hyperdrive": "cd apps/web && npm run test:hyperdrive --",
+    "format:backend": "cd apps/web && npm run format:backend --",
+    "check:format:backend": "cd apps/web && npm run check:format:backend --",
+    "db:setup:local": "cd apps/web && npm run db:setup:local --",
+    "build:client": "cd packages/client && npm run build --",
+    "check:client": "cd packages/client && npm run check --"
+  },
+  "cloudflare": {
+    "bindings": {
+      "DB": {
+        "description": "Stores owner sessions, websites, and analytics events."
+      },
+      "EVENTS": {
+        "description": "Buffers incoming analytics events for processing."
+      },
+      "BETTER_AUTH_SECRET": {
+        "description": "Generate with `openssl rand -hex 32`. Keep this secret stable across deployments."
+      },
+      "BOOTSTRAP_SECRET": {
+        "description": "Generate a second value with `openssl rand -hex 32`. Save it to create the owner at /setup after deployment."
+      },
+      "EVENTS_DLQ": {
+        "description": "Holds events that exhausted delivery retries for operator inspection and replay."
+      }
+    }
+  }
+}

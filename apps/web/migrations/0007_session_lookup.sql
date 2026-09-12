@@ -1,0 +1,1 @@
+CREATE INDEX `events_site_visitor_session_time` ON `events` (`site_id`,`visitor_id`,`session_id`,`received_at`);
