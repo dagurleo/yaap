@@ -4,6 +4,8 @@
   "main": "apps/web/src/server.ts",
   "compatibility_date": "2026-09-09",
   "compatibility_flags": ["nodejs_compat"],
+  // Optional Cloudflare Builds variable: YAAP_PLACEMENT_REGION (e.g. aws:us-east-2).
+  // npm run build sets placement.region when provided; unset keeps the default.
   "assets": {
     "binding": "ASSETS",
     "run_worker_first": [

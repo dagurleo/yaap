@@ -6,7 +6,10 @@ import {
   migratePostgres,
   migrationConnectionString,
 } from "./migrate-postgres.mjs";
-import { deploymentHyperdriveId } from "./deployment-config.mjs";
+import {
+  deploymentHyperdriveId,
+  deploymentPlacementRegion,
+} from "./deployment-config.mjs";
 
 const config = JSON.parse(
   await readFile("dist/server/wrangler.json", "utf8").catch((error) => {
@@ -18,6 +21,16 @@ const config = JSON.parse(
   }),
 );
 const provider = config.vars?.DATABASE_PROVIDER ?? "d1";
+const requestedPlacementRegion = deploymentPlacementRegion(
+  process.env.YAAP_PLACEMENT_REGION,
+);
+if (
+  requestedPlacementRegion &&
+  config.placement?.region !== requestedPlacementRegion
+)
+  throw new Error(
+    "Build output does not match YAAP_PLACEMENT_REGION. Rebuild with the same build variable before deploying.",
+  );
 const requestedHyperdriveId = deploymentHyperdriveId(
   process.env.YAAP_HYPERDRIVE_ID,
 );

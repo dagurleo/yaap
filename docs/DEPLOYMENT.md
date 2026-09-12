@@ -37,6 +37,14 @@ Email is omitted from the default production template so a basic installation ne
 
 Auth uses the Cloudflare-routed request origin. Optional `BETTER_AUTH_URL` pins a canonical origin for a custom domain; use the exact HTTPS origin without a trailing slash. Dashboard and API share that origin.
 
+## Optional Worker placement
+
+To run your Worker close to a database or API in a particular cloud region, set the **Cloudflare Builds plaintext variable** `YAAP_PLACEMENT_REGION`, for example `aws:us-east-2`. The production build writes `"placement": { "region": "aws:us-east-2" }` into the generated Wrangler configuration. Commit and push the supporting code, then rebuild and deploy with the variable set. For local production commands, export the variable before `npm run build`, `npm run check:deploy`, and `npm run deploy`.
+
+Leave the variable unset for Cloudflare's default placement. No region is hardcoded in the public template. An existing placement configured directly in `wrangler.jsonc` is preserved when the variable is unset; setting the variable replaces that strategy with the region hint. Remove the variable and rebuild to return to the template's placement.
+
+The region uses `aws:`, `gcp:`, or `azure:` followed by a region code supported by that provider. Cloudflare selects its own data center with the lowest latency to that region; the Worker still runs on Cloudflare. See [Cloudflare placement](https://developers.cloudflare.com/workers/configuration/placement/).
+
 ## Track this installation's public website
 
 Add a website in Yaap with your installation's exact origin (for example, `https://yaap.dagurleo.workers.dev`) and copy its site ID from Installation. In Cloudflare Workers Builds, set the **build variable** `VITE_YAAP_SITE_ID` to that ID, then rebuild and deploy. This ID is public and can be a plaintext variable; do not use a database credential or API key.

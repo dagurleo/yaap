@@ -3,11 +3,15 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 import { unstable_readConfig } from "wrangler";
-import { configureDeploymentDatabase } from "./deployment-config.mjs";
+import {
+  configureDeploymentDatabase,
+  configureDeploymentPlacement,
+} from "./deployment-config.mjs";
 
 const read = async (path) => JSON.parse(await readFile(path, "utf8"));
 const source = unstable_readConfig({ config: "../../wrangler.jsonc" });
 configureDeploymentDatabase(source, process.env.YAAP_HYPERDRIVE_ID);
+configureDeploymentPlacement(source, process.env.YAAP_PLACEMENT_REGION);
 const built = await read("dist/server/wrangler.json");
 const pkg = await read("../../package.json");
 const webPkg = await read("package.json");
@@ -115,6 +119,11 @@ function validate(config, label) {
 }
 validate(source, "source");
 validate(built, "build");
+assert.deepEqual(
+  built.placement,
+  source.placement,
+  "build must preserve the selected Worker placement",
+);
 assert.deepEqual(
   built.send_email ?? [],
   source.send_email ?? [],

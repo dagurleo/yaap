@@ -4,7 +4,10 @@ import { defineConfig } from "vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
-import { configureDeploymentDatabase } from "./scripts/deployment-config.mjs";
+import {
+  configureDeploymentDatabase,
+  configureDeploymentPlacement,
+} from "./scripts/deployment-config.mjs";
 export default defineConfig(({ command, isPreview }) => ({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   plugins: [
@@ -17,8 +20,13 @@ export default defineConfig(({ command, isPreview }) => ({
           ? "../../wrangler.jsonc"
           : "wrangler.jsonc",
       config: (config) => {
-        if (command === "build")
+        if (command === "build") {
           configureDeploymentDatabase(config, process.env.YAAP_HYPERDRIVE_ID);
+          configureDeploymentPlacement(
+            config,
+            process.env.YAAP_PLACEMENT_REGION,
+          );
+        }
       },
       viteEnvironment: { name: "ssr" },
     }),
