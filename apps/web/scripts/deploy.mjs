@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import pg from "pg";
 import { migratePostgres } from "./migrate-postgres.mjs";
+import { deploymentHyperdriveId } from "./deployment-config.mjs";
 
 const config = JSON.parse(
   await readFile("dist/server/wrangler.json", "utf8").catch((error) => {
@@ -14,6 +15,18 @@ const config = JSON.parse(
   }),
 );
 const provider = config.vars?.DATABASE_PROVIDER ?? "d1";
+const requestedHyperdriveId = deploymentHyperdriveId(
+  process.env.YAAP_HYPERDRIVE_ID,
+);
+if (
+  requestedHyperdriveId &&
+  (provider !== "postgres" ||
+    config.hyperdrive?.find((binding) => binding.binding === "HYPERDRIVE")
+      ?.id !== requestedHyperdriveId)
+)
+  throw new Error(
+    "Build output does not match YAAP_HYPERDRIVE_ID. Rebuild with the same build variable before deploying.",
+  );
 const wrangler = (...args) =>
   execFileSync(
     process.execPath,

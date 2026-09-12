@@ -13,27 +13,30 @@
       "/health",
       "/mcp",
       "/oauth/*",
-      "/.well-known/oauth-*"
-    ]
+      "/.well-known/oauth-*",
+    ],
   },
+  // Optional Cloudflare Builds variable: YAAP_HYPERDRIVE_ID.
+  // npm run build replaces DB with HYPERDRIVE and selects Postgres when set.
+  // DATABASE_URL belongs in a build secret for migrations, never in this file.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "os-analytics",
       "database_id": "",
-      "migrations_dir": "apps/web/migrations"
-    }
+      "migrations_dir": "apps/web/migrations",
+    },
   ],
   "queues": {
     "producers": [
       {
         "binding": "EVENTS",
-        "queue": "os-analytics-events"
+        "queue": "os-analytics-events",
       },
       {
         "binding": "EVENTS_DLQ",
-        "queue": "os-analytics-dead-letter"
-      }
+        "queue": "os-analytics-dead-letter",
+      },
     ],
     "consumers": [
       {
@@ -42,18 +45,18 @@
         "max_batch_timeout": 5,
         "max_retries": 3,
         "dead_letter_queue": "os-analytics-dead-letter",
-        "max_concurrency": 1
-      }
-    ]
+        "max_concurrency": 1,
+      },
+    ],
   },
   "triggers": {
-    "crons": ["* * * * *", "17 * * * *"]
+    "crons": ["* * * * *", "17 * * * *"],
   },
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   "workers_dev": true,
   "secrets": {
-    "required": ["BETTER_AUTH_SECRET", "BOOTSTRAP_SECRET"]
-  }
+    "required": ["BETTER_AUTH_SECRET", "BOOTSTRAP_SECRET"],
+  },
 }

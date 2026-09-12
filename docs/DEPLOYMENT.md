@@ -31,7 +31,7 @@ The deploy script rejects an unprovisioned D1 database before attempting migrati
 
 **Production:** edit the root `wrangler.jsonc`. Production builds read this file even though Vite runs inside `apps/web`. **Local development:** `apps/web/wrangler.jsonc` and `apps/web/.dev.vars` keep the local database, email simulator, and existing developer secrets separate. Do not put runtime secret values in either Wrangler file.
 
-For PostgreSQL, follow the [Hyperdrive instructions](DATABASES.md#production-postgres-through-hyperdrive), applying production changes to the root config. The deploy script selects migrations from the built provider configuration. PostgreSQL migration credentials belong in a build secret, with runtime access through Hyperdrive.
+For PostgreSQL, set `YAAP_HYPERDRIVE_ID` in Cloudflare Builds variables and follow the [Hyperdrive instructions](DATABASES.md#production-postgres-through-hyperdrive). The build substitutes the Hyperdrive binding and PostgreSQL provider without changing the public D1 template. Leave this variable unset for the default D1 deployment. The deploy script selects migrations from the built provider configuration. PostgreSQL migration credentials belong in a build secret, with runtime access through Hyperdrive.
 
 Email is omitted from the default production template so a basic installation needs no sender-domain setup. To enable invitations and other email features, follow [Email Service setup](EMAIL.md), add `"send_email": [{ "name": "EMAIL" }]` to the root config, configure `EMAIL_FROM`, and rebuild. Hosted billing also requires explicit configuration; see [billing](HOSTED_BILLING_SCOPE.md).
 

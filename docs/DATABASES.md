@@ -29,19 +29,14 @@ Switch back by setting `DATABASE_PROVIDER=d1` in `apps/web/.dev.vars` and restar
 
 1. Create a **Postgres** database in PlanetScale. Obtain a direct connection URL for migrations and a runtime role for Hyperdrive. The migration role needs DDL, function, and trigger privileges. The runtime role needs access to all application tables and trigger functions.
 2. Create a Hyperdrive configuration pointing to that database with query caching **disabled** (`wrangler hyperdrive create ... --caching-disabled`). Auth, settings, payments, and live reports require fresh reads. Hyperdrive still pools connections when caching is disabled.
-3. In the root `wrangler.jsonc`, remove `d1_databases` and add:
+3. In Cloudflare **Settings > Builds > Variables and secrets**, add `YAAP_HYPERDRIVE_ID` with your Hyperdrive configuration ID. Leave the public root `wrangler.jsonc` unchanged. During `npm run build`, Vite removes the default `DB` binding, adds `HYPERDRIVE`, and sets `DATABASE_PROVIDER=postgres` in the generated deployment config. Existing queues, assets, secrets, and other variables are preserved. Empty or unset values leave the checked-in configuration in effect; a malformed ID stops the build.
 
-```json
-{
-  "vars": { "DATABASE_PROVIDER": "postgres" },
-  "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "YOUR_REAL_HYPERDRIVE_ID" }]
-}
-```
-
-Merge these properties into the existing config; preserve assets, queues, crons, and `nodejs_compat`.
+This is a **build variable**, not a Worker runtime variable. It applies only to production builds; `npm run dev` continues using `apps/web/wrangler.jsonc` and local `.dev.vars`. A static production configuration (`DATABASE_PROVIDER=postgres` and a `HYPERDRIVE` binding in the root Wrangler file) is also supported when the build variable is unset.
 
 4. Set `DATABASE_URL` as a **build/CI secret** pointing directly at the same production database, using the TLS settings from PlanetScale. Keep the existing `BETTER_AUTH_SECRET` and `BOOTSTRAP_SECRET` as Worker runtime secrets. Hyperdrive supplies the runtime connection string; do not put database credentials in Wrangler vars or commit them.
-5. Run `npm run build` and then `npm run deploy` from the repository root. The deployment script selects migrations from the **built Wrangler configuration**, requires a real Hyperdrive binding for Postgres, applies migrations, and only deploys if they succeed. It never falls back to the local `apps/web/.dev.vars` migration URL for a Postgres deployment. The ordinary D1 deployment path is preserved.
+5. Connect Workers Builds to `main`, root directory `/`, with build command `npm run build` and deploy command `npm run deploy`. For a local production build/deploy, export `YAAP_HYPERDRIVE_ID` and the migration `DATABASE_URL` in your shell first, then run those same commands. The deployment script selects migrations from the **built Wrangler configuration**, requires a real Hyperdrive binding for Postgres, applies migrations, and only deploys if they succeed. It never falls back to the local `apps/web/.dev.vars` migration URL for a Postgres deployment. The ordinary D1 deployment path is preserved.
+Use the same `YAAP_HYPERDRIVE_ID` when running `npm run check:deploy` against this build. Deployment rejects a build that does not match the configured ID before running migrations. Changing the ID requires a rebuild.
+
 6. Verify `/health`, create the owner for a fresh install, and check one real queued pageview and one report.
 
 Local Postgres and local Hyperdrive emulation are covered by integration tests. A live PlanetScale/Hyperdrive deployment still needs verification once that database exists. Switching providers is configuration selection, not data migration; no live cutover or automatic D1 import is included.

@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
+import { configureDeploymentDatabase } from "./scripts/deployment-config.mjs";
 export default defineConfig(({ command, isPreview }) => ({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   plugins: [
@@ -15,6 +16,10 @@ export default defineConfig(({ command, isPreview }) => ({
         command === "build" || isPreview
           ? "../../wrangler.jsonc"
           : "wrangler.jsonc",
+      config: (config) => {
+        if (command === "build")
+          configureDeploymentDatabase(config, process.env.YAAP_HYPERDRIVE_ID);
+      },
       viteEnvironment: { name: "ssr" },
     }),
     tanstackStart(),

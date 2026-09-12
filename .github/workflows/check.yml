@@ -37,3 +37,10 @@ jobs:
           npx wrangler d1 migrations apply DB --local --config apps/web/dist/server/wrangler.json --persist-to "$RUNNER_TEMP/yaap-template"
       - name: Verify production template deployment bundle without deploying
         run: npx wrangler deploy --dry-run --config apps/web/dist/server/wrangler.json
+      - name: Verify optional Hyperdrive build configuration without deploying
+        env:
+          YAAP_HYPERDRIVE_ID: "0123456789abcdef0123456789abcdef"
+        run: |
+          npm run build
+          npm run check:deploy
+          npx wrangler deploy --dry-run --config apps/web/dist/server/wrangler.json

@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
+import { unstable_readConfig } from "wrangler";
+import { configureDeploymentDatabase } from "./deployment-config.mjs";
 
 const read = async (path) => JSON.parse(await readFile(path, "utf8"));
-const source = await read("../../wrangler.jsonc");
+const source = unstable_readConfig({ config: "../../wrangler.jsonc" });
+configureDeploymentDatabase(source, process.env.YAAP_HYPERDRIVE_ID);
 const built = await read("dist/server/wrangler.json");
 const pkg = await read("../../package.json");
 const webPkg = await read("package.json");
