@@ -37,6 +37,12 @@ Email is omitted from the default production template so a basic installation ne
 
 Auth uses the Cloudflare-routed request origin. Optional `BETTER_AUTH_URL` pins a canonical origin for a custom domain; use the exact HTTPS origin without a trailing slash. Dashboard and API share that origin.
 
+## Track this installation's public website
+
+Add a website in Yaap with your installation's exact origin (for example, `https://yaap.dagurleo.workers.dev`) and copy its site ID from Installation. In Cloudflare Workers Builds, set the **build variable** `VITE_YAAP_SITE_ID` to that ID, then rebuild and deploy. This ID is public and can be a plaintext variable; do not use a database credential or API key.
+
+The built app sends homepage (`/`) pageviews to its own origin. Collection pauses before navigating to other routes, so login, setup, invitations, and the signed-in dashboard are excluded. Standard visitor/session identifiers are enabled. Tracking is disabled in local development and whenever the build variable is unset, so forks do not report to another installation. Remove the variable and rebuild to disable it. After deployment, open the homepage and confirm a pageview in the website's overview.
+
 ## Upgrades and live acceptance
 
 Before upgrading, back up the database and record the deployed commit, resource IDs, and configuration. Keep the same database, queues, and secrets, merge the new code, then run the normal build and deploy. Applied migrations are tracked and repeat deployment must leave existing data intact. A Worker code rollback does not undo database migrations; test backup restoration before relying on rollback.

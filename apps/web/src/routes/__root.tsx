@@ -1,6 +1,7 @@
 import { ThemeProvider, themeScript } from "@/components/theme-provider";
 import { HeaderAccount } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
+import { SelfTracking } from "@/components/self-tracking";
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -34,6 +35,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           <HeadContent />
         </head>
         <body>
+          <SelfTracking />
           {children}
           <Scripts />
         </body>
