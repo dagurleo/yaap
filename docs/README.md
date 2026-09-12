@@ -4,30 +4,32 @@
 
 ## Install and run
 
-| Guide | What it covers |
-| --- | --- |
-| [Local development](DEVELOPMENT.md) | First setup, synthetic demo data, commands, code layout and contribution conventions |
-| [Database backends](DATABASES.md) | D1, local PostgreSQL, production Hyperdrive, migrations and provider tests |
-| [Cloudflare deployment](DEPLOYMENT.md) | Workers Builds, deploy-button configuration, secrets and validation status |
-| [Release readiness](RELEASE_READINESS.md) | Deployment audit, verified checks, and remaining launch work |
-| [Operations](OPERATIONS.md) | Retention, ingestion counters, failed deliveries and release verification |
+| Guide                                     | What it covers                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| [Local development](DEVELOPMENT.md)       | First setup, synthetic demo data, commands, code layout and contribution conventions |
+| [Database backends](DATABASES.md)         | D1, local PostgreSQL, production Hyperdrive, migrations and provider tests           |
+| [Cloudflare deployment](DEPLOYMENT.md)    | Workers Builds, deploy-button configuration, secrets and validation status           |
+| [Release readiness](RELEASE_READINESS.md) | Deployment audit, verified checks, and remaining launch work                         |
+| [Operations](OPERATIONS.md)               | Retention, ingestion counters, failed deliveries and release verification            |
 
 ## Collect and understand data
 
-| Guide | What it covers |
-| --- | --- |
-| [Tracking and identity](TRACKING.md) | Script lifecycle, full/anonymous/paused modes, browser identifiers and source context |
-| [Events and properties](EVENTS.md) | Custom properties, validation limits, explorer filters and HTTP API |
-| [Reports and metrics](REPORTING.md) | Dates, filters, sessions, audiences, journeys and live presence |
-| [Conversion performance](CONVERSION_PERFORMANCE.md) | Session acquisition, landing pages, comparisons and conversion rates |
-| [Goals and funnels](CONVERSIONS.md) | Exact matching, property conditions, denominators, editing and runtime bounds |
-| [Payments](PAYMENTS.md) | Server API, Stripe metadata/webhooks, refunds and attribution |
-| [Public API and MCP](API.md) | Scoped tokens, reporting/management endpoints, MCP connections and OAuth |
-| [Website settings](settings.md) | Installation, origins, exclusions, retention and tracking defaults |
-| [Performance](PERFORMANCE.md) | Rollups, query design, measured fixtures and their limits |
+| Guide                                               | What it covers                                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [Tracking and identity](TRACKING.md)                | Script lifecycle, full/anonymous/paused modes, browser identifiers and source context |
+| [Events and properties](EVENTS.md)                  | Custom properties, validation limits, explorer filters and HTTP API                   |
+| [Reports and metrics](REPORTING.md)                 | Dates, filters, sessions, audiences, journeys and live presence                       |
+| [Conversion performance](CONVERSION_PERFORMANCE.md) | Session acquisition, landing pages, comparisons and conversion rates                  |
+| [Goals and funnels](CONVERSIONS.md)                 | Exact matching, property conditions, denominators, editing and runtime bounds         |
+| [Payments](PAYMENTS.md)                             | Server API, Stripe metadata/webhooks, refunds and attribution                         |
+| [Public API and MCP](API.md)                        | Scoped tokens, reporting/management endpoints, MCP connections and OAuth              |
+| [Website settings](settings.md)                     | Installation, origins, exclusions, retention and tracking defaults                    |
+| [Performance](PERFORMANCE.md)                       | Rollups, query design, measured fixtures and their limits                             |
 
 ## Project direction
 
+- [Agent readiness](AGENT_READINESS.md): crawl policy, Markdown pages, API/MCP discovery, public browser tools and deployment verification.
+- [Public information pages](PUBLIC_PAGES.md): landing legal/support pages, draft status and details needed for final publication.
 - [Roadmap](ROADMAP.md): what is built, what comes next and public-release gates.
 - [Implementation plan](IMPLEMENTATION_PLAN.md): ordered stages, acceptance criteria and verification log.
 - [Ads integration plan](ADS_IMPLEMENTATION_PLAN.md): Google/Meta credentials, attribution, spend imports and purchase forwarding; planned work based on [research](ADS_INTEGRATION_RESEARCH.md).

@@ -12,12 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as CheckEmailRouteImport } from './routes/check-email'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AppAppIndexRouteImport } from './routes/_app/app/index'
 import { Route as AppAppAccessRouteImport } from './routes/_app/app/access'
@@ -28,6 +32,7 @@ import { Route as AppAppSiteIdFunnelsRouteImport } from './routes/_app/app/$site
 import { Route as AppAppSiteIdOverviewRouteImport } from './routes/_app/app/$siteId/overview'
 import { Route as AppAppSiteIdRevenueRouteImport } from './routes/_app/app/$siteId/revenue'
 import { Route as AppAppSiteIdSettingsRouteImport } from './routes/_app/app/$siteId/settings'
+import { Route as AppAppSiteIdSetupRouteImport } from './routes/_app/app/$siteId/setup'
 import { Route as AppAppSiteIdVisitorsRouteImport } from './routes/_app/app/$siteId/visitors'
 
 const IndexRoute = IndexRouteImport.update({
@@ -42,6 +47,11 @@ const AppRoute = AppRouteImport.update({
 const CheckEmailRoute = CheckEmailRouteImport.update({
   id: '/check-email',
   path: '/check-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -59,9 +69,19 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetupRoute = SetupRouteImport.update({
@@ -72,6 +92,11 @@ const SetupRoute = SetupRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -124,6 +149,11 @@ const AppAppSiteIdSettingsRoute = AppAppSiteIdSettingsRouteImport.update({
   path: '/app/$siteId/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppSiteIdSetupRoute = AppAppSiteIdSetupRouteImport.update({
+  id: '/app/$siteId/setup',
+  path: '/app/$siteId/setup',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppSiteIdVisitorsRoute = AppAppSiteIdVisitorsRouteImport.update({
   id: '/app/$siteId/visitors',
   path: '/app/$siteId/visitors',
@@ -133,12 +163,16 @@ const AppAppSiteIdVisitorsRoute = AppAppSiteIdVisitorsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/check-email': typeof CheckEmailRoute
+  '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/security': typeof SecurityRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/access': typeof AppAppAccessRoute
   '/app/billing': typeof AppAppBillingRoute
@@ -148,18 +182,23 @@ export interface FileRoutesByFullPath {
   '/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
   '/app/$siteId/revenue': typeof AppAppSiteIdRevenueRoute
   '/app/$siteId/settings': typeof AppAppSiteIdSettingsRoute
+  '/app/$siteId/setup': typeof AppAppSiteIdSetupRoute
   '/app/$siteId/visitors': typeof AppAppSiteIdVisitorsRoute
   '/app/$siteId/': typeof AppAppSiteIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/check-email': typeof CheckEmailRoute
+  '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/security': typeof SecurityRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/access': typeof AppAppAccessRoute
   '/app/billing': typeof AppAppBillingRoute
@@ -169,6 +208,7 @@ export interface FileRoutesByTo {
   '/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
   '/app/$siteId/revenue': typeof AppAppSiteIdRevenueRoute
   '/app/$siteId/settings': typeof AppAppSiteIdSettingsRoute
+  '/app/$siteId/setup': typeof AppAppSiteIdSetupRoute
   '/app/$siteId/visitors': typeof AppAppSiteIdVisitorsRoute
   '/app/$siteId': typeof AppAppSiteIdIndexRoute
 }
@@ -177,12 +217,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/check-email': typeof CheckEmailRoute
+  '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/security': typeof SecurityRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_app/app/access': typeof AppAppAccessRoute
   '/_app/app/billing': typeof AppAppBillingRoute
@@ -192,6 +236,7 @@ export interface FileRoutesById {
   '/_app/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
   '/_app/app/$siteId/revenue': typeof AppAppSiteIdRevenueRoute
   '/_app/app/$siteId/settings': typeof AppAppSiteIdSettingsRoute
+  '/_app/app/$siteId/setup': typeof AppAppSiteIdSetupRoute
   '/_app/app/$siteId/visitors': typeof AppAppSiteIdVisitorsRoute
   '/_app/app/$siteId/': typeof AppAppSiteIdIndexRoute
 }
@@ -200,12 +245,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/check-email'
+    | '/contact'
     | '/forgot-password'
     | '/login'
     | '/pricing'
+    | '/privacy'
     | '/reset-password'
+    | '/security'
     | '/setup'
     | '/signup'
+    | '/terms'
     | '/invite/$token'
     | '/app/access'
     | '/app/billing'
@@ -215,18 +264,23 @@ export interface FileRouteTypes {
     | '/app/$siteId/overview'
     | '/app/$siteId/revenue'
     | '/app/$siteId/settings'
+    | '/app/$siteId/setup'
     | '/app/$siteId/visitors'
     | '/app/$siteId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/check-email'
+    | '/contact'
     | '/forgot-password'
     | '/login'
     | '/pricing'
+    | '/privacy'
     | '/reset-password'
+    | '/security'
     | '/setup'
     | '/signup'
+    | '/terms'
     | '/invite/$token'
     | '/app/access'
     | '/app/billing'
@@ -236,6 +290,7 @@ export interface FileRouteTypes {
     | '/app/$siteId/overview'
     | '/app/$siteId/revenue'
     | '/app/$siteId/settings'
+    | '/app/$siteId/setup'
     | '/app/$siteId/visitors'
     | '/app/$siteId'
   id:
@@ -243,12 +298,16 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/check-email'
+    | '/contact'
     | '/forgot-password'
     | '/login'
     | '/pricing'
+    | '/privacy'
     | '/reset-password'
+    | '/security'
     | '/setup'
     | '/signup'
+    | '/terms'
     | '/invite/$token'
     | '/_app/app/access'
     | '/_app/app/billing'
@@ -258,6 +317,7 @@ export interface FileRouteTypes {
     | '/_app/app/$siteId/overview'
     | '/_app/app/$siteId/revenue'
     | '/_app/app/$siteId/settings'
+    | '/_app/app/$siteId/setup'
     | '/_app/app/$siteId/visitors'
     | '/_app/app/$siteId/'
   fileRoutesById: FileRoutesById
@@ -266,12 +326,16 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   CheckEmailRoute: typeof CheckEmailRoute
+  ContactRoute: typeof ContactRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SecurityRoute: typeof SecurityRoute
   SetupRoute: typeof SetupRoute
   SignupRoute: typeof SignupRoute
+  TermsRoute: typeof TermsRoute
   InviteTokenRoute: typeof InviteTokenRoute
 }
 
@@ -298,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
@@ -319,11 +390,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/setup': {
@@ -338,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -410,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppSiteIdSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/$siteId/setup': {
+      id: '/_app/app/$siteId/setup'
+      path: '/app/$siteId/setup'
+      fullPath: '/app/$siteId/setup'
+      preLoaderRoute: typeof AppAppSiteIdSetupRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/app/$siteId/visitors': {
       id: '/_app/app/$siteId/visitors'
       path: '/app/$siteId/visitors'
@@ -429,6 +528,7 @@ interface AppRouteChildren {
   AppAppSiteIdOverviewRoute: typeof AppAppSiteIdOverviewRoute
   AppAppSiteIdRevenueRoute: typeof AppAppSiteIdRevenueRoute
   AppAppSiteIdSettingsRoute: typeof AppAppSiteIdSettingsRoute
+  AppAppSiteIdSetupRoute: typeof AppAppSiteIdSetupRoute
   AppAppSiteIdVisitorsRoute: typeof AppAppSiteIdVisitorsRoute
   AppAppSiteIdIndexRoute: typeof AppAppSiteIdIndexRoute
 }
@@ -442,6 +542,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAppSiteIdOverviewRoute: AppAppSiteIdOverviewRoute,
   AppAppSiteIdRevenueRoute: AppAppSiteIdRevenueRoute,
   AppAppSiteIdSettingsRoute: AppAppSiteIdSettingsRoute,
+  AppAppSiteIdSetupRoute: AppAppSiteIdSetupRoute,
   AppAppSiteIdVisitorsRoute: AppAppSiteIdVisitorsRoute,
   AppAppSiteIdIndexRoute: AppAppSiteIdIndexRoute,
 }
@@ -452,12 +553,16 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   CheckEmailRoute: CheckEmailRoute,
+  ContactRoute: ContactRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SecurityRoute: SecurityRoute,
   SetupRoute: SetupRoute,
   SignupRoute: SignupRoute,
+  TermsRoute: TermsRoute,
   InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport

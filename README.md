@@ -1,8 +1,10 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="apps/web/public/brand/logo-dark.svg">
-    <img src="apps/web/public/brand/logo-light.svg" alt="Yaap" width="200">
-  </picture>
+  <a href="https://yaap.sh">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="apps/web/public/brand/logo-dark.svg">
+      <img src="apps/web/public/brand/logo-light.svg" alt="Yaap" width="200">
+    </picture>
+  </a>
 </p>
 
 <h1 align="center">Yet another analytics platform</h1>
@@ -12,6 +14,8 @@
 </p>
 
 <p align="center">
+  <a href="https://yaap.sh">Website</a> ·
+  <a href="https://yaap.sh/pricing">Pricing</a> ·
   <a href="#get-started">Get started</a> ·
   <a href="docs/README.md">Documentation</a> ·
   <a href="docs/DEPLOYMENT.md">Deploy</a> ·
@@ -64,7 +68,7 @@ This is an npm-workspaces monorepo with one root lockfile:
 - `packages/client` — `@yaap/client`, the typed npm client and standalone tracking script.
 - `docs` — shared product and development documentation.
 
-Run app commands from the repository root as before. `npm run dev` and `npm run build` build the client automatically and serve it at the existing `/script.js` URL. See the [client guide](packages/client/README.md) for npm usage and local packaging; the package is not published yet.
+Run app commands from the repository root as before. `npm run dev` and `npm run build` build the client automatically and serve it at the existing `/script.js` URL. See the [client guide](packages/client/README.md) for npm usage and local packaging. Install the published client with `npm install @yaap/client`.
 
 ## Track an event
 
@@ -129,6 +133,12 @@ npm run test:hyperdrive    # Local Hyperdrive emulation with PostgreSQL
 Tests use isolated fixtures. See [development](docs/DEVELOPMENT.md) for the project layout, schema workflow and UI conventions.
 
 Next up: **installation verification and diagnostics**. Recovery, export/restore, capacity testing and live deployment verification remain release work. [Roadmap →](docs/ROADMAP.md)
+
+## Contact and policies
+
+For product help, billing questions or privacy requests, visit [Contact](https://yaap.sh/contact) or email [hello@yaap.sh](mailto:hello@yaap.sh). For vulnerabilities, follow the private reporting instructions on the [Security page](https://yaap.sh/security).
+
+[Privacy Policy](https://yaap.sh/privacy) · [Terms of Service](https://yaap.sh/terms)
 
 ## License
 

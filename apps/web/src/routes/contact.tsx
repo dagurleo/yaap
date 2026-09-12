@@ -1,20 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LandingPage } from "@/features/landing/landing-page";
+import { ContactPage } from "@/features/landing/trust-pages";
 import landingStyles from "@/features/landing/landing.css?url";
 import { registrationAvailableFn } from "@/features/dashboard/functions";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/contact")({
   loader: () => registrationAvailableFn(),
   head: () => ({
     meta: [
-      { title: "Yaap — Yet another analytics platform" },
+      { title: "Contact — Yaap" },
       {
         name: "description",
         content:
-          "Source-available web analytics, from first visit to revenue. Self-host Yaap in your own Cloudflare account.",
+          "Find Yaap documentation, product support, billing help and privacy contacts.",
       },
     ],
     links: [{ rel: "stylesheet", href: landingStyles }],
   }),
-  component: () => <LandingPage hosted={Route.useLoaderData()} />,
+  component: () => <ContactPage hosted={Route.useLoaderData()} />,
 });

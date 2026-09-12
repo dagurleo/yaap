@@ -51,7 +51,21 @@ export function PricingSection({
           </p>
         </div>
         <div className="pricing-board">
-          <div className="pricing-configurator">
+          <div
+            className="pricing-configurator"
+            data-markdown={[
+              "Monthly hosted plans. Pageviews and custom events share one allowance across all websites. Billed monthly in USD, plus applicable tax.",
+              "",
+              "| Monthly events | USD per month |",
+              "| --- | --- |",
+              ...BILLING_PLANS.map(
+                (tier) =>
+                  `| ${events.format(tier.eventAllowance)} | ${price.format(tier.monthlyPriceCents / 100)} |`,
+              ),
+              "",
+              "Same features at every tier. Only the event allowance changes.",
+            ].join("\n")}
+          >
             <label htmlFor={`${id}-volume`}>How many events per month?</label>
             <div className="pricing-volume">
               <output className="pricing-event-count" htmlFor={`${id}-volume`}>

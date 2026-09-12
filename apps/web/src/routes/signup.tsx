@@ -96,6 +96,17 @@ function SignupPage() {
           </p>
         )}
       </form>
+      <p className="text-base text-muted-foreground sm:text-sm">
+        Read our{" "}
+        <a href="/privacy" className="underline underline-offset-4">
+          Privacy Policy
+        </a>{" "}
+        and{" "}
+        <a href="/terms" className="underline underline-offset-4">
+          Terms of Service
+        </a>
+        .
+      </p>
       <p className="text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link to="/login" className="underline">

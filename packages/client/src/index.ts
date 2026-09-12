@@ -1,7 +1,7 @@
 import type { Analytics, AnalyticsOptions, EventProperties } from "./types.js";
 
 // Keep this endpoint reachable for clients installed from older package versions.
-export const DEFAULT_HOST = "https://yaap.dagurleo.workers.dev";
+export const DEFAULT_HOST = "https://yaap.sh";
 
 /** Start one tracker per page. Importing this module does not access browser globals. */
 export function init(options: AnalyticsOptions): Analytics | undefined {

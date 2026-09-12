@@ -104,7 +104,13 @@ function validate(config, label) {
     "/health",
     "/mcp",
     "/oauth/*",
-    "/.well-known/oauth-*",
+    "/.well-known/*",
+    "/mcp/server-card",
+    "/robots.txt",
+    "/sitemap.xml",
+    "/llms.txt",
+    "/*.md",
+    "/docs/api.md",
   ])
     assert.ok(
       config.assets.run_worker_first.includes(route),

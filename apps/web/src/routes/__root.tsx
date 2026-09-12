@@ -26,6 +26,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "icon", type: "image/svg+xml", href: "/brand/favicon.svg" },
         { rel: "icon", sizes: "any", href: "/brand/favicon.ico" },
         { rel: "apple-touch-icon", href: "/brand/apple-touch-icon.png" },
+        {
+          rel: "api-catalog",
+          href: "/.well-known/api-catalog",
+          type: "application/linkset+json",
+        },
+        {
+          rel: "ai-catalog",
+          href: "/.well-known/ai-catalog.json",
+          type: "application/ai-catalog+json",
+        },
+        {
+          rel: "service-desc",
+          href: "/api/v1/openapi.json",
+          type: "application/json",
+        },
+        { rel: "service-doc", href: "/docs/api.md", type: "text/markdown" },
+        { rel: "sitemap", href: "/sitemap.xml", type: "application/xml" },
       ],
     }),
     shellComponent: ({ children }) => (
@@ -64,8 +81,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootLayout() {
   const isLanding = useMatches({
     select: (matches) =>
-      matches.some(
-        (match) => match.routeId === "/" || match.routeId === "/pricing",
+      matches.some((match) =>
+        [
+          "/",
+          "/pricing",
+          "/privacy",
+          "/terms",
+          "/security",
+          "/contact",
+        ].includes(match.routeId),
       ),
   });
   const isDashboard = useRouterState({

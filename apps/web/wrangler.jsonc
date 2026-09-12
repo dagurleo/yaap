@@ -6,15 +6,48 @@
   "compatibility_date": "2026-09-09",
   "compatibility_flags": ["nodejs_compat"],
   "send_email": [{ "name": "EMAIL" }],
-  "assets": {  "binding": "ASSETS", "run_worker_first": ["/api/*", "/payments/*", "/ingest", "/health", "/mcp", "/oauth/*", "/.well-known/oauth-*"] },
-  "d1_databases": [{ "binding": "DB", "database_name": "os-analytics", "database_id": "", "migrations_dir": "migrations" }],
+  "assets": {
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*",
+      "/payments/*",
+      "/ingest",
+      "/health",
+      "/mcp",
+      "/oauth/*",
+      "/.well-known/*",
+      "/mcp/server-card",
+      "/robots.txt",
+      "/sitemap.xml",
+      "/llms.txt",
+      "/*.md",
+      "/docs/api.md",
+    ],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "os-analytics",
+      "database_id": "",
+      "migrations_dir": "migrations",
+    },
+  ],
   "queues": {
     "producers": [
       { "binding": "EVENTS", "queue": "os-analytics-events" },
-      { "binding": "EVENTS_DLQ", "queue": "os-analytics-dead-letter" }
+      { "binding": "EVENTS_DLQ", "queue": "os-analytics-dead-letter" },
     ],
-    "consumers": [{ "queue": "os-analytics-events", "max_batch_size": 25, "max_batch_timeout": 5, "max_retries": 3, "dead_letter_queue": "os-analytics-dead-letter", "max_concurrency": 1 }]
+    "consumers": [
+      {
+        "queue": "os-analytics-events",
+        "max_batch_size": 25,
+        "max_batch_timeout": 5,
+        "max_retries": 3,
+        "dead_letter_queue": "os-analytics-dead-letter",
+        "max_concurrency": 1,
+      },
+    ],
   },
   "triggers": { "crons": ["* * * * *", "17 * * * *"] },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
 }

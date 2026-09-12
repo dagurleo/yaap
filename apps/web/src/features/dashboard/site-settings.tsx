@@ -264,6 +264,11 @@ export function SiteSettings({
               </Suspense>
             )}
             <div hidden={section !== "installation"}>
+              <Button asChild size="sm" className="mb-4">
+                <Link to="/app/$siteId/setup" params={{ siteId }}>
+                  Check installation
+                </Link>
+              </Button>
               <Installation siteId={siteId} appOrigin={appOrigin} />
             </div>
             {section === "revenue" && (
@@ -584,12 +589,14 @@ function GeneralSettings({
     </div>
   );
 }
-function Installation({
+export function Installation({
   siteId,
   appOrigin,
+  compact = false,
 }: {
   siteId: string;
   appOrigin: string;
+  compact?: boolean;
 }) {
   const [tab, setTab] = useState("script");
   const [mode, setMode] = useState("full");
@@ -600,11 +607,23 @@ function Installation({
         ? '\n  data-identifiers="false"'
         : "";
   const snippet = `<script\n  defer\n  src="${appOrigin}/script.js"\n  data-site-id="${siteId}"${options}\n></script>`;
+  const npmOptions =
+    mode === "paused"
+      ? '\n  tracking: "paused",\n  identifiers: false,'
+      : mode === "anonymous"
+        ? "\n  identifiers: false,"
+        : "";
+  const npmSnippet = `import { init } from "@yaap/client";\n\nconst analytics = init({\n  siteId: ${JSON.stringify(siteId)},\n  host: ${JSON.stringify(appOrigin)},${npmOptions}\n});`;
+  const api = tab === "npm" ? "analytics" : "window.osAnalytics";
   return (
     <div className="settings-stack">
       <Panel
-        title="Install the tracking script"
-        description="Add this snippet once, inside the <head> of every page you want to track."
+        title="Install tracking"
+        description={
+          tab === "npm"
+            ? "Install the package and initialize it once in your website’s browser code."
+            : "Add this snippet once, inside the <head> of every page you want to track."
+        }
       >
         <div
           className="settings-install-tabs"
@@ -613,6 +632,7 @@ function Installation({
         >
           {[
             ["script", "Script"],
+            ["npm", "npm"],
             ["wordpress", "WordPress"],
             ["shopify", "Shopify"],
           ].map(([id, label]) => (
@@ -626,6 +646,19 @@ function Installation({
             </button>
           ))}
         </div>
+        {tab === "npm" && (
+          <>
+            <CodeBlock
+              code="npm install @yaap/client"
+              label="Copy npm install command"
+            />
+            <p>
+              Your website ID and this Yaap server’s URL are filled in below.
+              Use one installation method per page to avoid initializing the
+              tracker twice.
+            </p>
+          </>
+        )}
         {tab === "wordpress" && (
           <p>
             Use a header script plugin or your theme’s header to insert the
@@ -655,7 +688,20 @@ function Installation({
           This updates the snippet below. Install the updated snippet on your
           website to apply this choice.
         </p>
-        <CodeBlock key={snippet} code={snippet} label="Copy tracking snippet" />
+        <CodeBlock
+          key={tab === "npm" ? npmSnippet : snippet}
+          code={tab === "npm" ? npmSnippet : snippet}
+          label={
+            tab === "npm" ? "Copy npm initialization" : "Copy tracking snippet"
+          }
+        />
+        {tab === "npm" && (
+          <p>
+            In React, call init inside useEffect and return a cleanup function
+            that calls analytics?.destroy(). Keep the returned analytics
+            instance for the controls and custom events below.
+          </p>
+        )}
         <div className="settings-inline-note">
           <ShieldCheck size={16} aria-hidden="true" />
           <p>
@@ -667,52 +713,52 @@ function Installation({
           </p>
         </div>
       </Panel>
-      <Panel
-        title="Connect your consent banner"
-        description="Use the Wait for consent snippet above to block collection before the first event."
-      >
-        <CodeBlock
-          code={
-            "// After consent is granted\nwindow.osAnalytics?.setIdentifiers(true);\nwindow.osAnalytics?.resume();\n\n// When consent is withdrawn\nwindow.osAnalytics?.pause();\nwindow.osAnalytics?.setIdentifiers(false);"
-          }
-        />
-        <p>
-          Call after the tracking script has loaded and restore the visitor’s
-          choice on every page load. Resuming tracks the current page; activity
-          while paused is never replayed.
-        </p>
-      </Panel>
-      <Panel
-        title="Control identifiers independently"
-        description="Switch to anonymous collection while keeping pageviews and custom events running."
-      >
-        <CodeBlock
-          code={
-            "window.osAnalytics?.setIdentifiers(false); // Clear this site's stored IDs\nwindow.osAnalytics?.setIdentifiers(true);  // Enable IDs for future events"
-          }
-        />
-        <p>
-          Changing identifiers does not pause or resume collection. Your
-          integration controls both settings.
-        </p>
-      </Panel>
-      <Panel
-        title="Track a custom event"
-        description="Measure meaningful actions such as signups, downloads, or purchases."
-      >
-        <CodeBlock
-          code={'window.osAnalytics?.track("signup", { plan: "pro" });'}
-        />
-        <Button asChild size="sm">
-          <Link
-            to="/app/$siteId/events"
-            search={{ days: 7 }}
-            params={{ siteId }}
+      {!compact && (
+        <>
+          <Panel
+            title="Connect your consent banner"
+            description="Use the Wait for consent snippet above to block collection before the first event."
           >
-            View recent events <ArrowUpRight aria-hidden="true" />
-          </Link>
-        </Button>
-      </Panel>
+            <CodeBlock
+              code={`// After consent is granted\n${api}?.setIdentifiers(true);\n${api}?.resume();\n\n// When consent is withdrawn\n${api}?.pause();\n${api}?.setIdentifiers(false);`}
+            />
+            <p>
+              {tab === "npm"
+                ? "Call after init and restore the visitor’s choice on every page load."
+                : "Call after the tracking script has loaded and restore the visitor’s choice on every page load."}{" "}
+              Resuming tracks the current page; activity while paused is never
+              replayed.
+            </p>
+          </Panel>
+          <Panel
+            title="Control identifiers independently"
+            description="Switch to anonymous collection while keeping pageviews and custom events running."
+          >
+            <CodeBlock
+              code={`${api}?.setIdentifiers(false); // Clear this site's stored IDs\n${api}?.setIdentifiers(true);  // Enable IDs for future events`}
+            />
+            <p>
+              Changing identifiers does not pause or resume collection. Your
+              integration controls both settings.
+            </p>
+          </Panel>
+          <Panel
+            title="Track a custom event"
+            description="Measure meaningful actions such as signups, downloads, or purchases."
+          >
+            <CodeBlock code={`${api}?.track("signup", { plan: "pro" });`} />
+            <Button asChild size="sm">
+              <Link
+                to="/app/$siteId/events"
+                search={{ days: 7 }}
+                params={{ siteId }}
+              >
+                View recent events <ArrowUpRight aria-hidden="true" />
+              </Link>
+            </Button>
+          </Panel>
+        </>
+      )}
     </div>
   );
 }

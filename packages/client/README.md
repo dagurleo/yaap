@@ -18,7 +18,7 @@ const analytics = init({
 await analytics?.track("signup", { plan: "pro", seats: 3, trial: false });
 ```
 
-Register your website's exact origin in YAAP first and copy its site ID. With no `host`, the npm client sends events to **`https://yaap.dagurleo.workers.dev/ingest`**. Your site ID must belong to the YAAP server you send events to.
+Register your website's exact origin in YAAP first and copy its site ID. With no `host`, the npm client sends events to **`https://yaap.sh/ingest`**. Your site ID must belong to the YAAP server you send events to.
 
 For a self-hosted YAAP server, override `host`:
 

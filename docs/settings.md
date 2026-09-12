@@ -3,7 +3,7 @@
 Settings now has linkable sections at `/app/:siteId/settings?section=general`:
 
 - **General**: edit website name and origin; copy the public site ID; choose the reporting timezone.
-- **Installation**: copy the tracking script; Script, WordPress and Shopify instructions; consent and custom-event examples.
+- **Installation**: Script, npm, WordPress and Shopify instructions; copy the script or npm install command and initialization code, with consent and custom-event examples. The npm option fills in the website ID and this installation's server URL, including for self-hosted servers.
 - **Revenue**: inspect Stripe/API connection status and open payment configuration.
 - **Domains & exclusions**: additional origins, allow-all domains, exact hostname exclusions, wildcard path exclusions, and bot filtering.
 - **Data retention**: separate event and payment history policies.
@@ -26,6 +26,8 @@ Team membership, scheduled reports, alerts, managed proxies, and public dashboar
 ## Tracking defaults and consent integration
 
 Full analytics is now the default. Installation offers Full analytics, Anonymous analytics, and Wait for consent snippets. This selector edits the snippet only; the implementer must install it on their website. Anonymous adds `data-identifiers="false"`; Wait for consent also adds `data-tracking="paused"` so neither events nor identifier storage are accessed before initialization is resumed.
+
+For npm, the same choices set `identifiers: false` for anonymous collection and add `tracking: "paused"` when waiting for consent. Initialize once in browser code and use the returned `analytics` instance for consent controls and custom events. React integrations should initialize inside `useEffect` and call `destroy()` during cleanup.
 
 Use `pause()` / `resume()` to control collection and `setIdentifiers(boolean)` to independently control stored visitor/session IDs. For consent withdrawal, pause first, then disable identifiers. Restore the selected behavior on every page load. The SDK does not assert or record consent simply because tracking is enabled. Existing snippets without an explicit mode now use full tracking; add an explicit anonymous or paused configuration where required before rolling out this change.
 

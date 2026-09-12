@@ -18,6 +18,7 @@ const output = await build({
   write: false,
   format: "esm",
   platform: "node",
+  loader: { ".md": "text" },
   banner: {
     js: `import { createRequire } from "node:module"; const require = createRequire(${JSON.stringify(pathToFileURL(resolve("package.json")).href)});`,
   },

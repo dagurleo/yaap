@@ -135,6 +135,80 @@ after(async () => {
   if (directory) await rm(directory, { recursive: true, force: true });
 });
 
+test("public discovery and Markdown reach the built Worker without weakening API authentication", async () => {
+  for (const path of [
+    "/",
+    "/pricing",
+    "/security",
+    "/contact",
+    "/privacy",
+    "/terms",
+  ]) {
+    const markdown = await request(path, {
+      headers: { Accept: "text/markdown" },
+    });
+    assert.equal(markdown.status, 200, path);
+    assert.match(markdown.headers.get("Content-Type"), /text\/markdown/);
+    assert.match(markdown.headers.get("Vary"), /Accept/);
+    const text = await markdown.text();
+    assert.match(text, /(^|\n)# /, path);
+    assert.doesNotMatch(text, /<script|__TSR|window\./);
+    if (["/", "/pricing"].includes(path)) {
+      assert.match(text, /\| 100,000 \| \$9 \|/);
+      assert.match(text, /\| 10,000,000 \| \$149 \|/);
+      assert.doesNotMatch(text, /48,291|42%|\$8,642|100K500K/);
+    }
+    if (["/privacy", "/terms"].includes(path)) {
+      assert.match(text, /Draft for review/);
+      assert.equal(markdown.headers.get("X-Robots-Tag"), "noindex");
+    }
+    const alias = await request(path === "/" ? "/index.md" : `${path}.md`);
+    assert.equal(alias.status, 200);
+    assert.equal(await alias.text(), text);
+  }
+  const html = await request("/", { headers: { Accept: "text/html" } });
+  assert.match(html.headers.get("Content-Type"), /text\/html/);
+  assert.match(html.headers.get("Link"), /rel="api-catalog"/);
+  const head = await request("/", {
+    method: "HEAD",
+    headers: { Accept: "text/markdown" },
+  });
+  assert.equal(head.status, 200);
+  assert.match(head.headers.get("Content-Type"), /text\/markdown/);
+  assert.equal(await head.text(), "");
+  for (const path of [
+    "/.well-known/api-catalog",
+    "/.well-known/ai-catalog.json",
+    "/mcp/server-card",
+    "/.well-known/agent-skills/index.json",
+    "/api/v1/openapi.json",
+  ]) {
+    const response = await request(path, {
+      headers: { Accept: "application/json" },
+    });
+    assert.equal(response.status, 200, path);
+    assert.ok(await response.json());
+  }
+  const unauthorized = await request("/api/v1/sites", {
+    headers: { Accept: "text/markdown" },
+  });
+  assert.equal(unauthorized.status, 401);
+  assert.equal(unauthorized.headers.get("Cache-Control"), "private, no-store");
+  assert.equal(
+    (
+      await request("/mcp", {
+        method: "POST",
+        body: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+      })
+    ).status,
+    401,
+  );
+  const metadata = await (
+    await request("/.well-known/oauth-protected-resource/mcp")
+  ).json();
+  assert.equal(metadata.resource, `${origin}/mcp`);
+});
+
 const scopeList = [
   "sites:read",
   "sites:create",

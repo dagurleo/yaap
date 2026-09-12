@@ -36,7 +36,7 @@ function Hero({ hosted }: { hosted: boolean }) {
         </h1>
         <div className="hero-bottom">
           <p>
-            Open-source web analytics, from first visit to revenue.
+            Source-available web analytics, from first visit to revenue.
             <br className="desktop-break" />{" "}
             {hosted
               ? "Start hosted, with a 14-day trial."
@@ -69,7 +69,7 @@ function Hero({ hosted }: { hosted: boolean }) {
               <span className="dot"></span> Illustrative data
             </div>
           </div>
-          <div className="dashboard">
+          <div className="dashboard" data-markdown-skip>
             <aside className="sidebar">
               <div className="mini-brand" role="img" aria-label="Yaap">
                 <img
@@ -250,7 +250,7 @@ function Features() {
             <dd>
               See the pages, sources and campaigns bringing people to your site.
             </dd>
-            <div className="mini-report">
+            <div className="mini-report" data-markdown-skip>
               <div>
                 <span>Google</span>
                 <b>42%</b>
@@ -275,7 +275,7 @@ function Features() {
               Follow visitor journeys and see where people drop out of your
               funnels.
             </dd>
-            <div className="funnel">
+            <div className="funnel" data-markdown-skip>
               <div>
                 <span>Pricing page</span>
                 <b>1,204</b>
@@ -297,7 +297,7 @@ function Features() {
               Attribute payments to traffic sources, with refunds and currencies
               accounted for.
             </dd>
-            <div className="revenue">
+            <div className="revenue" data-markdown-skip>
               <p>Attributed revenue · USD</p>
               <div>
                 $8,642<span>Illustrative data</span>
@@ -415,8 +415,9 @@ function Questions({ hosted }: { hosted: boolean }) {
           <details>
             <summary>Where does my data live?</summary>
             <p>
-              In your own Cloudflare account, using D1 for storage and Queues
-              for event processing.
+              {hosted
+                ? "With hosted Yaap, we manage the infrastructure. If you self-host, analytics stays in the infrastructure accounts you control."
+                : "In the infrastructure accounts you control, with Cloudflare handling event collection and D1 or PostgreSQL storing your analytics."}
             </p>
           </details>
           <details>

@@ -109,9 +109,8 @@ export function WebsiteLayout({
       await client.invalidateQueries({ queryKey: ["sites"] });
       setOpen(false);
       await router.navigate({
-        to: "/app/$siteId/overview",
+        to: "/app/$siteId/setup",
         params: { siteId: site.id },
-        search: { days: 7 },
       });
     } catch (error) {
       setError(

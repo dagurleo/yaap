@@ -603,16 +603,10 @@ if (moduleEntry) {
     const b = browser({ clientOptions: { host: undefined } });
     await flush();
     assert.equal(b.sent.length, 1);
-    assert.equal(
-      b.sent[0].endpoint,
-      "https://yaap.dagurleo.workers.dev/ingest",
-    );
+    assert.equal(b.sent[0].endpoint, "https://yaap.sh/ingest");
     assert.equal(b.sent[0].body.siteId, "site-one");
     assert.equal(await b.ctx.osAnalytics.track("signup"), true);
-    assert.equal(
-      b.sent.at(-1).endpoint,
-      "https://yaap.dagurleo.workers.dev/ingest",
-    );
+    assert.equal(b.sent.at(-1).endpoint, "https://yaap.sh/ingest");
     b.ctx.osAnalytics.destroy();
   });
 

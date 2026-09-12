@@ -1,4 +1,9 @@
-import type { MouseEvent, KeyboardEvent } from "react";
+import { useEffect, type MouseEvent, type KeyboardEvent } from "react";
+import { documentationUrl, repositoryUrl } from "./policy-details";
+import {
+  registerPublicAgentTools,
+  type PublicModelContext,
+} from "@/lib/public-agent-tools";
 
 function closeMobileMenu(event: MouseEvent<HTMLDivElement>) {
   if ((event.target as HTMLElement).closest("a"))
@@ -18,6 +23,13 @@ export function LandingHeader({
   hosted: boolean;
   pricing?: boolean;
 }) {
+  useEffect(() => {
+    const context = (
+      document as Document & { modelContext?: PublicModelContext }
+    ).modelContext;
+    if (context?.registerTool)
+      return registerPublicAgentTools(context, window.location.origin, hosted);
+  }, [hosted]);
   return (
     <header>
       <div className="wrap nav">
@@ -86,25 +98,85 @@ export function LandingHeader({
 
 export function LandingFooter() {
   return (
-    <footer>
-      <div className="wrap footer">
-        <div className="wordmark">
-          <a href="/" aria-label="Yaap homepage">
-            <img
-              className="brand-lockup"
-              src="/brand/logo-light.svg"
-              alt=""
-              width="209"
-              height="64"
-            />
+    <footer className="landing-footer">
+      <div className="wrap">
+        <div className="footer-main">
+          <div className="footer-brand">
+            <div className="wordmark">
+              <a href="/" aria-label="Yaap homepage">
+                <img
+                  className="brand-lockup"
+                  src="/brand/logo-light.svg"
+                  alt=""
+                  width="209"
+                  height="64"
+                />
+              </a>
+            </div>
+            <p>
+              Yet another analytics platform.
+              <br />
+              Your data deserves a place of its own.
+            </p>
+          </div>
+          <nav aria-label="Product links">
+            <h2>Product</h2>
+            <ul role="list">
+              <li>
+                <a href="/#product">Overview</a>
+              </li>
+              <li>
+                <a href="/pricing">Pricing</a>
+              </li>
+              <li>
+                <a href="/#ownership">Self-hosting</a>
+              </li>
+            </ul>
+          </nav>
+          <nav aria-label="Resource links">
+            <h2>Resources</h2>
+            <ul role="list">
+              <li>
+                <a href={documentationUrl}>Documentation</a>
+              </li>
+              <li>
+                <a href="/docs/api.md">API & MCP</a>
+              </li>
+              <li>
+                <a href={repositoryUrl}>GitHub</a>
+              </li>
+              <li>
+                <a href="/contact">Contact</a>
+              </li>
+            </ul>
+          </nav>
+          <nav aria-label="Legal and security links">
+            <h2>Legal & security</h2>
+            <ul role="list">
+              <li>
+                <a href="/privacy">Privacy Policy</a>
+              </li>
+              <li>
+                <a href="/terms">Terms of Service</a>
+              </li>
+              <li>
+                <a href="/security">Security</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div className="footer-bottom">
+          <p>
+            Source-available under{" "}
+            <a href={`${repositoryUrl}/blob/main/LICENSE.md`}>
+              Elastic License 2.0
+            </a>
+            .
+          </p>
+          <a href="#top">
+            Back to top <span aria-hidden="true">↑</span>
           </a>
         </div>
-        <p>
-          Yet another analytics platform.
-          <br />
-          Your data deserves a place of its own.
-        </p>
-        <a href="#top">Back to top ↑</a>
       </div>
     </footer>
   );
