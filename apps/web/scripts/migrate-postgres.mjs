@@ -4,6 +4,17 @@ import { parseEnv } from "node:util";
 import { pathToFileURL } from "node:url";
 import pg from "pg";
 
+export function migrationConnectionString(connectionString) {
+  const url = new URL(connectionString);
+  if (url.searchParams.get("sslrootcert") !== "system") return connectionString;
+
+  // PlanetScale's libpq URLs use "system" as a trust-store keyword, but pg
+  // reads it as a filename. Use Node's trusted CAs and verify the hostname.
+  url.searchParams.delete("sslrootcert");
+  url.searchParams.set("sslmode", "verify-full");
+  return url.href;
+}
+
 export async function migratePostgres(pool) {
   const client = await pool.connect();
   try {
@@ -60,7 +71,10 @@ if (
   const connectionString = process.env.DATABASE_URL ?? local.DATABASE_URL;
   if (!connectionString)
     throw new Error("Set DATABASE_URL for the Postgres database to migrate");
-  const pool = new pg.Pool({ connectionString, max: 1 });
+  const pool = new pg.Pool({
+    connectionString: migrationConnectionString(connectionString),
+    max: 1,
+  });
   try {
     await migratePostgres(pool);
     console.log("Postgres migrations are up to date.");

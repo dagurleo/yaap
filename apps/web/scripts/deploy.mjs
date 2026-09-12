@@ -2,7 +2,10 @@ import { fileURLToPath } from "node:url";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import pg from "pg";
-import { migratePostgres } from "./migrate-postgres.mjs";
+import {
+  migratePostgres,
+  migrationConnectionString,
+} from "./migrate-postgres.mjs";
 import { deploymentHyperdriveId } from "./deployment-config.mjs";
 
 const config = JSON.parse(
@@ -78,7 +81,10 @@ if (provider === "d1") {
   const url = new URL(process.env.DATABASE_URL);
   if (["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
     throw new Error("Refusing to deploy using a local migration database");
-  const pool = new pg.Pool({ connectionString: url.href, max: 1 });
+  const pool = new pg.Pool({
+    connectionString: migrationConnectionString(url.href),
+    max: 1,
+  });
   try {
     await migratePostgres(pool);
   } finally {
