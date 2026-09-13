@@ -50,6 +50,7 @@ export function LandingHeader({
           <a href="/pricing" aria-current={pricing ? "page" : undefined}>
             Pricing
           </a>
+          <a href={documentationUrl}>Docs</a>
         </nav>
         <div className="nav-end">
           <a href={hosted ? "/signup" : "/app"}>
@@ -88,6 +89,7 @@ export function LandingHeader({
               <a href="/pricing" aria-current={pricing ? "page" : undefined}>
                 Pricing
               </a>
+              <a href={documentationUrl}>Docs</a>
             </nav>
           </details>
         </div>
@@ -173,9 +175,7 @@ export function LandingFooter() {
             </a>
             .
           </p>
-          <a href="#top">
-            Back to top <span aria-hidden="true">↑</span>
-          </a>
+          <a href="#top">Back to top</a>
         </div>
       </div>
     </footer>

@@ -1,17 +1,24 @@
+import { type CSSProperties } from "react";
 import { LandingHeader, LandingFooter } from "./landing-shell";
 import { PricingSection } from "./pricing";
-import { useLandingMotion } from "./use-landing-motion";
+import { VisitorGlobe } from "./visitor-globe";
 
-export function LandingPage({ hosted = false, demoAvailable = false }: { hosted?: boolean; demoAvailable?: boolean }) {
-  const motionRoot = useLandingMotion();
+export function LandingPage({
+  hosted = false,
+  demoAvailable = false,
+}: {
+  hosted?: boolean;
+  demoAvailable?: boolean;
+}) {
   return (
-    <div className="yaap-landing" ref={motionRoot}>
+    <div className="yaap-landing yaap-home">
       <a className="skip-link" href="#top">
         Skip to content
       </a>
       <LandingHeader hosted={hosted} />
       <main id="top">
         <Hero hosted={hosted} demoAvailable={demoAvailable} />
+        <ProductPreview />
         <Features />
         <PricingSection hosted={hosted} />
         <Ownership />
@@ -23,289 +30,191 @@ export function LandingPage({ hosted = false, demoAvailable = false }: { hosted?
   );
 }
 
-function Hero({ hosted, demoAvailable }: { hosted: boolean; demoAvailable: boolean }) {
+function Hero({
+  hosted,
+  demoAvailable,
+}: {
+  hosted: boolean;
+  demoAvailable: boolean;
+}) {
   return (
-    <section className="hero">
-      <div className="wrap">
-        <h1>
-          See what brings people in.
-          <br />
-          <span>
+    <section className="hero" aria-labelledby="hero-heading">
+      <div className="wrap hero-layout">
+        <div className="hero-copy">
+          <h1 id="hero-heading">
+            See what brings people in.
+            <br />
             And what makes them <em>customers.</em>
-          </span>
-        </h1>
-        <div className="hero-bottom">
+          </h1>
           <p>
-            Source-available web analytics, from first visit to revenue.
-            <br className="desktop-break" />{" "}
-            {hosted
-              ? "Start hosted, with a 14-day trial."
-              : "Self-hosted on your own Cloudflare account."}
+            Source-available web analytics.
+            <span className="hosting-choice">
+              {hosted
+                ? "Start hosted, or run it in your own Cloudflare account."
+                : "Run it in your own Cloudflare account."}
+            </span>
           </p>
           <div className="actions">
             <a className="button primary" href={hosted ? "/signup" : "/app"}>
-              {hosted ? "Start your trial" : "Make it yours"}
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M12 .75a11.25 11.25 0 0 0-3.56 21.92c.56.1.77-.24.77-.54v-2.1c-3.13.68-3.79-1.33-3.79-1.33-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.4-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.29-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15A10.8 10.8 0 0 1 12 6.16c.96 0 1.91.13 2.81.38 2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.69.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.04.76 2.1v3.09c0 .3.2.65.78.54A11.25 11.25 0 0 0 12 .75Z" />
-              </svg>
+              {hosted ? "Start your trial" : "Open your workspace"}
             </a>
-            <a className="text-link" href={demoAvailable ? "/demo" : "#product"}>
-              {demoAvailable ? "View demo" : "Explore the dashboard"} <span aria-hidden="true">{demoAvailable ? "↗" : "↓"}</span>
+            <a
+              className="text-link"
+              href={demoAvailable ? "/demo" : "#product"}
+            >
+              {demoAvailable ? "View demo" : "Explore the dashboard"}
             </a>
           </div>
+          <p className="hero-note">
+            {hosted
+              ? "14 days free · No credit card"
+              : "Your infrastructure. Your analytics."}
+          </p>
         </div>
-        <div className="product-window" id="product">
-          <div className="window-top">
-            <div>
-              Yaap / <strong>Atlas Demo</strong>
-            </div>
-            <div className="sample">
-              <span className="dot"></span> Illustrative data
-            </div>
-          </div>
-          <div className="dashboard" data-markdown-skip>
-            <aside className="sidebar">
-              <div className="mini-brand" role="img" aria-label="Yaap">
-                <img
-                  className="brand-lockup"
-                  src="/brand/logo-light.svg"
-                  alt=""
-                  width="209"
-                  height="64"
-                />
-              </div>
-              <div className="site">
-                Atlas Demo <span>⌄</span>
-                <small>atlas-demo.example</small>
-              </div>
-              <div className="side-active">
-                Overview <span>•</span>
-              </div>
-              <div>Visitors</div>
-              <div>Funnels</div>
-              <div>Revenue</div>
-              <div>Events</div>
-              <div className="settings">Settings</div>
-              <div className="sidebar-foot">Your data. Your workspace.</div>
-            </aside>
-            <div className="workspace">
-              <div className="dash-heading">
-                <div>
-                  <p>Atlas Demo</p>
-                  <h2>Overview</h2>
-                </div>
-                <div className="period">
-                  Last 30 days <span>⌄</span>
-                </div>
-              </div>
-              <div className="tabs">
-                <strong>Traffic</strong>
-                <span>Conversions</span>
-                <span>Revenue</span>
-              </div>
-              <dl className="metrics">
-                <div>
-                  <dt>Pageviews</dt>
-                  <dd>
-                    48,291 <small>+12.8%</small>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Identified visitors</dt>
-                  <dd>
-                    12,608 <small>+9.6%</small>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Sessions</dt>
-                  <dd>
-                    16,394 <small>+11.2%</small>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Purchase conversion</dt>
-                  <dd>
-                    4.8% <small>+0.6 pp</small>
-                  </dd>
-                </div>
-              </dl>
-              <div className="chart-head">
-                <strong>Pageviews</strong>
-                <span>Daily</span>
-              </div>
-              <div className="chart">
-                <div className="axis">
-                  <span>3k</span>
-                  <span>2k</span>
-                  <span>1k</span>
-                  <span>0</span>
-                </div>
-                <svg
-                  viewBox="0 0 900 165"
-                  preserveAspectRatio="none"
-                  role="img"
-                  aria-label="Illustrative pageviews over 30 days, with several peaks"
-                >
-                  <path
-                    className="grid"
-                    d="M0 10H900M0 55H900M0 100H900M0 145H900"
-                  />
-                  <path
-                    className="area"
-                    d="M0 125L30 135L60 112L90 110L120 125L150 103L180 113L210 120L240 85L270 25L300 40L330 122L360 96L390 108L420 82L450 98L480 66L510 74L540 97L570 68L600 75L630 45L660 55L690 8L720 95L750 79L780 50L810 64L840 40L870 55L900 32V165H0Z"
-                  />
-                  <path
-                    className="previous"
-                    d="M0 145L30 142L60 133L90 140L120 135L150 130L180 143L210 139L240 135L270 122L300 130L330 144L360 130L390 136L420 125L450 127L480 111L510 125L540 140L570 126L600 120L630 130L660 115L690 102L720 138L750 124L780 119L810 125L840 105L870 118L900 100"
-                  />
-                  <path
-                    className="current"
-                    pathLength={1}
-                    d="M0 125L30 135L60 112L90 110L120 125L150 103L180 113L210 120L240 85L270 25L300 40L330 122L360 96L390 108L420 82L450 98L480 66L510 74L540 97L570 68L600 75L630 45L660 55L690 8L720 95L750 79L780 50L810 64L840 40L870 55L900 32"
-                  />
-                </svg>
-              </div>
-              <div className="dates">
-                <span>Aug 12</span>
-                <span>Aug 19</span>
-                <span>Aug 26</span>
-                <span>Sep 2</span>
-                <span>Sep 10</span>
-              </div>
-              <div className="report-grid">
-                <div>
-                  <h3>Traffic sources</h3>
-                  <div className="table-row table-label">
-                    <span>Source</span>
-                    <span>Pageviews</span>
-                  </div>
-                  <div className="table-row">
-                    <span>Direct / unknown</span>
-                    <span>18,351</span>
-                  </div>
-                  <div className="table-row">
-                    <span>Google</span>
-                    <span>12,608</span>
-                  </div>
-                  <div className="table-row">
-                    <span>Hacker News</span>
-                    <span>7,294</span>
-                  </div>
-                </div>
-                <div>
-                  <h3>Top pages</h3>
-                  <div className="table-row table-label">
-                    <span>Page</span>
-                    <span>Pageviews</span>
-                  </div>
-                  <div className="table-row">
-                    <span>/</span>
-                    <span>21,482</span>
-                  </div>
-                  <div className="table-row">
-                    <span>/pricing</span>
-                    <span>10,305</span>
-                  </div>
-                  <div className="table-row">
-                    <span>/docs</span>
-                    <span>6,918</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="proof-strip">
-          <span>Traffic & campaigns</span>
-          <span>Goals & funnels</span>
-          <span>Visitor journeys</span>
-          <span>Payment attribution</span>
-        </div>
+        <VisitorGlobe />
       </div>
     </section>
   );
 }
 
+function ProductPreview() {
+  return (
+    <section
+      className="product-section"
+      id="product"
+      aria-label="Yaap traffic overview"
+    >
+      <div className="wrap">
+        <figure className="product-figure">
+          <picture className="product-capture">
+            <source
+              media="(max-width: 700px)"
+              srcSet="/landing/traffic-mobile.png"
+              width="380"
+              height="720"
+            />
+            <img
+              src="/landing/traffic-desktop.png"
+              width="1708"
+              height="974"
+              alt="Yaap traffic overview with 77,565 pageviews, 16,887 visitors, 18,437 sessions and 5.3% purchase conversion; a daily chart and source and page rankings."
+              decoding="async"
+            />
+          </picture>
+          <figcaption className="product-caption">
+            <span>Atlas Demo · Traffic overview</span>
+            <span>Aug 15 – Sep 13, 2026 · Sample data</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+  );
+}
+
+function ReportRows({
+  rows,
+  funnel = false,
+}: {
+  rows: { label: string; value: string; proportion: number }[];
+  funnel?: boolean;
+}) {
+  return (
+    <div
+      className={`feature-report${funnel ? " feature-funnel" : ""}`}
+      data-markdown-skip
+    >
+      {rows.map((row) => (
+        <div
+          className="feature-report-row"
+          key={row.label}
+          style={{ "--row-proportion": `${row.proportion}%` } as CSSProperties}
+        >
+          <span>{row.label}</span>
+          <b>{row.value}</b>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Features() {
   return (
-    <section className="features">
+    <section
+      className="features"
+      aria-label="Acquisition, conversion and revenue"
+    >
       <div className="wrap">
-        <div className="section-heading">
-          <h2>
-            From “where did they come from?”
-            <br />
-            to “what brought them back?”
-          </h2>
-        </div>
         <dl className="feature-grid">
           <div>
-            <div className="feature-number">01 / ACQUISITION</div>
-            <dt>Find your way in</dt>
+            <dt>
+              <span className="feature-label">Acquisition</span>Compare sources
+              and campaigns
+            </dt>
             <dd>
-              See the pages, sources and campaigns bringing people to your site.
+              <p>
+                See the pages, sources and campaigns bringing people to your
+                site.
+              </p>
+              <ReportRows
+                rows={[
+                  {
+                    label: "Direct / unknown",
+                    value: "19.9%",
+                    proportion: 100,
+                  },
+                  {
+                    label: "Google / referral",
+                    value: "10.2%",
+                    proportion: 51.3,
+                  },
+                  {
+                    label: "LinkedIn / campaign",
+                    value: "10.1%",
+                    proportion: 50.8,
+                  },
+                ]}
+              />
             </dd>
-            <div className="mini-report" data-markdown-skip>
-              <div>
-                <span>Google</span>
-                <b>42%</b>
-              </div>
-              <div className="bar bar-one"></div>
-              <div>
-                <span>Hacker News</span>
-                <b>28%</b>
-              </div>
-              <div className="bar bar-two"></div>
-              <div>
-                <span>Direct / unknown</span>
-                <b>18%</b>
-              </div>
-              <div className="bar bar-three"></div>
-            </div>
           </div>
           <div>
-            <div className="feature-number">02 / CONVERSION</div>
-            <dt>Understand the next step</dt>
+            <dt>
+              <span className="feature-label">Conversion</span>Find where
+              visitors drop off
+            </dt>
             <dd>
-              Follow visitor journeys and see where people drop out of your
-              funnels.
+              <p>
+                Follow visitor journeys and see where people drop out of your
+                funnels.
+              </p>
+              <ReportRows
+                funnel
+                rows={[
+                  { label: "Homepage", value: "8,180", proportion: 100 },
+                  { label: "Pricing", value: "4,450", proportion: 54.4 },
+                  { label: "Signup", value: "1,573", proportion: 19.2 },
+                ]}
+              />
             </dd>
-            <div className="funnel" data-markdown-skip>
-              <div>
-                <span>Pricing page</span>
-                <b>1,204</b>
-              </div>
-              <div>
-                <span>Checkout</span>
-                <b>486</b>
-              </div>
-              <div>
-                <span>Purchase</span>
-                <b>231</b>
-              </div>
-            </div>
           </div>
           <div>
-            <div className="feature-number">03 / REVENUE</div>
-            <dt>Connect visits to value</dt>
+            <dt>
+              <span className="feature-label">Revenue</span>Attribute payments
+              to sources
+            </dt>
             <dd>
-              Attribute payments to traffic sources, with refunds and currencies
-              accounted for.
+              <p>
+                Attribute payments to traffic sources, with refunds and
+                currencies accounted for.
+              </p>
+              <div className="feature-revenue" data-markdown-skip>
+                <p>Sample net revenue · USD</p>
+                <div className="feature-revenue-total">$66,388.50</div>
+                <div className="feature-revenue-source">
+                  <span>Google / referral</span>
+                  <b>$5,799.00</b>
+                </div>
+              </div>
             </dd>
-            <div className="revenue" data-markdown-skip>
-              <p>Attributed revenue · USD</p>
-              <div>
-                $8,642<span>Illustrative data</span>
-              </div>
-              <div className="receipt">
-                Google / organic <strong>$3,482</strong>
-              </div>
-            </div>
           </div>
         </dl>
       </div>
@@ -332,9 +241,7 @@ function Ownership() {
           </a>
         </div>
         <div className="architecture">
-          <div className="architecture-title">
-            YOUR CLOUDFLARE ACCOUNT
-          </div>
+          <div className="architecture-title">YOUR CLOUDFLARE ACCOUNT</div>
           <div className="worker">
             <div className="worker-brand" role="img" aria-label="Yaap">
               <img
@@ -372,9 +279,17 @@ function Setup() {
       <div className="wrap">
         <div className="setup-top">
           <div>
-            <h2>Make room for another platform.</h2>
+            <h2>
+              Self-host Yaap
+              <br />
+              in three steps.
+            </h2>
           </div>
-          <p>This one lives in your account.</p>
+          <p>
+            Deploy to Cloudflare, add the snippet,
+            <br />
+            and start exploring your traffic.
+          </p>
         </div>
         <ol className="steps" role="list">
           <li>
@@ -412,7 +327,7 @@ function Questions({ hosted }: { hosted: boolean }) {
           <h2>Before you jump in</h2>
         </div>
         <div>
-          <details>
+          <details open>
             <summary>Where does my data live?</summary>
             <p>
               {hosted

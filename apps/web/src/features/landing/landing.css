@@ -394,22 +394,27 @@
     font-size: 16px;
   }
 }
-.yaap-landing * {
-  box-sizing: border-box;
-}
 .yaap-landing {
-  scroll-behavior: auto;
-}
-.yaap-landing {
+  --brand: #2458eb;
+  --brand-hover: #1945c7;
+  --brand-soft: #edf2ff;
+  --ink: #262c32;
+  --muted: #596570;
+  --line: #262c3220;
+  min-height: 100dvh;
   margin: 0;
-  background: #f4f5f6;
-  color: #262c32;
+  background: #fafbfc;
+  color: var(--ink);
+  color-scheme: light;
   font:
-    15px/1.55 InterVariable,
+    15px/1.6 InterVariable,
     Arial,
     sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01", "ss03";
+}
+.yaap-landing * {
+  box-sizing: border-box;
 }
 .yaap-landing main {
   isolation: isolate;
@@ -418,1076 +423,65 @@
   color: inherit;
   text-decoration: none;
 }
-.yaap-landing a:focus-visible,
-.yaap-landing summary:focus-visible {
-  outline: 2px solid #343a40;
-  outline-offset: 5px;
-}
 .yaap-landing a:hover {
-  color: #67717b;
+  color: var(--brand);
+}
+.yaap-landing a:focus-visible,
+.yaap-landing button:focus-visible,
+.yaap-landing summary:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 4px;
 }
 .yaap-landing h1,
 .yaap-landing h2,
 .yaap-landing h3,
 .yaap-landing p,
 .yaap-landing dl,
-.yaap-landing dd {
+.yaap-landing dd,
+.yaap-landing figure {
   margin: 0;
 }
 .yaap-landing h1,
 .yaap-landing h2,
 .yaap-landing h3 {
-  text-wrap: balance;
   font-weight: 550;
+  text-wrap: balance;
 }
 .yaap-landing p,
 .yaap-landing dd {
+  color: var(--muted);
   text-wrap: pretty;
-  color: #67717b;
+}
+.yaap-landing h1 {
+  font-size: 54px;
+  line-height: 1.12;
+  letter-spacing: -1.65px;
 }
 .yaap-landing h2 {
   font-size: 38px;
-  letter-spacing: -1.4px;
+  letter-spacing: -1.25px;
   line-height: 1.2;
 }
 .yaap-landing h3 {
-  font-size: 16px;
+  font-size: 18px;
 }
 .yaap-landing strong,
 .yaap-landing b {
   font-weight: 550;
 }
+.yaap-landing small {
+  color: inherit;
+}
 .yaap-landing .wrap {
-  width: min(1160px, 100%);
-  margin: 0 auto;
-  padding: 0 28px;
+  width: min(1280px, 100%);
+  margin-inline: auto;
+  padding-inline: 70px;
 }
-.yaap-landing header {
-  border-bottom: 1px solid #262c3210;
-}
-.yaap-landing .nav {
-  height: 88px;
-  display: flex;
-  align-items: center;
-  gap: 36px;
-}
-.yaap-landing .wordmark {
-  font-size: 30px;
-  letter-spacing: -1.8px;
-  font-weight: 650;
-  flex: 1;
-}
-.yaap-landing .brand-dot {
-  color: #67717b;
-}
-.yaap-landing .nav nav {
-  display: flex;
-  gap: 32px;
-  font-size: 14px;
-}
-.yaap-landing .nav-end {
-  flex: 1;
-  text-align: right;
-  font-size: 14px;
-}
-.yaap-landing .mobile-menu {
-  display: none;
-}
-.yaap-landing .hero {
-  padding: 68px 0 0;
-}
-.yaap-landing .eyebrow {
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: #4f5962;
-}
-.yaap-landing .dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: #218057;
-  border-radius: 100%;
-  flex-shrink: 0;
-}
-.yaap-landing h1 {
-  font-size: 62px;
-  line-height: 1.08;
-  letter-spacing: -3.1px;
-  margin: 25px 0 27px;
-  max-width: 30ch;
-}
-.yaap-landing h1 span {
-  color: #67717b;
-}
-.yaap-landing .hero-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 28px;
-}
-.yaap-landing .hero-bottom p {
-  font-size: 17px;
-  max-width: 55ch;
-}
-.yaap-landing .actions {
-  display: flex;
-  align-items: center;
-  gap: 23px;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.yaap-landing .button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 14px 16px;
-  border-radius: 8px;
-  min-height: 48px;
-  font-weight: 500;
-}
-.yaap-landing .primary {
-  background: #343a40;
-  color: white;
-}
-.yaap-landing .primary:hover {
-  background: #202529;
-  color: white;
-}
-.yaap-landing .text-link {
-  display: inline-flex;
-  gap: 15px;
-  align-items: center;
-  color: #343a40;
-  font-weight: 500;
-}
-.yaap-landing .product-window {
-  margin-top: 44px;
-  outline: 1px solid #262c3214;
-  border-radius: min(1vw, 12px);
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 16px 48px #262c3208;
-  scroll-margin-top: 24px;
-}
-.yaap-landing .window-top {
-  height: 40px;
-  background: #f7f8f9;
-  border-bottom: 1px solid #262c3210;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 19px;
-  font-size: 11px;
-  color: #67717b;
-}
-.yaap-landing .sample {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.yaap-landing .dashboard {
-  display: flex;
-  min-height: 555px;
-  container-type: inline-size;
-}
-.yaap-landing .sidebar {
-  width: 170px;
-  flex-shrink: 0;
-  background: #f4f5f6;
-  padding: 24px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  font-size: 12px;
-  color: #4f5962;
-}
-.yaap-landing .sidebar > div {
-  padding: 8px 10px;
-}
-.yaap-landing .sidebar .mini-brand {
-  font-size: 19px;
-  letter-spacing: -0.7px;
-  color: #262c32;
-  font-weight: 600;
-  padding-top: 0;
-}
-.yaap-landing .site {
-  margin: 9px 0;
-  background: white;
-  border: 1px solid #262c3210;
-  border-radius: 8px;
-  font-weight: 550;
-}
-.yaap-landing .site > span,
-.yaap-landing .side-active > span {
-  float: right;
-}
-.yaap-landing .site small {
-  display: block;
-  font-weight: 400;
-  color: #67717b;
-  font-size: 10px;
-}
-.yaap-landing .side-active {
-  border-radius: 6px;
-  background: #e7ebee;
-  color: #262c32;
-}
-.yaap-landing .settings {
-  margin-top: 18px;
-}
-.yaap-landing .sidebar .sidebar-foot {
-  margin-top: auto;
-  font-size: 10px;
-}
-.yaap-landing .workspace {
-  padding: 27px 28px 23px;
-  flex: 1;
-  min-width: 0;
-}
-.yaap-landing .dash-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.yaap-landing .dash-heading p {
-  font-size: 11px;
-}
-.yaap-landing .dash-heading h2 {
-  font-size: 25px;
-  letter-spacing: -1px;
-  margin-top: 2px;
-}
-.yaap-landing .period {
-  padding: 7px 9px;
-  border: 1px solid #262c3214;
-  border-radius: 6px;
-  font-size: 11px;
-  display: flex;
-  gap: 20px;
-}
-.yaap-landing .tabs {
-  display: flex;
-  gap: 25px;
-  border-bottom: 1px solid #262c3212;
-  margin: 18px 0 20px;
-  font-size: 11px;
-  color: #67717b;
-}
-.yaap-landing .tabs > * {
-  padding: 8px 0;
-}
-.yaap-landing .tabs strong {
-  border-bottom: 2px solid #343a40;
-  color: #262c32;
-}
-.yaap-landing .metrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  font-variant-numeric: tabular-nums;
-}
-.yaap-landing .metrics > div {
-  padding: 10px 12px;
-  background: #f7f8f9;
-  border-radius: 7px;
-  min-width: 0;
-}
-.yaap-landing .metrics dt {
-  font-size: 10px;
-  white-space: nowrap;
-  color: #4f5962;
-}
-.yaap-landing .metrics dd {
-  color: #262c32;
-  font-size: 25px;
-  letter-spacing: -0.7px;
-  margin-top: 5px;
-}
-.yaap-landing .metrics small {
-  display: block;
-  color: #218057;
-  font-size: 9px;
-  letter-spacing: 0;
-}
-.yaap-landing .chart-head {
-  display: flex;
-  justify-content: space-between;
-  margin: 20px 0 13px;
-  font-size: 12px;
-}
-.yaap-landing .chart-head span {
-  color: #67717b;
-  font-size: 10px;
-}
-.yaap-landing .chart {
-  display: flex;
-  gap: 16px;
-  height: 139px;
-}
-.yaap-landing .chart svg {
-  flex: 1;
-  min-width: 0;
-}
-.yaap-landing .axis {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: #67717b;
-  font-size: 9px;
-  width: 16px;
-}
-.yaap-landing .grid {
-  stroke: #262c320a;
-  fill: none;
-}
-.yaap-landing .area {
-  fill: #343a4008;
-}
-.yaap-landing .current {
-  stroke: #343a40;
-  stroke-width: 2;
-  fill: none;
-}
-.yaap-landing .previous {
-  stroke: #b6bdc4;
-  stroke-width: 1.3;
-  stroke-dasharray: 5 5;
-  fill: none;
-}
-.yaap-landing .dates {
-  display: flex;
-  justify-content: space-between;
-  padding-left: 32px;
-  margin-top: 8px;
-  font-size: 9px;
-  color: #67717b;
-}
-.yaap-landing .report-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  margin-top: 22px;
-  padding-top: 16px;
-  border-top: 1px solid #262c3210;
-}
-.yaap-landing .report-grid h3 {
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-.yaap-landing .table-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  padding: 5px 0;
-  border-bottom: 1px solid #262c3208;
-  font-variant-numeric: tabular-nums;
-}
-.yaap-landing .table-label {
-  color: #67717b;
-  font-size: 9px;
-}
-.yaap-landing .proof-strip {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 25px 0 30px;
-  font-size: 13px;
-  color: #67717b;
-}
-.yaap-landing .features {
-  background: white;
-  border-top: 1px solid #262c3210;
-  padding: 67px 0;
-}
-.yaap-landing .section-heading h2 {
-  margin-top: 14px;
-}
-.yaap-landing .feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
-  margin-top: 37px;
-}
-.yaap-landing .feature-grid > div {
-  min-width: 0;
-  border-top: 1px solid #262c321a;
-  padding-top: 22px;
-}
-.yaap-landing .feature-number {
-  font: 10px/1.5 monospace;
-  letter-spacing: 1px;
-  color: #67717b;
-}
-.yaap-landing .feature-grid dt {
-  font-size: 20px;
-  font-weight: 550;
-  letter-spacing: -0.6px;
-  margin: 15px 0 8px;
-}
-.yaap-landing .feature-grid dd {
-  font-size: 14px;
-  max-width: 36ch;
-  min-height: 66px;
-}
-.yaap-landing .mini-report,
-.yaap-landing .funnel,
-.yaap-landing .revenue {
-  height: 148px;
-  background: #f7f8f9;
-  padding: 16px 18px;
-  border-radius: 8px;
-  margin-top: 20px;
-  font-size: 11px;
-}
-.yaap-landing .mini-report > div:not(.bar) {
-  display: flex;
-  justify-content: space-between;
-}
-.yaap-landing .bar {
-  height: 7px;
-  background: #b6bdc4;
-  border-radius: 2px;
-  margin: 5px 0 9px;
-}
-.yaap-landing .bar-one {
-  width: 85%;
-  background: #343a40;
-}
-.yaap-landing .bar-two {
-  width: 57%;
-}
-.yaap-landing .bar-three {
-  width: 37%;
-}
-.yaap-landing .funnel {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-.yaap-landing .funnel > div {
-  display: flex;
-  justify-content: space-between;
-  padding: 7px 9px;
-  background: #e7ebee;
-  border-left: 2px solid #343a40;
-}
-.yaap-landing .funnel > div:nth-child(2) {
-  width: 84%;
-}
-.yaap-landing .funnel > div:nth-child(3) {
-  width: 66%;
-}
-.yaap-landing .revenue p {
-  font-size: 10px;
-}
-.yaap-landing .revenue > div:not(.receipt) {
-  font-size: 32px;
-  letter-spacing: -1px;
-  margin: 8px 0;
-}
-.yaap-landing .revenue > div > span {
-  font-size: 9px;
-  letter-spacing: 0;
-  color: #67717b;
-  margin-left: 10px;
-}
-.yaap-landing .receipt {
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid #262c3210;
-  padding-top: 9px;
-}
-.yaap-landing .ownership {
-  padding: 68px 0;
-  background: #eef1f3;
-  border-top: 1px solid #262c3210;
-  border-bottom: 1px solid #262c3210;
-}
-.yaap-landing .split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  align-items: center;
-}
-.yaap-landing .split h2 {
-  margin-top: 16px;
-}
-.yaap-landing .split p:not(.eyebrow) {
-  font-size: 15px;
-  max-width: 45ch;
-  margin: 20px 0;
-}
-.yaap-landing .split .text-link {
-  font-size: 14px;
-}
-.yaap-landing .architecture {
-  padding: 23px 28px;
-  border: 1px dashed #262c3233;
-  border-radius: 12px;
-}
-.yaap-landing .architecture-title {
-  font: 10px monospace;
-  letter-spacing: 1px;
-  color: #67717b;
-  display: flex;
-  justify-content: space-between;
-}
-.yaap-landing .worker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: white;
-  border: 1px solid #262c3210;
-  border-radius: 8px;
-  padding: 15px;
-  margin-top: 22px;
-  gap: 4px;
-}
-.yaap-landing .worker strong {
-  font-size: 23px;
-  letter-spacing: -1px;
-}
-.yaap-landing .worker span {
-  font-size: 11px;
-  color: #67717b;
-}
-.yaap-landing .worker small {
-  font-size: 10px;
-}
-.yaap-landing .connect-line {
-  height: 20px;
-  border-left: 1px solid #262c3233;
-  width: 1px;
-  margin: auto;
-}
-.yaap-landing .infra-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-}
-.yaap-landing .infra-grid > div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 13px;
-  background: #f7f8f9;
-  border: 1px solid #262c3210;
-  border-radius: 8px;
-  font-size: 14px;
-}
-.yaap-landing .infra-grid span {
-  font-size: 11px;
-  color: #67717b;
-}
-.yaap-landing .architecture p:not(.eyebrow) {
-  font-size: 10px;
-  text-align: center;
-  margin: 16px 0 0;
-  max-width: none;
-}
-.yaap-landing .setup {
-  background: white;
-  padding: 60px 0;
-}
-.yaap-landing .setup-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 28px;
-}
-.yaap-landing .setup-top h2 {
-  margin-top: 14px;
-  font-size: 33px;
-}
-.yaap-landing .setup-top > p {
-  font-size: 14px;
-}
-.yaap-landing .steps {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
-  padding: 0;
-  margin: 32px 0 0;
-}
-.yaap-landing .steps li {
-  display: flex;
-  gap: 14px;
-  border-top: 1px solid #262c3214;
-  padding-top: 20px;
-}
-.yaap-landing .steps li > span {
-  font: 12px monospace;
-  color: #67717b;
-  padding-top: 4px;
-}
-.yaap-landing .steps p {
-  font-size: 13px;
-  margin-top: 7px;
-}
-.yaap-landing .faq {
-  background: white;
-  padding: 20px 0 58px;
-}
-.yaap-landing .faq-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-}
-.yaap-landing .faq h2 {
-  font-size: 29px;
-  margin-top: 12px;
-}
-.yaap-landing .faq details {
-  border-bottom: 1px solid #262c3214;
-  padding: 14px 0;
-  font-size: 14px;
-}
-.yaap-landing .faq summary {
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-}
-.yaap-landing .faq summary:after {
-  content: "+";
-  color: #67717b;
-}
-.yaap-landing .faq details[open] summary:after {
-  content: "−";
-}
-.yaap-landing .faq details p {
-  font-size: 14px;
-  margin-top: 12px;
-}
-.yaap-landing .footer {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  padding-top: 30px;
-  padding-bottom: 30px;
-}
-.yaap-landing .footer .wordmark {
-  flex: 0;
-}
-.yaap-landing .footer p {
-  font-size: 12px;
-  flex: 1;
-}
-.yaap-landing .footer > a {
-  font-size: 12px;
-}
-@container (max-width:700px) {
-  .yaap-landing .sidebar {
-    display: none;
-  }
-  .yaap-landing .workspace {
-    padding: 22px;
-  }
-  .yaap-landing .metrics {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .yaap-landing .metrics dt {
-    font-size: 11px;
-  }
-  .yaap-landing .metrics dd {
-    font-size: 26px;
-  }
-  .yaap-landing .metrics small {
-    display: inline;
-    font-size: 10px;
-    letter-spacing: 0;
-  }
-  .yaap-landing .chart {
-    height: 120px;
-  }
-  .yaap-landing .report-grid {
-    gap: 18px;
-  }
-  .yaap-landing .report-grid h3 {
-    font-size: 12px;
-  }
-  .yaap-landing .table-row {
-    font-size: 10px;
-  }
-  .yaap-landing .dashboard {
-    min-height: 0;
-  }
-}
-@media (max-width: 800px) {
-  .yaap-landing .nav {
-    height: 72px;
-  }
-  .yaap-landing .nav nav,
-  .yaap-landing .nav-end {
-    display: none;
-  }
-  .yaap-landing .mobile-menu {
-    display: block;
-    font-size: 16px;
-    position: relative;
-  }
-  .yaap-landing .mobile-menu summary {
-    cursor: pointer;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-  }
-  .yaap-landing .mobile-menu details[open] nav {
-    display: flex;
-    position: absolute;
-    right: 0;
-    top: 48px;
-    z-index: 5;
-    background: white;
-    box-shadow: 0 8px 24px #262c3210;
-    border: 1px solid #262c3214;
-    border-radius: 8px;
-    width: 190px;
-    padding: 16px;
-    flex-direction: column;
-    gap: 18px;
-  }
-  .yaap-landing .hero {
-    padding-top: 42px;
-  }
-  .yaap-landing .hero-bottom {
-    align-items: start;
-    flex-direction: column;
-    gap: 24px;
-  }
-  .yaap-landing h1 {
-    font-size: 48px;
-    letter-spacing: -2px;
-  }
-  .yaap-landing .feature-grid {
-    grid-template-columns: 1fr;
-  }
-  .yaap-landing .feature-grid dd {
-    min-height: 0;
-    max-width: 56ch;
-    font-size: 16px;
-  }
-  .yaap-landing .feature-grid > div {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 24px;
-  }
-  .yaap-landing .feature-number,
-  .yaap-landing .feature-grid dt,
-  .yaap-landing .feature-grid dd {
-    grid-column: 1;
-  }
-  .yaap-landing .mini-report,
-  .yaap-landing .funnel,
-  .yaap-landing .revenue {
-    grid-column: 2;
-    grid-row: 1/4;
-    margin-top: 0;
-  }
-  .yaap-landing .split {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-  .yaap-landing .split p:not(.eyebrow) {
-    font-size: 16px;
-  }
-  .yaap-landing .setup-top {
-    align-items: start;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .yaap-landing .steps {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-  .yaap-landing .steps p {
-    font-size: 16px;
-  }
-  .yaap-landing .steps h3 {
-    font-size: 18px;
-  }
-  .yaap-landing .faq-grid {
-    grid-template-columns: 1fr;
-  }
-  .yaap-landing .faq details,
-  .yaap-landing .faq details p {
-    font-size: 16px;
-  }
-  .yaap-landing .proof-strip {
-    flex-wrap: wrap;
-    justify-content: start;
-    font-size: 13px;
-    gap: 10px 23px;
-  }
-}
-@media (max-width: 500px) {
-  .yaap-landing .wrap {
-    padding-left: 22px;
-    padding-right: 22px;
-  }
-  .yaap-landing .wordmark {
-    font-size: 28px;
-  }
-  .yaap-landing .eyebrow {
-    font-size: 13px;
-  }
-  .yaap-landing h1 {
-    font-size: 40px;
-    letter-spacing: -1.8px;
-    line-height: 1.13;
-    margin: 22px 0;
-  }
-  .yaap-landing h1 br {
-    display: none;
-  }
-  .yaap-landing h1 span {
-    display: block;
-    margin-top: 5px;
-  }
-  .yaap-landing .hero-bottom p {
-    font-size: 16px;
-    max-width: 34ch;
-  }
-  .yaap-landing .desktop-break {
-    display: none;
-  }
-  .yaap-landing .actions {
-    flex-wrap: wrap;
-    gap: 18px;
-    font-size: 14px;
-  }
-  .yaap-landing .button {
-    padding: 13px 15px;
-  }
-  .yaap-landing .product-window {
-    margin-top: 32px;
-  }
-  .yaap-landing .window-top {
-    padding: 0 12px;
-    font-size: 9px;
-  }
-  .yaap-landing .workspace {
-    padding: 18px 13px;
-  }
-  .yaap-landing .dash-heading h2 {
-    font-size: 24px;
-  }
-  .yaap-landing .metrics {
-    gap: 8px;
-  }
-  .yaap-landing .metrics > div {
-    padding: 10px;
-  }
-  .yaap-landing .metrics dd {
-    font-size: 23px;
-  }
-  .yaap-landing .metrics small {
-    display: block;
-  }
-  .yaap-landing .tabs {
-    gap: 22px;
-    margin: 14px 0;
-  }
-  .yaap-landing .chart {
-    height: 112px;
-  }
-  .yaap-landing .report-grid {
-    grid-template-columns: 1fr;
-  }
-  .yaap-landing .report-grid > div:last-child {
-    display: none;
-  }
-  .yaap-landing .report-grid .table-row {
-    font-size: 11px;
-  }
-  .yaap-landing .proof-strip {
-    font-size: 11px;
-    padding: 20px 0 24px;
-    gap: 8px 18px;
-  }
-  .yaap-landing .features {
-    padding: 43px 0;
-  }
-  .yaap-landing h2 {
-    font-size: 29px;
-    letter-spacing: -1px;
-  }
-  .yaap-landing .feature-grid {
-    margin-top: 24px;
-    gap: 25px;
-  }
-  .yaap-landing .feature-grid > div {
-    display: block;
-    padding-top: 17px;
-  }
-  .yaap-landing .feature-grid dt {
-    font-size: 21px;
-    margin-top: 10px;
-  }
-  .yaap-landing .feature-grid dd {
-    font-size: 16px;
-  }
-  .yaap-landing .mini-report,
-  .yaap-landing .funnel,
-  .yaap-landing .revenue {
-    margin-top: 15px;
-    height: 130px;
-    padding: 12px 16px;
-  }
-  .yaap-landing .ownership {
-    padding: 43px 0;
-  }
-  .yaap-landing .architecture {
-    padding: 20px;
-  }
-  .yaap-landing .split h2 {
-    font-size: 32px;
-  }
-  .yaap-landing .setup {
-    padding: 43px 0;
-  }
-  .yaap-landing .setup-top h2 {
-    font-size: 29px;
-  }
-  .yaap-landing .setup-top > p {
-    font-size: 16px;
-  }
-  .yaap-landing .steps {
-    margin-top: 22px;
-  }
-  .yaap-landing .faq {
-    padding: 0 0 36px;
-  }
-  .yaap-landing .faq h2 {
-    font-size: 27px;
-  }
-  .yaap-landing .footer {
-    gap: 16px;
-    flex-wrap: wrap;
-    padding-top: 25px;
-    padding-bottom: 25px;
-  }
-  .yaap-landing .footer p {
-    font-size: 12px;
-  }
-  .yaap-landing .footer > a {
-    display: none;
-  }
-}
-
-/* Yaap brand accent: cobalt blue over the existing Graphite foundation. */
-.yaap-landing {
-  --brand: #2458eb;
-  --brand-hover: #1945c7;
-  --brand-soft: #edf2ff;
-  --brand-mid: #8faafa;
-}
-.yaap-landing .brand-dot,
-.yaap-landing h1 em {
-  color: var(--brand);
-}
-.yaap-landing h1 em {
-  font-style: normal;
-}
-.yaap-landing .hero > .wrap > .eyebrow .dot {
-  background: var(--brand);
-}
-.yaap-landing .primary {
-  background: var(--brand);
-  box-shadow: 0 2px 3px #1745cd1a;
-}
-.yaap-landing .primary:hover {
-  background: var(--brand-hover);
-}
-.yaap-landing a:focus-visible,
-.yaap-landing summary:focus-visible {
-  outline-color: var(--brand);
-}
-.yaap-landing .text-link:hover,
-.yaap-landing .nav a:hover {
-  color: var(--brand);
-}
-.yaap-landing .side-active {
-  background: var(--brand-soft);
-  color: #2348a8;
-}
-.yaap-landing .tabs strong {
-  border-bottom-color: var(--brand);
-}
-.yaap-landing .current {
-  stroke: var(--brand);
-  stroke-width: 2.25;
-}
-.yaap-landing .area {
-  fill: #2458eb0b;
-}
-.yaap-landing .metrics > div:first-child {
-  background: var(--brand-soft);
-}
-.yaap-landing .feature-number {
-  color: #2453c7;
-}
-.yaap-landing .bar-one {
-  background: var(--brand);
-}
-.yaap-landing .bar-two {
-  background: #7898f4;
-}
-.yaap-landing .bar-three {
-  background: #b2c3f9;
-}
-.yaap-landing .funnel > div {
-  background: #edf2ff;
-  border-left-color: var(--brand);
-}
-.yaap-landing .revenue > div:not(.receipt) {
-  color: #2453c7;
-}
-.yaap-landing .architecture {
-  background: #1745cd;
-  border: 1px solid #1745cd;
-  color: white;
-}
-.yaap-landing .architecture-title {
-  color: #ffffffb8;
-}
-.yaap-landing .worker {
-  background: #ffffff;
-  border-color: #ffffff20;
-  color: #262c32;
-}
-.yaap-landing .worker strong {
-  color: #2458eb;
-}
-.yaap-landing .connect-line {
-  border-left-color: #ffffff60;
-}
-.yaap-landing .infra-grid > div {
-  background: #ffffff0d;
-  border-color: #ffffff38;
-  color: white;
-}
-.yaap-landing .infra-grid span {
-  color: #e1e9ff;
-}
-.yaap-landing .architecture p:not(.eyebrow) {
-  color: #e1e9ff;
-}
-.yaap-landing .steps li > span {
-  color: #2453c7;
-}
-
-/* Selected identity: Confluence. Keep outlined lockups proportional. */
 .yaap-landing .brand-lockup {
   display: block;
   width: auto;
   height: 34px;
+  max-width: none;
   flex-shrink: 0;
 }
 .yaap-landing .wordmark > a {
@@ -1495,38 +489,32 @@
   align-items: center;
   min-height: 44px;
 }
-.yaap-landing .footer .brand-lockup {
-  height: 26px;
+.yaap-landing .nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 88px;
 }
-.yaap-landing .mini-brand .brand-lockup {
-  height: 22px;
+.yaap-landing .nav::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  inset-inline: 70px;
+  border-bottom: 1px solid var(--line);
 }
-.yaap-landing .worker-brand .brand-lockup {
-  height: 30px;
+.yaap-landing .wordmark {
+  flex: 1;
 }
-.yaap-landing .worker-brand {
-  padding: 3px 0 2px;
+.yaap-landing .nav nav {
+  display: flex;
+  gap: 28px;
+  font-size: 13px;
 }
-@media (max-width: 500px) {
-  .yaap-landing .nav .brand-lockup {
-    height: 30px;
-  }
-  .yaap-landing .footer .brand-lockup {
-    height: 24px;
-  }
-}
-
-/* Hero leads directly with the headline; name expansion lives in the footer. */
-.yaap-landing .hero h1 {
-  margin-top: 0;
-}
-
-/* Direct section headings and repository placeholder. */
-.yaap-landing .section-heading h2,
-.yaap-landing .split h2,
-.yaap-landing .setup-top h2,
-.yaap-landing .faq h2 {
-  margin-top: 0;
+.yaap-landing .nav-end {
+  margin-left: auto;
+  font-size: 13px;
+  white-space: nowrap;
 }
 .yaap-landing .github-button {
   display: inline-flex;
@@ -1535,90 +523,55 @@
   gap: 8px;
   min-height: 40px;
   padding: 8px 12px;
-  border: 1px solid #262c3226;
   border-radius: 7px;
-  background: #fff;
-  color: #262c32;
-  font:
-    500 13px InterVariable,
-    Arial,
-    sans-serif;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.yaap-landing .github-button:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 4px;
-}
-.yaap-landing .nav {
-  gap: 24px;
-}
-.yaap-landing .nav-end {
-  flex: 0;
+  background: var(--ink);
+  color: white;
+  font-size: 13px;
   white-space: nowrap;
 }
-@media (max-width: 800px) {
-  .yaap-landing .nav {
-    gap: 18px;
-  }
-  .yaap-landing .github-button {
-    margin-left: auto;
-  }
-  .yaap-landing .wordmark {
-    flex: 1;
-  }
-}
-@media (max-width: 500px) {
-  .yaap-landing .nav {
-    gap: 14px;
-  }
-  .yaap-landing .github-button {
-    padding: 8px 10px;
-  }
-}
-
-/* Compact controls: keep labels readable and reduce the surrounding chrome. */
-.yaap-landing .button {
-  min-height: 36px;
-  padding: 8px 12px;
-  gap: 10px;
-  border-radius: 6px;
-  font-size: 14px;
-  line-height: 20px;
-}
-.yaap-landing .text-link {
-  gap: 8px;
-}
-.yaap-landing .github-button {
-  min-height: 32px;
-  padding: 6px 10px;
-  gap: 6px;
-  border-radius: 6px;
-  line-height: 18px;
+.yaap-landing .github-button:hover {
+  background: #151b22;
+  color: white;
 }
 .yaap-landing .github-button svg {
-  width: 16px;
-  height: 16px;
+  flex-shrink: 0;
+}
+.yaap-landing .mobile-menu {
+  display: none;
+}
+.yaap-landing .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.4;
 }
 .yaap-landing .primary {
-  box-shadow: none;
+  background: var(--brand);
+  color: white;
+  box-shadow: 0 2px 3px #1745cd1a;
 }
-
-.yaap-landing {
-  min-height: 100dvh;
-  color-scheme: light;
+.yaap-landing .primary:hover {
+  background: var(--brand-hover);
+  color: white;
 }
-.yaap-landing small {
-  color: inherit;
-  font-size: smaller;
+.yaap-landing .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 500;
 }
-.yaap-landing summary {
-  padding: 0;
-  font: inherit;
-  border-radius: 0;
-}
-.yaap-landing .brand-lockup {
-  max-width: none;
+.yaap-landing .actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  font-size: 14px;
 }
 .yaap-landing .skip-link {
   position: absolute;
@@ -1632,48 +585,742 @@
 .yaap-landing .skip-link:focus {
   transform: none;
 }
-.yaap-landing .button,
-.yaap-landing .github-button {
-  position: relative;
+.yaap-landing .hero {
+  padding: 0;
 }
-@media (pointer: coarse) {
-  .yaap-landing .button::after,
-  .yaap-landing .github-button::after {
-    content: "";
-    position: absolute;
-    inset: -6px 0;
+.yaap-landing .hero-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  min-height: 566px;
+}
+.yaap-landing .hero-copy {
+  min-width: 0;
+  padding: 40px 0 45px;
+}
+.yaap-landing .hero h1 {
+  font-weight: 600;
+  text-wrap: initial;
+  max-width: 17ch;
+  margin-bottom: 26px;
+}
+.yaap-landing .hero h1 em {
+  color: var(--brand);
+  font-style: normal;
+}
+.yaap-landing .hero-copy > p {
+  max-width: 37ch;
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+.yaap-landing .hosting-choice {
+  display: block;
+  margin-top: 4px;
+}
+.yaap-landing .hero-copy p.hero-note {
+  margin: 16px 0 0;
+  font-size: 12px;
+}
+.yaap-landing .visitor-globe {
+  position: relative;
+  min-width: 0;
+  height: 520px;
+}
+.yaap-landing .visitor-globe .visitor-count,
+.yaap-landing .visitor-globe .globe-canvas {
+  opacity: 0;
+}
+.yaap-landing .visitor-globe[data-ready="true"] .visitor-count,
+.yaap-landing .visitor-globe[data-ready="true"] .globe-canvas {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .yaap-landing .visitor-count,
+  .yaap-landing .globe-canvas,
+  .yaap-landing .globe-skeleton {
+    transition: opacity 200ms ease-out;
   }
 }
-
-/* Pointer feedback is brief; keyboard navigation and reduced motion stay instant. */
+.yaap-landing .visitor-count {
+  position: absolute;
+  inset: 0 0 auto auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.yaap-landing .visitor-count strong {
+  color: var(--ink);
+  font-size: 28px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+.yaap-landing .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #2b996c;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.yaap-landing .globe-stage {
+  user-select: none;
+  position: absolute;
+  inset: 30px -24px 0;
+}
+.yaap-landing .globe-stage[data-ready="true"] {
+  touch-action: none;
+  cursor: grab;
+}
+.yaap-landing .globe-stage[data-dragging="true"] {
+  cursor: grabbing;
+}
+.yaap-landing .globe-stage:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -20px;
+  border-radius: 50%;
+}
+.yaap-landing .globe-stage::after {
+  opacity: 0;
+  content: "";
+  position: absolute;
+  bottom: 18px;
+  left: 24%;
+  width: 52%;
+  height: 20px;
+  border-radius: 50%;
+  background: #33456712;
+  filter: blur(12px);
+  z-index: -1;
+}
+.yaap-landing .globe-stage[data-ready="true"]::after {
+  opacity: 1;
+}
+.yaap-landing .globe-stage .globe-canvas,
+.yaap-landing .globe-skeleton,
+.yaap-landing .globe-locations {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+}
+.yaap-landing .globe-skeleton {
+  pointer-events: none;
+}
+.yaap-landing .globe-skeleton::before {
+  content: "";
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background: #edf1f6;
+}
+.yaap-landing .globe-stage[data-ready="true"] .globe-skeleton {
+  opacity: 0;
+}
+.yaap-landing .globe-locations {
+  pointer-events: none;
+  visibility: hidden;
+}
+.yaap-landing .globe-stage[data-ready="true"] .globe-locations {
+  visibility: visible;
+}
+.yaap-landing .visitor-anchor {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+.yaap-landing .visitor-location {
+  transform: translate(
+    calc(-1 * var(--label-align, 50%)),
+    var(--label-offset-y, -48px)
+  );
+  pointer-events: none;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  background: #fffffff2;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.yaap-landing .visitor-flag {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.yaap-landing .visitor-path {
+  color: var(--muted);
+  margin-left: 5px;
+}
+.yaap-landing .product-section {
+  padding: 10px 0 44px;
+  scroll-margin-top: 24px;
+}
+.yaap-landing .product-capture {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+}
+.yaap-landing .product-capture img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.yaap-landing .product-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.yaap-landing .features {
+  padding: 26px 0 70px;
+}
+.yaap-landing .feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+.yaap-landing .feature-grid > div {
+  min-width: 0;
+}
+.yaap-landing .feature-grid > div + div {
+  border-left: 1px solid var(--line);
+  padding-left: 32px;
+}
+.yaap-landing .feature-label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.yaap-landing .feature-grid dt {
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+.yaap-landing .feature-grid dd > p {
+  min-height: 80px;
+  font-size: 16px;
+}
+.yaap-landing .feature-report,
+.yaap-landing .feature-revenue {
+  margin-top: 24px;
+}
+.yaap-landing .feature-report {
+  display: grid;
+  gap: 9px;
+  font-size: 12px;
+  color: var(--ink);
+}
+.yaap-landing .feature-report-row {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 10px;
+  font-variant-numeric: tabular-nums;
+}
+.yaap-landing .feature-report-row::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 auto 0 0;
+  width: var(--row-proportion);
+  background: #e8eeff;
+  border-radius: 2px;
+}
+.yaap-landing .feature-funnel .feature-report-row:nth-child(1)::before {
+  background: #dce5ff;
+}
+.yaap-landing .feature-funnel .feature-report-row:nth-child(2)::before {
+  background: #bdcdff;
+}
+.yaap-landing .feature-funnel .feature-report-row:nth-child(3)::before {
+  background: #90adff;
+}
+.yaap-landing .feature-revenue p {
+  font-size: 12px;
+}
+.yaap-landing .feature-revenue-total {
+  font-size: 36px;
+  letter-spacing: -1px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0 20px;
+}
+.yaap-landing .feature-revenue-source {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 12px;
+}
+.yaap-landing .ownership,
+.yaap-landing .setup,
+.yaap-landing .faq {
+  padding: 88px 0;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 24px;
+}
+.yaap-landing .split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 64px;
+  align-items: center;
+}
+.yaap-landing .split > div {
+  min-width: 0;
+}
+.yaap-landing .split > div > p {
+  max-width: 43ch;
+  margin: 24px 0 18px;
+  font-size: 16px;
+}
+.yaap-landing .split .text-link {
+  color: var(--brand);
+  font-size: 14px;
+}
+.yaap-landing .architecture {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 24px;
+}
+.yaap-landing .architecture-title {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+.yaap-landing .worker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 8px;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.yaap-landing .worker-brand .brand-lockup {
+  height: 28px;
+}
+.yaap-landing .worker small {
+  font-size: 12px;
+}
+.yaap-landing .connect-line {
+  height: 1px;
+  background: var(--line);
+}
+.yaap-landing .infra-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.yaap-landing .infra-grid > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 8px;
+  font-size: 14px;
+}
+.yaap-landing .infra-grid > div + div {
+  border-left: 1px solid var(--line);
+}
+.yaap-landing .infra-grid span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.yaap-landing .split .architecture > p {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  text-align: center;
+  font-size: 12px;
+  margin: 0;
+  max-width: none;
+}
+.yaap-landing .setup-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 40px;
+}
+.yaap-landing .setup-top p {
+  max-width: 38ch;
+  font-size: 16px;
+}
+.yaap-landing .steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+  list-style: none;
+  padding: 0;
+  margin: 40px 0 0;
+}
+.yaap-landing .steps li {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.yaap-landing .steps li > span {
+  display: block;
+  color: var(--brand);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 24px;
+}
+.yaap-landing .steps p {
+  font-size: 16px;
+  margin-top: 12px;
+}
+.yaap-landing .faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 64px;
+}
+.yaap-landing .faq details {
+  border-bottom: 1px solid var(--line);
+  padding: 20px 0;
+}
+.yaap-landing .faq details:first-child {
+  border-top: 1px solid var(--line);
+}
+.yaap-landing summary {
+  font: inherit;
+  padding: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+.yaap-landing .faq summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+.yaap-landing summary::-webkit-details-marker {
+  display: none;
+}
+.yaap-landing .faq summary::after {
+  content: "+";
+  color: var(--muted);
+}
+.yaap-landing .faq details[open] summary::after {
+  content: "−";
+}
+.yaap-landing .faq details p {
+  margin-top: 20px;
+  font-size: 15px;
+}
+.yaap-home .pricing-heading h2 span {
+  color: var(--ink);
+}
+.yaap-landing .pricing-start .button {
+  display: flex;
+  justify-content: center;
+}
+.yaap-home .pricing-configurator {
+  padding: 40px;
+}
+.yaap-home .pricing-total {
+  padding: 40px;
+}
+.yaap-home .pricing-board {
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+}
+.yaap-home .pricing-heading h2 {
+  max-width: none;
+}
+@media (min-width: 801px) {
+  .yaap-landing .nav > nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 1100px) {
+  .yaap-landing .wrap {
+    padding-inline: 40px;
+  }
+  .yaap-landing .nav::after {
+    inset-inline: 40px;
+  }
+  .yaap-landing .hero h1 {
+    font-size: 46px;
+  }
+  .yaap-landing .hero-layout {
+    gap: 24px;
+  }
+  .yaap-landing .hero-copy > p {
+    font-size: 16px;
+  }
+  .yaap-landing .visitor-globe {
+    height: 460px;
+  }
+  .yaap-landing .feature-grid {
+    gap: 24px;
+  }
+  .yaap-landing .feature-grid > div + div {
+    padding-left: 24px;
+  }
+  .yaap-landing .feature-grid dt {
+    font-size: 19px;
+  }
+  .yaap-landing .feature-grid dd > p {
+    min-height: 104px;
+  }
+  .yaap-landing .split {
+    gap: 40px;
+  }
+}
+@media (max-width: 800px) {
+  .yaap-landing .nav {
+    height: 78px;
+    gap: 14px;
+  }
+  .yaap-landing .nav > nav,
+  .yaap-landing .nav-end {
+    display: none;
+  }
+  .yaap-landing .mobile-menu {
+    display: block;
+    position: relative;
+    font-size: 14px;
+  }
+  .yaap-landing .mobile-menu summary {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+  .yaap-landing .mobile-menu details[open] nav {
+    display: flex;
+    position: absolute;
+    right: 0;
+    top: 52px;
+    z-index: 5;
+    width: 220px;
+    flex-direction: column;
+    gap: 0;
+    padding: 12px;
+    border-radius: 6px;
+    background: white;
+    box-shadow: 0 8px 24px #262c3214;
+    outline: 1px solid var(--line);
+    font-size: 16px;
+  }
+  .yaap-landing .mobile-menu nav a {
+    padding: 12px;
+  }
+  .yaap-landing .hero h1 {
+    font-size: 40px;
+  }
+  .yaap-landing .hero-layout {
+    min-height: 520px;
+  }
+  .yaap-landing .visitor-globe {
+    height: 400px;
+  }
+  .yaap-landing .actions {
+    gap: 10px 18px;
+  }
+  .yaap-landing .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .yaap-landing .feature-grid > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--line);
+    padding-top: 28px;
+  }
+  .yaap-landing .feature-grid dt {
+    font-size: 23px;
+  }
+  .yaap-landing .feature-grid dd > p {
+    min-height: 0;
+  }
+  .yaap-landing .split,
+  .yaap-landing .faq-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .yaap-landing .setup-top {
+    display: grid;
+    gap: 20px;
+  }
+  .yaap-landing .steps {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .yaap-home .pricing-board {
+    grid-template-columns: 1fr;
+  }
+  .yaap-home .pricing-total {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+@media (max-width: 700px) {
+  .yaap-landing .wrap {
+    padding-inline: 24px;
+  }
+  .yaap-landing .nav::after {
+    inset-inline: 24px;
+  }
+  .yaap-landing .nav .brand-lockup {
+    height: 30px;
+  }
+  .yaap-landing .github-button {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+  .yaap-landing .hero-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .yaap-landing .hero-copy {
+    padding: 36px 0 18px;
+  }
+  .yaap-landing .hero h1 {
+    font-size: 38px;
+    line-height: 1.13;
+    letter-spacing: -1.1px;
+    margin-bottom: 22px;
+  }
+  .yaap-landing .hero-copy > p {
+    font-size: 16px;
+    max-width: 36ch;
+    margin-bottom: 25px;
+  }
+  .yaap-landing .hero-copy p.hero-note {
+    font-size: 12px;
+    margin: 18px 0 0;
+  }
+  .yaap-landing .button {
+    font-size: 13px;
+    padding: 12px 16px;
+  }
+  .yaap-landing .actions {
+    font-size: 13px;
+  }
+  .yaap-landing .visitor-globe {
+    height: 417px;
+    margin: 22px 0 30px;
+  }
+  .yaap-landing .globe-stage {
+    inset: 60px -12px 0;
+  }
+  .yaap-landing .globe-stage .globe-canvas,
+  .yaap-landing .globe-skeleton,
+  .yaap-landing .globe-locations {
+    width: min(100%, 440px);
+  }
+  .yaap-landing .visitor-location {
+    font-size: 11px;
+    gap: 7px;
+    padding: 8px 10px;
+  }
+  .yaap-landing .product-section {
+    padding: 10px 0 32px;
+  }
+  .yaap-landing .product-caption {
+    display: grid;
+    gap: 2px;
+    font-size: 11px;
+  }
+  .yaap-landing .product-capture img {
+    aspect-ratio: 380 / 720;
+  }
+  .yaap-landing .features {
+    padding: 22px 0 48px;
+  }
+  .yaap-landing .feature-report,
+  .yaap-landing .feature-revenue-source {
+    font-size: 13px;
+  }
+  .yaap-landing .feature-revenue-total {
+    font-size: 36px;
+  }
+  .yaap-landing h2 {
+    font-size: 32px;
+    letter-spacing: -1px;
+  }
+  .yaap-landing .ownership,
+  .yaap-landing .setup,
+  .yaap-landing .faq {
+    padding: 56px 0;
+  }
+  .yaap-landing .architecture {
+    padding: 20px;
+  }
+  .yaap-landing .steps {
+    margin-top: 32px;
+  }
+  .yaap-landing .steps li > span {
+    margin-bottom: 20px;
+  }
+  .yaap-landing .faq details p {
+    font-size: 16px;
+  }
+  .yaap-home .pricing-configurator,
+  .yaap-home .pricing-total {
+    padding: 26px 22px;
+  }
+  .yaap-landing .pricing-stops button {
+    font-size: 12px;
+  }
+  .yaap-landing .pricing-stops button::before {
+    width: 100%;
+  }
+}
+@media (max-width: 360px) {
+  .yaap-landing .wrap {
+    padding-inline: 20px;
+  }
+  .yaap-landing .nav::after {
+    inset-inline: 20px;
+  }
+  .yaap-landing .hero h1 {
+    font-size: 34px;
+  }
+  .yaap-landing .nav {
+    gap: 10px;
+  }
+  .yaap-landing .nav .brand-lockup {
+    height: 27px;
+  }
+  .yaap-landing .visitor-globe {
+    height: 345px;
+  }
+  .yaap-landing .pricing-stops button:not(:first-child):not(:last-child) {
+    display: block;
+  }
+}
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
   .yaap-landing .button {
-    transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 140ms ease-out;
   }
-  .yaap-landing .button:active:not(:focus-visible) {
+  .yaap-landing .button:active {
     transform: scale(0.98);
-  }
-  .yaap-landing .button > span,
-  .yaap-landing .text-link > span {
-    display: inline-block;
-    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .yaap-landing .button:hover > span,
-  .yaap-landing .ownership .text-link:hover > span {
-    transform: translate(2px, -2px);
-  }
-  .yaap-landing .hero .text-link:hover > span {
-    transform: translateY(2px);
-  }
-}
-
-.yaap-landing .pricing-faq {
-  padding-top: 64px;
-}
-@media (max-width: 500px) {
-  .yaap-landing .pricing-faq details,
-  .yaap-landing .pricing-faq details p {
-    font-size: 16px;
   }
 }
 
@@ -2024,5 +1671,17 @@
   }
   .yaap-landing .public-mobile-contents nav {
     padding-bottom: 12px;
+  }
+}
+
+.yaap-landing .globe-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 400px) {
+  .yaap-landing .visitor-path {
+    display: none;
   }
 }
