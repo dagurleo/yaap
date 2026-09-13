@@ -1,3 +1,4 @@
+import type { ReportActor } from "./access";
 import { requireSiteView } from "./access";
 import { goalMatch } from "./conversion-match";
 import { matchesConditions } from "../lib/conversion-conditions";
@@ -47,7 +48,7 @@ export type VisitorRow = {
 };
 export async function siteVisitors(
   env: Env,
-  actorUserId: string,
+  actorUserId: ReportActor,
   siteId: string,
   filters: VisitorFilters,
 ) {
@@ -56,6 +57,7 @@ export async function siteVisitors(
     env,
     actorUserId,
     siteId,
+    "visitors",
   );
   filters.timezone = site.timezone;
   const { start, end, asOf } = reportPeriod(filters);
@@ -118,7 +120,7 @@ export type JourneyEvent = {
 };
 export async function visitorJourney(
   env: Env,
-  actorUserId: string,
+  actorUserId: ReportActor,
   siteId: string,
   visitorId: string,
   asOf: number,
@@ -140,7 +142,7 @@ export async function visitorJourney(
         cursor.id.length > 128))
   )
     throw new HttpError(400, "Invalid journey filters");
-  const { db } = await requireSiteView(env, actorUserId, siteId);
+  const { db } = await requireSiteView(env, actorUserId, siteId, "journey");
   const end = Math.min(asOf, Date.now());
   const [summary] = await db.all<{
     firstSeen: number | null;
@@ -177,7 +179,7 @@ export async function visitorJourney(
     sql`select external_id as "externalId",provider,mode,currency,amount,refunded_amount as "refundedAmount",paid_at as "paidAt" from payments where site_id=${siteId} and visitor_id=${visitorId} and paid_at<=${end} order by paid_at desc,provider,external_id limit 20`,
   );
   const definitions = await db.listGoals(siteId);
-  const events = rows.slice(0, 100).map((row) => {
+  const events = rows.slice(0, 100).map((row): JourneyEvent => {
     const properties = JSON.parse(row.properties) as EventProperties;
     const goals = definitions
       .filter(

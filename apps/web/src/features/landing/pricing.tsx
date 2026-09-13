@@ -134,7 +134,7 @@ export function PricingSection({
             <div className="pricing-start">
               {hosted ? (
                 <a className="button primary" href="/signup">
-                  Start your free trial <span aria-hidden="true">↗</span>
+                  Start your free trial
                 </a>
               ) : (
                 <p className="pricing-coming-soon">
@@ -164,12 +164,12 @@ export function PricingSection({
           <p>
             Prefer to run it yourself?{" "}
             <a href="https://github.com/dagurleo/yaap">
-              Self-host Yaap <span aria-hidden="true">↗</span>
+              Self-host Yaap
             </a>
           </p>
           {!fullPage && (
             <a className="text-link" href="/pricing">
-              Explore pricing & FAQs <span aria-hidden="true">→</span>
+              Explore pricing & FAQs
             </a>
           )}
           {fullPage && (
@@ -209,7 +209,7 @@ export function PricingPage({ hosted = false }: { hosted?: boolean }) {
               className="text-link"
               href="https://github.com/dagurleo/yaap#readme"
             >
-              Explore self-hosting <span aria-hidden="true">↗</span>
+              Explore self-hosting
             </a>
           </div>
         </section>

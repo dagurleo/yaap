@@ -1,3 +1,5 @@
+import { publicSharingFn, savePublicSharingFn } from "./public-functions";
+import type { PublicSharing } from "@/lib/public-sharing";
 import { TimezoneSelect } from "./timezone-select";
 import { Suspense, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
@@ -46,6 +48,12 @@ import { validateTrackingRules, type TrackingRules } from "@/lib/site-settings";
 import "./site-settings.css";
 
 export const settingsSections = [
+  {
+    id: "sharing",
+    label: "Public dashboard",
+    icon: Globe2,
+    description: "Share selected reports with anyone who has the link.",
+  },
   {
     id: "general",
     label: "General",
@@ -255,6 +263,13 @@ export function SiteSettings({
               <h2>{current.label}</h2>
               <p>{current.description}</p>
             </div>
+            {section === "sharing" && (
+              <Suspense
+                fallback={<p role="status">Loading sharing settings…</p>}
+              >
+                <PublicSharingSettings siteId={siteId} appOrigin={appOrigin} />
+              </Suspense>
+            )}
             <div hidden={section !== "general"}>
               <GeneralSettings site={data.site} />
             </div>
@@ -1111,5 +1126,118 @@ function RetentionSettings({
         )}
       </Panel>
     </form>
+  );
+}
+
+function PublicSharingSettings({
+  siteId,
+  appOrigin,
+}: {
+  siteId: string;
+  appOrigin: string;
+}) {
+  const client = useQueryClient();
+  const { data } = useSuspenseQuery({
+    queryKey: ["sites", siteId, "public-sharing"],
+    queryFn: () => publicSharingFn({ data: { siteId } }),
+  });
+  const [draft, setDraft] = useState<PublicSharing>(data);
+  const mutation = useMutation({
+    mutationFn: () =>
+      savePublicSharingFn({ data: { siteId, settings: draft } }),
+    onSuccess: async (saved) => {
+      client.setQueryData(["sites", siteId, "public-sharing"], saved);
+      await client.invalidateQueries({ queryKey: ["public"] });
+    },
+  });
+  const options = [
+    [
+      "events",
+      "Events & properties",
+      "Share individual events and their recorded properties. Properties can contain customer details.",
+    ],
+    [
+      "visitors",
+      "Visitors & journeys",
+      "Share visitor identifiers, locations and browsing history. Event properties and linked payments follow the options selected here.",
+    ],
+    [
+      "conversions",
+      "Goals & funnels",
+      "Share goal and funnel definitions, matching conditions and conversion reports.",
+    ],
+    [
+      "revenue",
+      "Revenue & payments",
+      "Share revenue, attribution, payment references and refunds.",
+    ],
+  ] as const;
+  return (
+    <Panel
+      title="Public dashboard"
+      description="Traffic reports include page paths, referrers, campaigns and geographic breakdowns. Anyone with the link can view and copy shared data without signing in."
+      footer={
+        <>
+          <Button
+            variant="primary"
+            disabled={mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
+            {mutation.isPending ? "Saving…" : "Save sharing settings"}
+          </Button>
+          <SaveState error={mutation.error} saved={mutation.isSuccess} />
+        </>
+      }
+    >
+      <Toggle
+        id="public-enabled"
+        checked={draft.enabled}
+        onChange={(enabled) => {
+          setDraft({ ...draft, enabled });
+          mutation.reset();
+        }}
+        label="Make this dashboard public"
+        description="Private by default. Save with this switched off to immediately disable the public link."
+      />
+      <fieldset
+        disabled={!draft.enabled || mutation.isPending}
+        className="disabled:opacity-50"
+      >
+        <legend className="pt-6 pb-2 font-medium">
+          Additional reports to share
+        </legend>
+        {options.map(([key, label, description]) => (
+          <Toggle
+            key={key}
+            id={`public-${key}`}
+            checked={draft[key]}
+            onChange={(value) => {
+              setDraft({ ...draft, [key]: value });
+              mutation.reset();
+            }}
+            label={label}
+            description={description}
+          />
+        ))}
+      </fieldset>
+      {data.enabled && data.publicId && (
+        <div className="mt-6 space-y-3">
+          <h3 className="font-medium">Public link</h3>
+          <CodeBlock
+            code={`${appOrigin}/share/${data.publicId}`}
+            label="Copy public dashboard link"
+          />
+          <Button asChild>
+            <a
+              href={`/share/${data.publicId}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Preview public dashboard <ArrowUpRight aria-hidden="true" />
+            </a>
+          </Button>
+        </div>
+      )}
+    </Panel>
   );
 }

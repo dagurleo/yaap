@@ -1,3 +1,4 @@
+import type { ReportActor } from "./access";
 import { calendarDate, shiftDate } from "../lib/report-timezone";
 import { visitorDimensions } from "./visitor-dimensions";
 import { goalReport } from "./goal-report";
@@ -17,7 +18,7 @@ import { requireSiteView } from "./access";
 
 export async function siteOverview(
   env: Env,
-  actorUserId: string,
+  actorUserId: ReportActor,
   siteId: string,
   input: number | ReportFilters,
   includeLive = true,
@@ -29,6 +30,7 @@ export async function siteOverview(
     env,
     actorUserId,
     siteId,
+    "overview",
   );
   filters.timezone = site.timezone;
 

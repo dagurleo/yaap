@@ -1,11 +1,13 @@
+import { ReportLink as Link } from "@/features/dashboard/public-context";
+import { useReportQueries } from "@/features/dashboard/report-queries";
 import { calendarDate } from "@/lib/report-timezone";
 import { overviewSearch } from "@/lib/conversion-filters";
 import { ConversionBreakdown } from "@/features/dashboard/conversion-breakdown";
 import { dashboardPending } from "@/features/dashboard/dashboard-pending";
 import { OnlineNow } from "@/features/dashboard/online-now";
 import { Suspense, useRef, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Plus,
   Target,
@@ -78,12 +80,24 @@ function Overview() {
   const { siteId } = Route.useParams(),
     filters = Route.useSearch(),
     navigate = Route.useNavigate();
+  return (
+    <OverviewReport siteId={siteId} filters={filters} navigate={navigate} />
+  );
+}
+export function OverviewReport({
+  siteId,
+  filters,
+  navigate,
+}: {
+  siteId: string;
+  filters: ReturnType<typeof Route.useSearch>;
+  navigate: ReturnType<typeof Route.useNavigate>;
+}) {
+  const { overviewQuery } = useReportQueries();
   const { data, error } = useSuspenseQuery(overviewQuery(siteId, filters));
-  const payments = useQuery({
-    ...paymentSettingsQuery(siteId),
-    enabled: data.site.capabilities.manageSite,
-  });
-  const tab = filters.view ?? "traffic";
+  const tab = data.site.capabilities.conversions
+    ? (filters.view ?? "traffic")
+    : "traffic";
   const setTab = (view: "traffic" | "conversions") =>
     void navigate({
       search: { ...filters, view: view === "conversions" ? view : undefined },
@@ -139,6 +153,7 @@ function Overview() {
       positive:
         data.identities.visitors >= (data.comparison?.identities.visitors ?? 0),
       action: () =>
+        data.site.capabilities.visitors &&
         void navigate({
           to: "/app/$siteId/visitors",
           params: { siteId },
@@ -202,7 +217,7 @@ function Overview() {
   }
   const actions = (
     <div className="graphite-pageactions">
-      <OnlineNow siteId={siteId} />
+      {data.site.capabilities.visitors && <OnlineNow siteId={siteId} />}
       <Button size="sm" type="button" onClick={exportCsv}>
         <GraphiteIcon name="export" />
         Export
@@ -227,20 +242,24 @@ function Overview() {
           >
             <ChartNoAxesCombined aria-hidden="true" /> Traffic
           </button>
-          <button
-            type="button"
-            aria-pressed={tab === "conversions"}
-            onClick={() => setTab("conversions")}
-          >
-            <Target aria-hidden="true" /> Conversions
-          </button>
-          <Link
-            to="/app/$siteId/revenue"
-            params={{ siteId }}
-            search={{ ...filters, mode: "live", page: 0 }}
-          >
-            <CircleDollarSign aria-hidden="true" /> Revenue
-          </Link>
+          {data.site.capabilities.conversions && (
+            <button
+              type="button"
+              aria-pressed={tab === "conversions"}
+              onClick={() => setTab("conversions")}
+            >
+              <Target aria-hidden="true" /> Conversions
+            </button>
+          )}
+          {data.site.capabilities.revenue && (
+            <Link
+              to="/app/$siteId/revenue"
+              params={{ siteId }}
+              search={{ ...filters, mode: "live", page: 0 }}
+            >
+              <CircleDollarSign aria-hidden="true" /> Revenue
+            </Link>
+          )}
         </div>
       }
       headerActions={actions}
@@ -273,33 +292,38 @@ function Overview() {
           <>
             <div className="graphite-metrics-wrap">
               <div className="graphite-metrics" aria-label="Key metrics">
-                {metrics.map((metric) => (
-                  <button
-                    type="button"
-                    key={metric.label}
-                    className="graphite-metric"
-                    onClick={metric.action}
-                  >
-                    <div className="graphite-metric-label">
-                      <metric.icon aria-hidden="true" />
-                      <span>{metric.label}</span>
-                    </div>
-                    <div className="graphite-metric-values">
-                      <div className="graphite-number">{metric.value}</div>
-                      {metric.delta && (
-                        <div
-                          className="graphite-delta"
-                          data-positive={metric.positive}
-                        >
-                          {metric.delta}
-                        </div>
-                      )}
-                    </div>
-                    <div className="graphite-metric-detail">
-                      {metric.detail}
-                    </div>
-                  </button>
-                ))}
+                {metrics
+                  .filter(
+                    (_, index) =>
+                      index !== 3 || data.site.capabilities.conversions,
+                  )
+                  .map((metric) => (
+                    <button
+                      type="button"
+                      key={metric.label}
+                      className="graphite-metric"
+                      onClick={metric.action}
+                    >
+                      <div className="graphite-metric-label">
+                        <metric.icon aria-hidden="true" />
+                        <span>{metric.label}</span>
+                      </div>
+                      <div className="graphite-metric-values">
+                        <div className="graphite-number">{metric.value}</div>
+                        {metric.delta && (
+                          <div
+                            className="graphite-delta"
+                            data-positive={metric.positive}
+                          >
+                            {metric.delta}
+                          </div>
+                        )}
+                      </div>
+                      <div className="graphite-metric-detail">
+                        {metric.detail}
+                      </div>
+                    </button>
+                  ))}
               </div>
             </div>
             <PageviewChart
@@ -322,70 +346,78 @@ function Overview() {
                 />
               </div>
             </div>
-            <section className="graphite-goals">
-              <div className="graphite-sectionhead">
-                <h2 className="report-heading">
-                  <Target aria-hidden="true" />
-                  Goals &amp; conversions
-                </h2>
-                <button
-                  type="button"
-                  className="graphite-textbutton"
-                  onClick={() =>
-                    activeGoals.length
-                      ? setDetail("goals")
-                      : setGoalDialogOpen(true)
-                  }
-                >
-                  {activeGoals.length ? (
-                    <>
-                      Manage goals <GraphiteIcon name="external" />
-                    </>
-                  ) : (
-                    <>
-                      New goal <Plus aria-hidden="true" />
-                    </>
-                  )}
-                </button>
-              </div>
-              {displayGoals.length ? (
-                <table className="graphite-table">
-                  <thead>
-                    <tr>
-                      <th>Goal</th>
-                      <th>Completions</th>
-                      <th className="graphite-optional">Converted sessions</th>
-                      <th className="graphite-conversion-heading">
-                        <span>Session conversion</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayGoals.map((goal) => (
-                      <tr key={goal.id}>
-                        <td>
-                          <span className="flex min-w-0 items-center gap-2">
-                            <EntityIcon name={goal.icon} />
-                            <span className="min-w-0 wrap-anywhere">
-                              {goal.name}
-                            </span>
-                          </span>
-                        </td>
-                        <td>{format(goal.completions)}</td>
-                        <td className="graphite-optional">
-                          {format(goal.convertedSessions)}
-                        </td>
-                        <td>{percent(goal.conversionRate)}</td>
+            {data.site.capabilities.conversions && (
+              <section className="graphite-goals">
+                <div className="graphite-sectionhead">
+                  <h2 className="report-heading">
+                    <Target aria-hidden="true" />
+                    Goals &amp; conversions
+                  </h2>
+                  <button
+                    type="button"
+                    className="graphite-textbutton"
+                    onClick={() =>
+                      activeGoals.length
+                        ? setDetail("goals")
+                        : data.site.capabilities.manageSite &&
+                          setGoalDialogOpen(true)
+                    }
+                  >
+                    {activeGoals.length ? (
+                      <>
+                        {data.site.capabilities.manageSite
+                          ? "Manage goals"
+                          : "View goals"}{" "}
+                        <GraphiteIcon name="external" />
+                      </>
+                    ) : (
+                      <>
+                        New goal <Plus aria-hidden="true" />
+                      </>
+                    )}
+                  </button>
+                </div>
+                {displayGoals.length ? (
+                  <table className="graphite-table">
+                    <thead>
+                      <tr>
+                        <th>Goal</th>
+                        <th>Completions</th>
+                        <th className="graphite-optional">
+                          Converted sessions
+                        </th>
+                        <th className="graphite-conversion-heading">
+                          <span>Session conversion</span>
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="graphite-empty">
-                  No goals yet. Add a goal to measure conversions.
-                </p>
-              )}
-            </section>
+                    </thead>
+                    <tbody>
+                      {displayGoals.map((goal) => (
+                        <tr key={goal.id}>
+                          <td>
+                            <span className="flex min-w-0 items-center gap-2">
+                              <EntityIcon name={goal.icon} />
+                              <span className="min-w-0 wrap-anywhere">
+                                {goal.name}
+                              </span>
+                            </span>
+                          </td>
+                          <td>{format(goal.completions)}</td>
+                          <td className="graphite-optional">
+                            {format(goal.convertedSessions)}
+                          </td>
+                          <td>{percent(goal.conversionRate)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="graphite-empty">
+                    No goals yet. Add a goal to measure conversions.
+                  </p>
+                )}
+              </section>
+            )}
           </>
         ) : (
           <div className="graphite-conversions">
@@ -414,8 +446,8 @@ function Overview() {
         {data.site.capabilities.manageSite && (
           <aside className="graphite-revenue">
             <div>
-              <strong>Connect traffic to revenue</strong>
-              <p>Discover which sources bring paying customers.</p>
+              <strong>Revenue tracking</strong>
+              <p>See which traffic sources lead to paying customers.</p>
             </div>
             <button
               type="button"
@@ -423,9 +455,7 @@ function Overview() {
               className="graphite-primary"
               onClick={() => setPaymentOpen(true)}
             >
-              {payments.data?.stripeLive || payments.data?.stripeTest
-                ? "Manage integrations"
-                : "Connect Stripe"}
+              Revenue settings
             </button>
           </aside>
         )}

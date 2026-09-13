@@ -41,6 +41,7 @@ Yaap brings traffic, custom events, funnels and payment reports into one private
 | **Live presence** | Current visitors and paths, kept separate from pageview counts |
 | **Collection controls** | Full, anonymous or paused tracking; origin/path exclusions, bot filtering and retention policies |
 | **Public API & MCP** | Scoped credentials, reporting and management tools, OpenAPI and OAuth client connections |
+| **Public dashboards** | Owner-controlled, read-only share links with per-report opt-ins; a seeded demo uses the same sharing feature |
 | **Private workspace** | One owner, multiple websites, light/dark themes and responsive reports |
 
 ## Get started
@@ -58,7 +59,7 @@ Open **[localhost:8790/app](http://localhost:8790/app)**. On a fresh installatio
 
 Already using local PostgreSQL? Run `npm run db:setup:postgres` before `npm run dev`. This creates and migrates `yaap_local` and selects it in `apps/web/.dev.vars`; it does not copy existing D1 data. [Database setup →](docs/DATABASES.md)
 
-Want a populated workspace? After creating the owner, run `npm run db:seed` to add a new **Atlas Demo** site with synthetic traffic, goals, funnels and payments. Existing sites are preserved. [Development and demo options →](docs/DEVELOPMENT.md)
+Want a populated workspace? After creating the owner, run `npm run db:seed` to add a new **Atlas Demo** site with synthetic traffic, goals, funnels and payments. Existing sites are preserved. [Development and demo options →](docs/DEVELOPMENT.md) · [Public demo setup →](docs/PUBLIC_SHARING.md)
 
 ## Repository layout
 

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as CheckEmailRouteImport } from './routes/check-email'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -26,6 +27,8 @@ import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AppAppIndexRouteImport } from './routes/_app/app/index'
 import { Route as AppAppAccessRouteImport } from './routes/_app/app/access'
 import { Route as AppAppBillingRouteImport } from './routes/_app/app/billing'
+import { Route as SharePublicIdIndexRouteImport } from './routes/share/$publicId/index'
+import { Route as SharePublicIdReportRouteImport } from './routes/share/$publicId/$report'
 import { Route as AppAppSiteIdIndexRouteImport } from './routes/_app/app/$siteId/index'
 import { Route as AppAppSiteIdEventsRouteImport } from './routes/_app/app/$siteId/events'
 import { Route as AppAppSiteIdFunnelsRouteImport } from './routes/_app/app/$siteId/funnels'
@@ -52,6 +55,11 @@ const CheckEmailRoute = CheckEmailRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -119,6 +127,16 @@ const AppAppBillingRoute = AppAppBillingRouteImport.update({
   path: '/app/billing',
   getParentRoute: () => AppRoute,
 } as any)
+const SharePublicIdIndexRoute = SharePublicIdIndexRouteImport.update({
+  id: '/share/$publicId/',
+  path: '/share/$publicId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SharePublicIdReportRoute = SharePublicIdReportRouteImport.update({
+  id: '/share/$publicId/$report',
+  path: '/share/$publicId/$report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppAppSiteIdIndexRoute = AppAppSiteIdIndexRouteImport.update({
   id: '/app/$siteId/',
   path: '/app/$siteId/',
@@ -164,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -176,7 +195,9 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/app/access': typeof AppAppAccessRoute
   '/app/billing': typeof AppAppBillingRoute
+  '/share/$publicId/$report': typeof SharePublicIdReportRoute
   '/app/': typeof AppAppIndexRoute
+  '/share/$publicId/': typeof SharePublicIdIndexRoute
   '/app/$siteId/events': typeof AppAppSiteIdEventsRoute
   '/app/$siteId/funnels': typeof AppAppSiteIdFunnelsRoute
   '/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
@@ -190,6 +211,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -202,7 +224,9 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/app/access': typeof AppAppAccessRoute
   '/app/billing': typeof AppAppBillingRoute
+  '/share/$publicId/$report': typeof SharePublicIdReportRoute
   '/app': typeof AppAppIndexRoute
+  '/share/$publicId': typeof SharePublicIdIndexRoute
   '/app/$siteId/events': typeof AppAppSiteIdEventsRoute
   '/app/$siteId/funnels': typeof AppAppSiteIdFunnelsRoute
   '/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
@@ -218,6 +242,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -230,7 +255,9 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_app/app/access': typeof AppAppAccessRoute
   '/_app/app/billing': typeof AppAppBillingRoute
+  '/share/$publicId/$report': typeof SharePublicIdReportRoute
   '/_app/app/': typeof AppAppIndexRoute
+  '/share/$publicId/': typeof SharePublicIdIndexRoute
   '/_app/app/$siteId/events': typeof AppAppSiteIdEventsRoute
   '/_app/app/$siteId/funnels': typeof AppAppSiteIdFunnelsRoute
   '/_app/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
@@ -246,6 +273,7 @@ export interface FileRouteTypes {
     | '/'
     | '/check-email'
     | '/contact'
+    | '/demo'
     | '/forgot-password'
     | '/login'
     | '/pricing'
@@ -258,7 +286,9 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/app/access'
     | '/app/billing'
+    | '/share/$publicId/$report'
     | '/app/'
+    | '/share/$publicId/'
     | '/app/$siteId/events'
     | '/app/$siteId/funnels'
     | '/app/$siteId/overview'
@@ -272,6 +302,7 @@ export interface FileRouteTypes {
     | '/'
     | '/check-email'
     | '/contact'
+    | '/demo'
     | '/forgot-password'
     | '/login'
     | '/pricing'
@@ -284,7 +315,9 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/app/access'
     | '/app/billing'
+    | '/share/$publicId/$report'
     | '/app'
+    | '/share/$publicId'
     | '/app/$siteId/events'
     | '/app/$siteId/funnels'
     | '/app/$siteId/overview'
@@ -299,6 +332,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/check-email'
     | '/contact'
+    | '/demo'
     | '/forgot-password'
     | '/login'
     | '/pricing'
@@ -311,7 +345,9 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_app/app/access'
     | '/_app/app/billing'
+    | '/share/$publicId/$report'
     | '/_app/app/'
+    | '/share/$publicId/'
     | '/_app/app/$siteId/events'
     | '/_app/app/$siteId/funnels'
     | '/_app/app/$siteId/overview'
@@ -327,6 +363,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   CheckEmailRoute: typeof CheckEmailRoute
   ContactRoute: typeof ContactRoute
+  DemoRoute: typeof DemoRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
@@ -337,6 +374,8 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  SharePublicIdReportRoute: typeof SharePublicIdReportRoute
+  SharePublicIdIndexRoute: typeof SharePublicIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -367,6 +406,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -459,6 +505,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/billing'
       preLoaderRoute: typeof AppAppBillingRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/share/$publicId/': {
+      id: '/share/$publicId/'
+      path: '/share/$publicId'
+      fullPath: '/share/$publicId/'
+      preLoaderRoute: typeof SharePublicIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$publicId/$report': {
+      id: '/share/$publicId/$report'
+      path: '/share/$publicId/$report'
+      fullPath: '/share/$publicId/$report'
+      preLoaderRoute: typeof SharePublicIdReportRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/app/$siteId/': {
       id: '/_app/app/$siteId/'
@@ -554,6 +614,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   CheckEmailRoute: CheckEmailRoute,
   ContactRoute: ContactRoute,
+  DemoRoute: DemoRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
@@ -564,6 +625,8 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   InviteTokenRoute: InviteTokenRoute,
+  SharePublicIdReportRoute: SharePublicIdReportRoute,
+  SharePublicIdIndexRoute: SharePublicIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

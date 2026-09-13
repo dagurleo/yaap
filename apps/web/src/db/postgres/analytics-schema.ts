@@ -942,3 +942,25 @@ export const paymentAttributions = pgTable(
     ),
   ],
 );
+
+export const sitePublicShares = pgTable("site_public_shares", {
+  siteId: text("site_id")
+    .primaryKey()
+    .references(() => sites.id, { onDelete: "cascade" }),
+  publicId: text("public_id").notNull().unique(),
+  enabled: integerBoolean("enabled")
+    .notNull()
+    .default(sql`0`),
+  events: integerBoolean("events")
+    .notNull()
+    .default(sql`0`),
+  visitors: integerBoolean("visitors")
+    .notNull()
+    .default(sql`0`),
+  revenue: integerBoolean("revenue")
+    .notNull()
+    .default(sql`0`),
+  conversions: integerBoolean("conversions")
+    .notNull()
+    .default(sql`0`),
+});

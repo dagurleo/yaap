@@ -31,53 +31,76 @@ function Events() {
   const filters = Route.useSearch();
   const navigate = Route.useNavigate();
   const { access } = Route.useRouteContext();
-  const [message, setMessage] = useState("");
-  const snippet = `<script defer src="${access.origin}/script.js" data-site-id="${siteId}"></script>`;
   return (
-    <WebsiteLayout selectedSiteId={siteId}>
-      <EventExplorer
-        siteId={siteId}
-        filters={filters}
-        onChange={(next) => void navigate({ search: next })}
-      />
-      <details className="min-w-0 border-t border-border/70 pt-4 text-base sm:text-sm">
-        <summary className="cursor-pointer py-2 font-medium">
-          Installation & tracking API
-        </summary>
-        <div className="space-y-3 py-3">
-          <p>Add this snippet to your website’s head.</p>
-          <pre className="overflow-x-auto">{snippet}</pre>
-          <Button
-            size="sm"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(snippet);
-                setMessage("Snippet copied.");
-              } catch {
-                setMessage("Select and copy the snippet above.");
+    <EventsReport
+      siteId={siteId}
+      filters={filters}
+      onChange={(next) => void navigate({ search: next })}
+      installationOrigin={access.origin}
+    />
+  );
+}
+export function EventsReport({
+  siteId,
+  filters,
+  onChange,
+  installationOrigin,
+}: {
+  siteId: string;
+  filters: ReturnType<typeof eventFilters>;
+  onChange: (filters: ReturnType<typeof eventFilters>) => void;
+  installationOrigin?: string;
+}) {
+  const [message, setMessage] = useState("");
+  const snippet = `<script defer src="${installationOrigin}/script.js" data-site-id="${siteId}"></script>`;
+  return (
+    <WebsiteLayout
+      selectedSiteId={siteId}
+      title={installationOrigin ? "Events & installation" : "Events"}
+    >
+      <EventExplorer siteId={siteId} filters={filters} onChange={onChange} />
+      {installationOrigin && (
+        <details className="min-w-0 border-t border-border/70 pt-4 text-base sm:text-sm">
+          <summary className="cursor-pointer py-2 font-medium">
+            Installation & tracking API
+          </summary>
+          <div className="space-y-3 py-3">
+            <p>Add this snippet to your website’s head.</p>
+            <pre className="overflow-x-auto">{snippet}</pre>
+            <Button
+              size="sm"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(snippet);
+                  setMessage("Snippet copied.");
+                } catch {
+                  setMessage("Select and copy the snippet above.");
+                }
+              }}
+            >
+              Copy snippet
+            </Button>
+            {message && <p role="status">{message}</p>}
+            <pre className="overflow-x-auto">
+              {
+                'window.osAnalytics?.track("signup", { plan: "pro", seats: 3 });'
               }
-            }}
-          >
-            Copy snippet
-          </Button>
-          {message && <p role="status">{message}</p>}
-          <pre className="overflow-x-auto">
-            {'window.osAnalytics?.track("signup", { plan: "pro", seats: 3 });'}
-          </pre>
-          <p className="text-muted-foreground">
-            Send up to 20 text, number, or boolean properties. Use non-sensitive
-            categories such as plan or button location.
-          </p>
-          <Link
-            className="underline"
-            to="/app/$siteId/settings"
-            params={{ siteId }}
-            search={{ section: "installation" }}
-          >
-            Installation options and collection controls
-          </Link>
-        </div>
-      </details>
+            </pre>
+            <p className="text-muted-foreground">
+              Send up to 20 text, number, or boolean properties. Use
+              non-sensitive categories such as plan or button location.
+            </p>
+            <Link
+              className="underline"
+              to="/app/$siteId/settings"
+              params={{ siteId }}
+              search={{ section: "installation" }}
+            >
+              Installation options and collection controls
+            </Link>
+          </div>
+        </details>
+      )}
     </WebsiteLayout>
   );
 }

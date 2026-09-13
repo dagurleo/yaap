@@ -8,6 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { useRouter, useMatches, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -116,30 +120,38 @@ export function AccountMenu({
             <DropdownMenuSeparator />
           </>
         )}
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          Theme
-        </DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(value) => {
-            if (value === "light" || value === "dark" || value === "system")
-              setTheme(value);
-          }}
-          aria-label="Theme"
-        >
-          <DropdownMenuRadioItem value="light">
-            <Sun aria-hidden="true" />
-            Light
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">
-            <Moon aria-hidden="true" />
-            Dark
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">
-            <Monitor aria-hidden="true" />
-            System
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent className="w-40" sideOffset={4}>
+              <DropdownMenuRadioGroup
+                value={theme}
+                onValueChange={(value) => {
+                  if (
+                    value === "light" ||
+                    value === "dark" ||
+                    value === "system"
+                  )
+                    setTheme(value);
+                }}
+                aria-label="Theme"
+              >
+                <DropdownMenuRadioItem value="light">
+                  <Sun aria-hidden="true" />
+                  Light
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="dark">
+                  <Moon aria-hidden="true" />
+                  Dark
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="system">
+                  <Monitor aria-hidden="true" />
+                  System
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           disabled={pending}

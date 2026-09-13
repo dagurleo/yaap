@@ -93,7 +93,7 @@ function RootLayout() {
       ),
   });
   const isDashboard = useRouterState({
-    select: (state) => /^\/app\/[^/]+/.test(state.location.pathname),
+    select: (state) => /^\/(?:app|share)\/[^/]+/.test(state.location.pathname),
   });
   if (isLanding) return <Outlet />;
   return (

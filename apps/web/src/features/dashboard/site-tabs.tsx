@@ -1,4 +1,5 @@
 import { reportFilters, type ReportFilters } from "../../lib/report-filters";
+import { ReportLink, usePublicDashboard } from "./public-context";
 import { Link } from "@tanstack/react-router";
 import {
   ChartNoAxesCombined,
@@ -20,6 +21,8 @@ export function SiteTabs({
   onNavigate?: () => void;
   canManage?: boolean;
 }) {
+  const shared = usePublicDashboard();
+  const capabilities = shared?.site.capabilities;
   const style = "dashboard-nav-link";
   return (
     <nav
@@ -30,7 +33,7 @@ export function SiteTabs({
       <div className="dashboard-nav-label dashboard-nav-label-first">
         Analytics
       </div>
-      <Link
+      <ReportLink
         className={style}
         to="/app/$siteId/overview"
         params={{ siteId }}
@@ -38,52 +41,65 @@ export function SiteTabs({
         activeOptions={{ includeSearch: false }}
       >
         <ChartNoAxesCombined aria-hidden="true" /> Overview
-      </Link>
-      <Link
-        className={style}
-        to="/app/$siteId/visitors"
-        params={{ siteId }}
-        search={{
-          ...reportFilters(filters),
-          cohort: "all",
-          goalId: "",
-          page: 0,
-        }}
-        activeOptions={{ includeSearch: false }}
-      >
-        <Users aria-hidden="true" /> Visitors
-      </Link>
-      <Link
-        className={style}
-        to="/app/$siteId/funnels"
-        params={{ siteId }}
-        search={reportFilters(filters)}
-        activeOptions={{ includeSearch: false }}
-      >
-        <Filter aria-hidden="true" /> Funnels
-      </Link>
-      <Link
-        className={style}
-        to="/app/$siteId/revenue"
-        params={{ siteId }}
-        search={{ ...reportFilters(filters), mode: "live", page: 0 }}
-        activeOptions={{ includeSearch: false }}
-      >
-        <CircleDollarSign aria-hidden="true" /> Revenue
-      </Link>
-      <Link
-        className={style}
-        to="/app/$siteId/events"
-        search={{ days: 7 }}
-        params={{ siteId }}
-      >
-        <Zap aria-hidden="true" /> Events
-      </Link>
-      <div className="dashboard-nav-label">Workspace</div>
-      <Link className={style} to="/app" activeOptions={{ exact: true }}>
-        <LayoutGrid aria-hidden="true" />
-        All websites
-      </Link>
+      </ReportLink>
+      {(!capabilities || capabilities.visitors) && (
+        <ReportLink
+          className={style}
+          to="/app/$siteId/visitors"
+          params={{ siteId }}
+          search={{
+            ...reportFilters(filters),
+            cohort: "all",
+            goalId: "",
+            page: 0,
+          }}
+          activeOptions={{ includeSearch: false }}
+        >
+          <Users aria-hidden="true" /> Visitors
+        </ReportLink>
+      )}
+      {(!capabilities || capabilities.conversions) && (
+        <ReportLink
+          className={style}
+          to="/app/$siteId/funnels"
+          params={{ siteId }}
+          search={reportFilters(filters)}
+          activeOptions={{ includeSearch: false }}
+        >
+          <Filter aria-hidden="true" /> Funnels
+        </ReportLink>
+      )}
+      {(!capabilities || capabilities.revenue) && (
+        <ReportLink
+          className={style}
+          to="/app/$siteId/revenue"
+          params={{ siteId }}
+          search={{ ...reportFilters(filters), mode: "live", page: 0 }}
+          activeOptions={{ includeSearch: false }}
+        >
+          <CircleDollarSign aria-hidden="true" /> Revenue
+        </ReportLink>
+      )}
+      {(!capabilities || capabilities.events) && (
+        <ReportLink
+          className={style}
+          to="/app/$siteId/events"
+          search={{ days: 7 }}
+          params={{ siteId }}
+          activeOptions={{ includeSearch: false }}
+        >
+          <Zap aria-hidden="true" /> Events
+        </ReportLink>
+      )}
+      {!shared && (
+        <>
+          <div className="dashboard-nav-label">Workspace</div>
+          <Link className={style} to="/app" activeOptions={{ exact: true }}>
+            <LayoutGrid aria-hidden="true" />
+            All websites
+          </Link>
+        </>
+      )}
       {canManage && (
         <Link className={style} to="/app/$siteId/settings" params={{ siteId }}>
           <Settings2 aria-hidden="true" /> Settings

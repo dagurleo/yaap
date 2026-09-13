@@ -1,3 +1,4 @@
+import { refreshDemo } from "./server/demo";
 import { withDatabase } from "./db";
 import handler from "@tanstack/react-start/server-entry";
 import { route } from "./api";
@@ -95,12 +96,14 @@ export default {
     const safe = new Response(response.body, response);
     safe.headers.set("Cache-Control", "private, no-store");
     safe.headers.set("X-Content-Type-Options", "nosniff");
-    if (new URL(request.url).pathname.startsWith("/invite/"))
+    if (/^\/(?:invite|share)\//.test(new URL(request.url).pathname))
       safe.headers.set("Referrer-Policy", "no-referrer");
     else if (!safe.headers.has("Referrer-Policy"))
       safe.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     safe.headers.set("X-Frame-Options", "DENY");
     publicResponseHeaders(safe, request, origin);
+    if (/^\/share(?:\/|$)/.test(new URL(request.url).pathname))
+      safe.headers.set("X-Robots-Tag", "noindex, nofollow");
     return safe;
   },
   queue: (batch, env) => {
@@ -115,6 +118,14 @@ export default {
       await repairBillingProviderState(scoped);
       await repairBillingNotifications(scoped);
       if (controller.cron === BILLING_REPAIR_CRON) return;
+      try {
+        await refreshDemo(scoped, controller.scheduledTime);
+      } catch (error) {
+        console.error(
+          "demo_refresh_failed",
+          error instanceof Error ? error.message : "Unknown error",
+        );
+      }
       await cleanup(scoped);
       await refreshRollups(scoped);
     });

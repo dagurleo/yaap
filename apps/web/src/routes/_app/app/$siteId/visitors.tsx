@@ -1,3 +1,4 @@
+import { useReportQueries } from "@/features/dashboard/report-queries";
 import { dashboardPending } from "@/features/dashboard/dashboard-pending";
 import { reportFilters } from "@/lib/report-filters";
 import {
@@ -60,6 +61,20 @@ function Visitors() {
   const { siteId } = Route.useParams();
   const filters = Route.useSearch();
   const navigate = Route.useNavigate();
+  return (
+    <VisitorsReport siteId={siteId} filters={filters} navigate={navigate} />
+  );
+}
+export function VisitorsReport({
+  siteId,
+  filters,
+  navigate,
+}: {
+  siteId: string;
+  filters: ReturnType<typeof Route.useSearch>;
+  navigate: ReturnType<typeof Route.useNavigate>;
+}) {
+  const { visitorsQuery } = useReportQueries();
   const { data, error, refetch, isFetching } = useSuspenseQuery(
     visitorsQuery(siteId, filters),
   );

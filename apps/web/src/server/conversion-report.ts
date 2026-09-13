@@ -1,3 +1,4 @@
+import type { ReportActor } from "./access";
 import { sql } from "drizzle-orm";
 import { HttpError } from "../http";
 import {
@@ -18,7 +19,7 @@ type Counts = {
 };
 export async function siteConversions(
   env: Env,
-  actorUserId: string,
+  actorUserId: ReportActor,
   siteId: string,
   input: ConversionFilters,
 ) {
@@ -27,6 +28,7 @@ export async function siteConversions(
     env,
     actorUserId,
     siteId,
+    "conversions",
   );
   filters.timezone = site.timezone;
   const goals = await db.listGoals(siteId);

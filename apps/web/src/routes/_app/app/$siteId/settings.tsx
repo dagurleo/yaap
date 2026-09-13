@@ -1,3 +1,4 @@
+import { publicSharingFn } from "@/features/dashboard/public-functions";
 import { dashboardPending } from "@/features/dashboard/dashboard-pending";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -25,6 +26,12 @@ export const Route = createFileRoute("/_app/app/$siteId/settings")({
     await Promise.all([
       context.queryClient.ensureQueryData(sitesQuery()),
       context.queryClient.ensureQueryData(operationsQuery(params.siteId)),
+      deps.section === "sharing"
+        ? context.queryClient.ensureQueryData({
+            queryKey: ["sites", params.siteId, "public-sharing"],
+            queryFn: () => publicSharingFn({ data: { siteId: params.siteId } }),
+          })
+        : Promise.resolve(),
       deps.section === "people"
         ? context.queryClient.ensureQueryData(peopleQuery(params.siteId))
         : Promise.resolve(),

@@ -97,6 +97,7 @@ before(async () => {
       bindings: {
         BETTER_AUTH_SECRET: "test-auth-" + "a".repeat(40),
         BOOTSTRAP_SECRET: setupSecret,
+        YAAP_DEMO_SITE_ID: "demo-refresh-fixture",
         ...(postgres
           ? {
               DATABASE_PROVIDER: "postgres",
@@ -575,6 +576,37 @@ test("website viewers register through an invitation, read only that site, and l
   assert.equal(shared.length, 1);
   assert.equal(shared[0].id, site.id);
   assert.equal(shared[0].access, "viewer");
+  const sharingAttempt = await request(
+    `/_serverFn/${serverFns.savePublicSharingFn}`,
+    {
+      method: "POST",
+      cookie: viewerCookie,
+      body: toJSON({
+        data: {
+          siteId: site.id,
+          settings: {
+            enabled: true,
+            events: true,
+            visitors: true,
+            revenue: true,
+            conversions: true,
+          },
+        },
+      }),
+    },
+  );
+  assert.match(await sharingAttempt.text(), /Website not found/);
+  assert.equal(
+    await db
+      .prepare(
+        "SELECT count(*) AS count FROM site_public_shares WHERE site_id=?",
+      )
+      .bind(site.id)
+      .first()
+      .then((row) => row.count),
+    0,
+  );
+
   assert.equal(shared[0].capabilities.manageSite, false);
   assert.deepEqual(Object.keys(shared[0]).sort(), [
     "access",
@@ -4710,6 +4742,286 @@ test("site timezone persists and Tokyo reports exclude adjacent local days", asy
     },
   });
   assert.equal(invalid.status, 400);
+});
+
+test("public dashboards enforce report opt-ins, site isolation, revocation and owner-only configuration", async () => {
+  const fixture = await request("/api/sites", {
+    method: "POST",
+    cookie: ownerCookie,
+    body: {
+      name: "Public sharing fixture",
+      origin: "https://public-fixture.example",
+    },
+  }).then((r) => r.json());
+  const getFn = async (name, data, cookie) => {
+    assert.ok(serverFns[name], name);
+    return request(
+      `/_serverFn/${serverFns[name]}?payload=${encodeURIComponent(JSON.stringify(toJSON({ data })))}`,
+      { cookie },
+    );
+  };
+  const write = (settings, cookie = ownerCookie, requestOrigin = origin) =>
+    request(`/_serverFn/${serverFns.savePublicSharingFn}`, {
+      method: "POST",
+      cookie,
+      requestOrigin,
+      body: toJSON({ data: { siteId: fixture.id, settings } }),
+    });
+  const settings = {
+    enabled: true,
+    events: false,
+    visitors: false,
+    revenue: false,
+    conversions: false,
+  };
+  const before = await getFn(
+    "publicSharingFn",
+    { siteId: fixture.id },
+    ownerCookie,
+  );
+  assert.match(await before.text(), /publicId/);
+  assert.match(await (await write(settings, "")).text(), /Sign in/);
+  assert.equal(
+    (await write(settings, ownerCookie, "https://evil.example")).status,
+    403,
+  );
+  assert.equal((await write(settings)).status, 200);
+  const settingsPage = await request(
+    `/app/${fixture.id}/settings?section=sharing`,
+    { cookie: ownerCookie },
+  );
+  assert.equal(settingsPage.status, 200);
+  const settingsHtml = await settingsPage.text();
+  assert.match(settingsHtml, /Make this dashboard public/);
+  assert.match(settingsHtml, /Save sharing settings/);
+  assert.doesNotMatch(settingsHtml, /withDatabase scope/);
+
+  const shared = await db
+    .prepare("SELECT public_id AS id FROM site_public_shares WHERE site_id=?")
+    .bind(fixture.id)
+    .first();
+  assert.ok(shared.id);
+  const now = Date.now() - 1000;
+  await db
+    .prepare(
+      "INSERT INTO events(site_id,id,name,path,received_at,visitor_id,session_id,tracking_version,properties) VALUES (?,?,?,?,?,?,?,?,?)",
+    )
+    .bind(
+      fixture.id,
+      "public-page",
+      "pageview",
+      "/public-traffic",
+      now,
+      "public-visitor",
+      "public-session",
+      2,
+      "{}",
+    )
+    .run();
+  await db
+    .prepare(
+      "INSERT INTO events(site_id,id,name,path,received_at,visitor_id,session_id,tracking_version,properties) VALUES (?,?,?,?,?,?,?,?,?)",
+    )
+    .bind(
+      fixture.id,
+      "private-event",
+      "private_custom_event",
+      "/private-event-path",
+      now,
+      "public-visitor",
+      "public-session",
+      2,
+      '{"secret_property":"sensitive-value"}',
+    )
+    .run();
+  await db
+    .prepare(
+      "INSERT INTO payments(site_id,provider,mode,external_id,amount,currency,paid_at,visitor_id,created_at,updated_at) VALUES (?,'api','live','private-payment-ref',2900,'USD',?,'public-visitor',?,?)",
+    )
+    .bind(fixture.id, now, now, now)
+    .run();
+  const read = async (report, filters = {}, publicId = shared.id) =>
+    (await getFn("publicReportFn", { publicId, report, filters })).text();
+  const overview = await read("overview");
+  assert.match(overview, /public-traffic/);
+  assert.doesNotMatch(
+    overview,
+    /private_custom_event|sensitive-value|private-payment-ref|public-visitor/,
+  );
+  for (const report of [
+    "events",
+    "visitors",
+    "journey",
+    "revenue",
+    "conversions",
+    "funnels",
+    "live",
+  ])
+    assert.match(await read(report), /not shared/);
+  assert.match(await read("overview", {}, crypto.randomUUID()), /unavailable/);
+  assert.doesNotMatch(await read("overview", { siteId: site.id }), /welcome/);
+  assert.equal(
+    (await request(`/api/sites/${fixture.id}/overview`)).status,
+    401,
+  );
+  for (const name of ["addGoalFn", "saveOperationsFn", "saveSiteDetailsFn"]) {
+    const response = await request(`/_serverFn/${serverFns[name]}`, {
+      method: "POST",
+      body: toJSON({
+        data: {
+          siteId: fixture.id,
+          name: "Unauthorized",
+          eventName: "signup",
+          origin: "https://evil.example",
+        },
+      }),
+    });
+    assert.doesNotMatch(await response.text(), /"access":"owner"/);
+  }
+  const page = await request(`/share/${shared.id}/overview?days=7`);
+  assert.equal(
+    page.status,
+    200,
+    JSON.stringify({
+      location: page.headers.get("location"),
+      body: await page.clone().text(),
+    }),
+  );
+  assert.match(page.headers.get("cache-control"), /no-store/);
+  assert.equal(page.headers.get("x-robots-tag"), "noindex, nofollow");
+  const html = await page.text();
+  assert.match(html, /Public sharing fixture/);
+  assert.match(html, /public-traffic/);
+  assert.match(html, /Search your workspace/);
+  assert.match(html, /Help &amp; documentation/);
+  assert.doesNotMatch(html, /href="[^"]*\/app(?:\/|")/);
+  for (const report of ["visitors", "funnels", "revenue", "events"]) {
+    assert.doesNotMatch(
+      html,
+      new RegExp('href="[^"]*/share/' + shared.id + "/" + report),
+    );
+  }
+  assert.doesNotMatch(
+    html,
+    /sensitive-value|private-payment-ref|Revenue settings|Manage goals|API &amp; MCP access/,
+  );
+  // Even owners see a public view when opening the share URL.
+  const ownerView = await request(`/share/${shared.id}/overview?days=7`, {
+    cookie: ownerCookie,
+  }).then((r) => r.text());
+  assert.doesNotMatch(
+    ownerView,
+    /Revenue settings|Manage goals|Add website|All websites/,
+  );
+  await write({ ...settings, visitors: true });
+  const journey = await read("journey", {
+    visitorId: "public-visitor",
+    asOf: Date.now(),
+  });
+  assert.match(journey, /public-traffic/);
+  assert.doesNotMatch(
+    journey,
+    /sensitive-value|private_custom_event|private-payment-ref/,
+  );
+  await write({ ...settings, events: true });
+  const events = await read("events");
+  assert.match(events, /sensitive-value/);
+  assert.doesNotMatch(events, /public-visitor/);
+  await write({
+    enabled: true,
+    events: true,
+    visitors: true,
+    revenue: true,
+    conversions: true,
+  });
+  for (const report of [
+    "overview",
+    "events",
+    "visitors",
+    "funnels",
+    "revenue",
+  ]) {
+    const response = await request(`/share/${shared.id}/${report}?days=7`);
+    assert.equal(response.status, 200, await response.clone().text());
+    assert.doesNotMatch(
+      await response.text(),
+      /Something went wrong|Public dashboard unavailable/,
+    );
+  }
+  assert.match(
+    await read("journey", { visitorId: "public-visitor", asOf: Date.now() }),
+    /private-payment-ref/,
+  );
+  await write({ ...settings, enabled: false });
+  assert.match(await read("overview"), /unavailable/);
+  assert.doesNotMatch(
+    await request(`/share/${shared.id}/overview?days=7`).then((r) => r.text()),
+    /public-traffic/,
+  );
+  // Previously shared URLs stay disabled without affecting the owner's report.
+  assert.equal(
+    (
+      await request(`/api/sites/${fixture.id}/overview`, {
+        cookie: ownerCookie,
+      })
+    ).status,
+    200,
+  );
+});
+
+test("configured demo uses public sharing and hourly refresh is isolated and retry-safe", async () => {
+  const demoId = "demo-refresh-fixture";
+  const publicId = crypto.randomUUID();
+  await db
+    .prepare(
+      "INSERT INTO sites(id,owner_id,workspace_id,name,origin,created_at) SELECT ?,owner_id,workspace_id,'Atlas Demo','https://atlas-demo.example',? FROM sites WHERE id=?",
+    )
+    .bind(demoId, Date.now(), site.id)
+    .run();
+  await db
+    .prepare(
+      "INSERT INTO site_public_shares(site_id,public_id,enabled,events,visitors,revenue,conversions) VALUES (?,?,1,1,1,1,1)",
+    )
+    .bind(demoId, publicId)
+    .run();
+  const counts = () =>
+    db
+      .prepare(
+        "SELECT (SELECT count(*) FROM events WHERE site_id=?) AS events,(SELECT count(*) FROM payments WHERE site_id=?) AS payments,(SELECT count(*) FROM events WHERE site_id!=?) AS other",
+      )
+      .bind(demoId, demoId, demoId)
+      .first();
+  const before = await counts();
+  const worker = await mf.getWorker();
+  const scheduledTime = Math.floor(Date.now() / 3600000) * 3600000;
+  await worker.scheduled({ cron: "17 * * * *", scheduledTime });
+  const first = await counts();
+  assert.ok(first.events > 400);
+  assert.ok(first.payments > 20);
+  assert.equal(first.other, before.other);
+  await worker.scheduled({ cron: "17 * * * *", scheduledTime });
+  assert.deepEqual(await counts(), first);
+  const demo = await request("/demo");
+  assert.equal(demo.status, 307);
+  assert.match(
+    demo.headers.get("location"),
+    new RegExp(`/share/${publicId}/overview`),
+  );
+  const page = await request(`/share/${publicId}/overview?days=30`).then((r) =>
+    r.text(),
+  );
+  assert.match(page, /Sample data/);
+  const landing = await request("/").then((r) => r.text());
+  assert.match(landing, /View demo/);
+  await db
+    .prepare("UPDATE site_public_shares SET enabled=0 WHERE site_id=?")
+    .bind(demoId)
+    .run();
+  await worker.scheduled({
+    cron: "17 * * * *",
+    scheduledTime: scheduledTime + 3600000,
+  });
+  assert.deepEqual(await counts(), first);
 });
 
 test("payload limits, sign-in, expired sessions and logout are enforced", async () => {

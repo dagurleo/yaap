@@ -1,3 +1,4 @@
+import type { ReportActor } from "./access";
 import { ownedSite, requireSiteView } from "./access";
 import { propertyMatch } from "./conversion-match";
 import { sql } from "drizzle-orm";
@@ -140,7 +141,7 @@ async function funnelCounts(
 }
 export async function siteFunnels(
   env: Env,
-  actorUserId: string,
+  actorUserId: ReportActor,
   siteId: string,
   input: ReportFilters,
   funnelId?: string,
@@ -150,6 +151,7 @@ export async function siteFunnels(
     env,
     actorUserId,
     siteId,
+    "funnels",
   );
   filters.timezone = site.timezone;
   const definitions = await db.listFunnels(siteId);

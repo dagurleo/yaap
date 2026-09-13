@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { FunnelSelect } from "./funnel-editor";
-import { conversionsQuery } from "./queries";
+import { useReportQueries } from "./report-queries";
 import type { ReportFilters } from "@/lib/report-filters";
 import {
   conversionFilters,
@@ -25,6 +25,7 @@ export function ConversionBreakdown({
   goalId: string;
   onGoalChange: (id: string) => void;
 }) {
+  const { conversionsQuery } = useReportQueries();
   const [dimension, setDimension] =
     useState<ConversionFilters["dimension"]>("source");
   const [sort, setSort] = useState<ConversionFilters["sort"]>("sessions");

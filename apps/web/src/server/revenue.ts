@@ -1,3 +1,4 @@
+import type { ReportActor } from "./access";
 import {
   attributionColumns,
   reconcilePaymentAttribution,
@@ -39,7 +40,7 @@ export type RevenuePayment = {
 };
 export async function siteRevenue(
   env: Env,
-  actorUserId: string,
+  actorUserId: ReportActor,
   siteId: string,
   input: RevenueFilters,
 ) {
@@ -47,10 +48,12 @@ export async function siteRevenue(
     env,
     actorUserId,
     siteId,
+    "revenue",
   );
   const filters = { ...revenueFilters(input), timezone: site.timezone };
   const period = reportPeriod(filters);
-  await reconcilePaymentAttribution(env, { siteId });
+  if (typeof actorUserId === "string")
+    await reconcilePaymentAttribution(env, { siteId });
   const base = (start: number, end: number) =>
     revenueFrom(siteId, filters, start, end);
   const current = base(period.start, period.end);

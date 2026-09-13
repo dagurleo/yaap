@@ -67,7 +67,7 @@ export function PublicPage({
               Have a question?
               <br />
               <a href="/contact">
-                Get in touch <span aria-hidden="true">↗</span>
+                Get in touch
               </a>
             </p>
           </aside>

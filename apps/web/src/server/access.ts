@@ -4,9 +4,13 @@ import type { Env } from "../types";
 import type { Site } from "../db/store";
 import { sql } from "drizzle-orm";
 
-export type SiteAccess = "owner" | "viewer";
+export type SiteAccess = "owner" | "viewer" | "public";
 export type SiteCapabilities = {
   viewAnalytics: true;
+  events: boolean;
+  visitors: boolean;
+  revenue: boolean;
+  conversions: boolean;
   manageSite: boolean;
   managePeople: boolean;
   manageCredentials: boolean;
@@ -35,6 +39,10 @@ export function safeSite(site: Site, access: SiteAccess): SafeSite {
     access,
     capabilities: {
       viewAnalytics: true,
+      events: true,
+      visitors: true,
+      revenue: true,
+      conversions: true,
       manageSite: manage,
       managePeople: manage,
       manageCredentials: manage,
@@ -63,6 +71,10 @@ export async function listAccessibleSites(
     ...row,
     capabilities: {
       viewAnalytics: true,
+      events: true,
+      visitors: true,
+      revenue: true,
+      conversions: true,
       manageSite: row.access === "owner",
       managePeople: row.access === "owner",
       manageCredentials: row.access === "owner",
@@ -72,10 +84,18 @@ export async function listAccessibleSites(
 
 export async function requireSiteView(
   env: Env,
-  actorUserId: string,
+  actorUserId: ReportActor,
   siteId: string,
+  report: PublicReport = "overview",
 ) {
   validSiteId(siteId);
+  if (typeof actorUserId !== "string") {
+    const { resolvePublicSite } = await import("./public-sharing");
+    const shared = await resolvePublicSite(env, actorUserId.publicId, report);
+    if (shared.site.id !== siteId)
+      throw new HttpError(404, "Website not found");
+    return shared;
+  }
   const db = createDb(env);
   const [grant] = await db.all<{ access: SiteAccess; workspaceId: string }>(
     sql`select case when w.owner_user_id=${actorUserId} then 'owner' else 'viewer' end as access,w.id as "workspaceId"
@@ -137,3 +157,14 @@ export async function requireAccountOwner(
 
 /** Compatibility name for management call sites. Never use for report reads. */
 export const ownedSite = requireSiteManage;
+
+export type ReportActor = string | { publicId: string };
+export type PublicReport =
+  | "overview"
+  | "events"
+  | "visitors"
+  | "journey"
+  | "revenue"
+  | "funnels"
+  | "conversions"
+  | "live";

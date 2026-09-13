@@ -1,3 +1,5 @@
+import { ReportLink, usePublicDashboard } from "./public-context";
+import type { SafeSite } from "@/server/access";
 import { TimezoneSelect } from "./timezone-select";
 import {
   BoardSkeleton,
@@ -41,15 +43,7 @@ import { HeaderAccount } from "@/components/account-menu";
 import { reportFilters } from "@/lib/report-filters";
 import { sitesQuery } from "./queries";
 import { addSiteFn } from "./functions";
-export function WebsiteLayout({
-  children,
-  title,
-  selectedSiteId,
-  hideHeading = false,
-  footer,
-  headerTabs,
-  headerActions,
-}: {
+type WebsiteLayoutProps = {
   children: ReactNode;
   title?: string;
   selectedSiteId?: string;
@@ -57,7 +51,21 @@ export function WebsiteLayout({
   footer?: ReactNode;
   headerTabs?: ReactNode;
   headerActions?: ReactNode;
-}) {
+};
+
+function WebsiteLayoutContent({
+  sites,
+  canAddSite = false,
+  children,
+  title,
+  selectedSiteId,
+  hideHeading = false,
+  footer,
+  headerTabs,
+  headerActions,
+}: WebsiteLayoutProps & { sites: SafeSite[]; canAddSite?: boolean }) {
+  const shared = usePublicDashboard();
+  selectedSiteId = shared?.site.id ?? selectedSiteId;
   const destination = useRouterState({
     select: (state) =>
       state.isLoading && state.location.href !== state.resolvedLocation?.href
@@ -66,7 +74,8 @@ export function WebsiteLayout({
   });
   const destinationParts = destination?.split("/");
   const pendingBoard: Board | undefined =
-    destinationParts?.[1] === "app" &&
+    (destinationParts?.[1] === "app" ||
+      (shared && destinationParts?.[1] === "share")) &&
     destinationParts[2] &&
     destinationParts[2] !== "access"
       ? Object.hasOwn(boardTitles, destinationParts[3] ?? "")
@@ -74,7 +83,8 @@ export function WebsiteLayout({
         : "overview"
       : undefined;
   if (pendingBoard) {
-    selectedSiteId = decodeURIComponent(destinationParts![2]);
+    selectedSiteId =
+      shared?.site.id ?? decodeURIComponent(destinationParts![2]);
     title = boardTitles[pendingBoard];
     hideHeading = pendingBoard === "overview";
     headerTabs =
@@ -83,16 +93,16 @@ export function WebsiteLayout({
     footer = undefined;
   }
   const search = useSearch({ strict: false });
-  const { access } = useRouteContext({ from: "/_app" });
   const [menuOpen, setMenuOpen] = useState(false);
-  const { data: sites = [] } = useQuery(sitesQuery());
   const client = useQueryClient();
   const router = useRouter();
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const [timezone, setTimezone] = useState("UTC");
   const selected = sites.find((site) => site.id === selectedSiteId);
-  const ownedSites = sites.filter((site) => site.access === "owner");
+  const ownedSites = sites.filter(
+    (site) => site.access === "owner" || site.access === "public",
+  );
   const sharedSites = sites.filter((site) => site.access === "viewer");
   const mutation = useMutation({
     mutationFn: (data: { name: string; origin: string }) => addSiteFn({ data }),
@@ -144,12 +154,12 @@ export function WebsiteLayout({
           className="website-switcher-menu w-64"
         >
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-            Your websites
+            {shared ? "Shared website" : "Your websites"}
           </DropdownMenuLabel>
           {ownedSites.length ? (
             ownedSites.map((site) => (
               <DropdownMenuItem key={site.id} asChild>
-                <Link
+                <ReportLink
                   to="/app/$siteId/overview"
                   params={{ siteId: site.id }}
                   search={{ days: 7 }}
@@ -161,7 +171,7 @@ export function WebsiteLayout({
                   </span>
                   <span className="min-w-0 flex-1 truncate">{site.name}</span>
                   {site.id === selectedSiteId && <Check aria-hidden="true" />}
-                </Link>
+                </ReportLink>
               </DropdownMenuItem>
             ))
           ) : (
@@ -195,11 +205,15 @@ export function WebsiteLayout({
               ))}
             </>
           )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link to="/app">All websites</Link>
-          </DropdownMenuItem>
-          {access.user?.ownsAccount && (
+          {!shared && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/app">All websites</Link>
+              </DropdownMenuItem>
+            </>
+          )}
+          {canAddSite && (
             <DropdownMenuItem
               className="text-muted-foreground"
               onSelect={() => {
@@ -232,7 +246,10 @@ export function WebsiteLayout({
     <section className={selectedSiteId ? "dashboard-shell" : "space-y-5"}>
       {selectedSiteId && (
         <header className="dashboard-mobile-header">
-          <Link to="/app" className="font-semibold tracking-tight">
+          <Link
+            to={shared ? "/" : "/app"}
+            className="font-semibold tracking-tight"
+          >
             <img
               className="dashboard-logo dashboard-logo-light"
               src="/brand/logo-light.svg"
@@ -259,7 +276,13 @@ export function WebsiteLayout({
               {menuOpen ? <X /> : <GraphiteIcon name="menu" />}{" "}
               {menuOpen ? "Close" : "Menu"}
             </Button>
-            <HeaderAccount />
+            {shared ? (
+              <Button asChild size="sm">
+                <Link to="/">Get started</Link>
+              </Button>
+            ) : (
+              <HeaderAccount />
+            )}
           </div>
         </header>
       )}
@@ -269,7 +292,7 @@ export function WebsiteLayout({
         data-open={menuOpen}
       >
         {selectedSiteId && (
-          <Link to="/app" className="dashboard-brand">
+          <Link to={shared ? "/" : "/app"} className="dashboard-brand">
             <img
               className="dashboard-logo dashboard-logo-light"
               src="/brand/logo-light.svg"
@@ -300,64 +323,66 @@ export function WebsiteLayout({
           }
         >
           {selectedSiteId && sitePicker}
-          <Dialog
-            open={open}
-            onOpenChange={(value) => {
-              if (value)
-                setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-              setOpen(value);
-            }}
-          >
-            {!selectedSiteId && access.user?.ownsAccount && (
-              <DialogTrigger asChild>
-                <Button aria-label="Add website" variant="primary">
-                  <Plus aria-hidden="true" /> Add website
-                </Button>
-              </DialogTrigger>
-            )}
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add a website</DialogTitle>
-                <DialogDescription className="sr-only">
-                  Install one snippet to start collecting traffic.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={submit}>
-                <Label>
-                  Website name
-                  <Input
-                    name="name"
-                    placeholder="My website"
-                    maxLength={120}
-                    required
-                  />
-                </Label>
-                <Label>
-                  Website origin
-                  <Input
-                    name="origin"
-                    type="url"
-                    placeholder="https://example.com"
-                    required
-                  />
-                  <small>Include the protocol. Leave out paths.</small>
-                </Label>
-                <TimezoneSelect value={timezone} onChange={setTimezone} />
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={mutation.isPending}
-                >
-                  {mutation.isPending ? "Adding…" : "Add website"}
-                </Button>
-                {error && (
-                  <p className="text-destructive" role="alert">
-                    {error}
-                  </p>
-                )}
-              </form>
-            </DialogContent>
-          </Dialog>
+          {!shared && (
+            <Dialog
+              open={open}
+              onOpenChange={(value) => {
+                if (value)
+                  setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+                setOpen(value);
+              }}
+            >
+              {!selectedSiteId && canAddSite && (
+                <DialogTrigger asChild>
+                  <Button aria-label="Add website" variant="primary">
+                    <Plus aria-hidden="true" /> Add website
+                  </Button>
+                </DialogTrigger>
+              )}
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add a website</DialogTitle>
+                  <DialogDescription className="sr-only">
+                    Install one snippet to start collecting traffic.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={submit}>
+                  <Label>
+                    Website name
+                    <Input
+                      name="name"
+                      placeholder="My website"
+                      maxLength={120}
+                      required
+                    />
+                  </Label>
+                  <Label>
+                    Website origin
+                    <Input
+                      name="origin"
+                      type="url"
+                      placeholder="https://example.com"
+                      required
+                    />
+                    <small>Include the protocol. Leave out paths.</small>
+                  </Label>
+                  <TimezoneSelect value={timezone} onChange={setTimezone} />
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={mutation.isPending}
+                  >
+                    {mutation.isPending ? "Adding…" : "Add website"}
+                  </Button>
+                  {error && (
+                    <p className="text-destructive" role="alert">
+                      {error}
+                    </p>
+                  )}
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
         {selectedSiteId && (
           <SiteTabs
@@ -389,6 +414,7 @@ export function WebsiteLayout({
               sites={sites}
               siteId={selectedSiteId}
               filters={reportFilters(search)}
+              canManage={selected?.capabilities.manageSite ?? false}
             />
           )}
           <div className={selectedSiteId ? "dashboard-content" : undefined}>
@@ -403,5 +429,26 @@ export function WebsiteLayout({
         </div>
       </div>
     </section>
+  );
+}
+
+function AuthenticatedWebsiteLayout(props: WebsiteLayoutProps) {
+  const { access } = useRouteContext({ from: "/_app" });
+  const { data: sites = [] } = useQuery(sitesQuery());
+  return (
+    <WebsiteLayoutContent
+      {...props}
+      sites={sites}
+      canAddSite={access.user?.ownsAccount ?? false}
+    />
+  );
+}
+
+export function WebsiteLayout(props: WebsiteLayoutProps) {
+  const shared = usePublicDashboard();
+  return shared ? (
+    <WebsiteLayoutContent {...props} sites={[shared.site]} />
+  ) : (
+    <AuthenticatedWebsiteLayout {...props} />
   );
 }

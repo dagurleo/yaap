@@ -1,3 +1,4 @@
+import type { ReportActor } from "./access";
 import { sql } from "drizzle-orm";
 import { eventFilters, type EventFilters } from "../lib/event-filters";
 import type { EventProperties, PropertyValue } from "../lib/event-properties";
@@ -16,7 +17,7 @@ type EventRow = {
 };
 export async function siteEventExplorer(
   env: Env,
-  actorUserId: string,
+  actorUserId: ReportActor,
   siteId: string,
   input: EventFilters,
 ) {
@@ -25,6 +26,7 @@ export async function siteEventExplorer(
     env,
     actorUserId,
     siteId,
+    "events",
   );
   filters.timezone = site.timezone;
   const period = reportPeriod(filters, filters.asOf ?? Date.now());

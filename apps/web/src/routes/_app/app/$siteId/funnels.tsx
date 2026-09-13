@@ -1,3 +1,4 @@
+import { useReportQueries } from "@/features/dashboard/report-queries";
 import { dashboardPending } from "@/features/dashboard/dashboard-pending";
 import { conditionsLabel } from "@/lib/conversion-conditions";
 import { useState, useRef } from "react";
@@ -46,6 +47,20 @@ function Funnels() {
   const { siteId } = Route.useParams();
   const filters = Route.useSearch();
   const navigate = Route.useNavigate();
+  return (
+    <FunnelsReport siteId={siteId} filters={filters} navigate={navigate} />
+  );
+}
+export function FunnelsReport({
+  siteId,
+  filters,
+  navigate,
+}: {
+  siteId: string;
+  filters: ReturnType<typeof Route.useSearch>;
+  navigate: ReturnType<typeof Route.useNavigate>;
+}) {
+  const { funnelsQuery } = useReportQueries();
   const { data, error, refetch, isFetching } = useSuspenseQuery(
     funnelsQuery(siteId, filters),
   );

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdtemp, open, rm, readFile } from "node:fs/promises";
+import { mkdtemp, open, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -82,6 +82,11 @@ export function optionsFromArgs(args) {
       name: { type: "string", default: "Atlas Demo" },
       origin: { type: "string", default: "https://atlas-demo.example" },
       help: { type: "boolean" },
+      public: { type: "boolean" },
+      demo: { type: "boolean" },
+      output: { type: "string" },
+      "owner-id": { type: "string" },
+      "workspace-id": { type: "string" },
     },
   });
   if (values.help) return { help: true };
@@ -105,6 +110,8 @@ export function optionsFromArgs(args) {
     throw new Error(
       "--origin must be an exact HTTPS origin, e.g. https://demo.example.",
     );
+  if (values.demo && values.origin !== "https://atlas-demo.example")
+    throw new Error("--demo requires the synthetic atlas-demo.example origin.");
   return values;
 }
 
@@ -119,6 +126,8 @@ export function* generateSeed({
   name = "Atlas Demo",
   origin = "https://atlas-demo.example",
   now = Date.now(),
+  public: publicDashboard = false,
+  demo = false,
 }) {
   let state = seed >>> 0;
   const random = () => {
@@ -389,6 +398,20 @@ export function* generateSeed({
         last,
       ]),
     );
+  if (publicDashboard || demo)
+    yield insert(
+      "site_public_shares",
+      [
+        "site_id",
+        "public_id",
+        "enabled",
+        "events",
+        "visitors",
+        "revenue",
+        "conversions",
+      ],
+      [[siteId, siteId, 1, 1, 1, 1, 1]],
+    );
 }
 
 function wrangler(args) {
@@ -488,7 +511,23 @@ export async function seedPostgres(pool, options) {
   }
 }
 
-function printResult(options, { siteId, events, payments }) {
+async function printResult(options, { siteId, events, payments }) {
+  if (options.public || options.demo)
+    console.log(`Public dashboard: http://localhost:8790/share/${siteId}`);
+  if (options.demo) {
+    const file = join(root, ".dev.vars");
+    const previous = await readFile(file, "utf8").catch((error) => {
+      if (error.code === "ENOENT") return "";
+      throw error;
+    });
+    const next = previous.replace(/^YAAP_DEMO_SITE_ID=.*\n?/gm, "");
+    await writeFile(file, `${next.trimEnd()}\nYAAP_DEMO_SITE_ID=${siteId}\n`, {
+      mode: 0o600,
+    });
+    console.log(
+      "Demo configured locally. Restart the dev server, then open /demo. The existing hourly Worker schedule refreshes synthetic traffic in deployed environments.",
+    );
+  }
   console.log(
     `Created ${options.name}: ${events.toLocaleString()} events, ${payments.toLocaleString()} payments, 3 goals, 2 funnels.\nhttp://localhost:8790/app/${siteId}/overview?days=30\nLive activity expires after five minutes; rerun to create another fresh demo site.`,
   );
@@ -499,6 +538,29 @@ async function main() {
   if (options.help) {
     console.log(
       "Usage: npm run db:seed -- [--sessions 100000] [--days 180] [--seed 42] [--name 'Atlas Demo'] [--origin https://atlas-demo.example]\nCreates a NEW site for the existing owner in the local backend selected by DATABASE_PROVIDER (D1 by default). Reads .dev.vars, with environment overrides. For Postgres, DATABASE_URL must point to localhost. Apply that backend's migrations first. Never seeds a remote database.",
+    );
+    return;
+  }
+  if (options.output) {
+    if (!options["owner-id"] || !options["workspace-id"])
+      throw new Error(
+        "SQL export requires --owner-id and --workspace-id for the target installation.",
+      );
+    const siteId = randomUUID();
+    const file = await open(options.output, "wx");
+    try {
+      for (const statement of generateSeed({
+        ...options,
+        siteId,
+        ownerId: options["owner-id"],
+        workspaceId: options["workspace-id"],
+      }))
+        await file.write(statement);
+    } finally {
+      await file.close();
+    }
+    console.log(
+      `Wrote synthetic seed SQL to ${options.output}. No database was changed.\nSite ID: ${siteId}\n${options.public || options.demo ? `Public URL after import: /share/${siteId}\n` : ""}${options.demo ? `Set YAAP_DEMO_SITE_ID=${siteId} on the existing Worker after import.` : ""}`,
     );
     return;
   }
@@ -519,7 +581,7 @@ async function main() {
       console.log(
         `Generating and importing ${options.sessions.toLocaleString()} visits over ${options.days} days into local Postgres for ${options.name}…`,
       );
-      printResult(options, await seedPostgres(pool, options));
+      await printResult(options, await seedPostgres(pool, options));
     } finally {
       await pool.end();
     }
@@ -556,7 +618,7 @@ async function main() {
     const counts = query(
       `SELECT (SELECT count(*) FROM events WHERE site_id=${quote(siteId)}) AS events, (SELECT count(*) FROM payments WHERE site_id=${quote(siteId)}) AS payments`,
     )[0];
-    printResult(options, { siteId, ...counts });
+    await printResult(options, { siteId, ...counts });
     await rm(dir, { recursive: true, force: true });
   } catch (error) {
     throw new Error(

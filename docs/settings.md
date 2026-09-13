@@ -34,3 +34,7 @@ Use `pause()` / `resume()` to control collection and `setIdentifiers(boolean)` t
 ## Reporting timezone
 
 General settings accepts IANA timezone names (for example `Asia/Tokyo`). New websites suggest the browser timezone; existing websites remain UTC until changed. The setting applies to all reports, comparisons, displayed timestamps, exports and API date ranges. Stored timestamps remain UTC. Apply D1 migration `0020_reporting_timezone.sql` or PostgreSQL migration `0008_reporting_timezone.sql` before running this version.
+
+## Public dashboards
+
+Open **Public dashboard** to share traffic reports without requiring login. Sharing is private by default; events, visitor journeys, conversions and revenue require separate opt-ins. Save with sharing disabled to revoke public access. See [public sharing and demo setup](PUBLIC_SHARING.md) for the data included in each option and deployment instructions.

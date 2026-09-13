@@ -170,3 +170,61 @@ test("seed selects the configured local backend and rejects remote Postgres", ()
     "postgres",
   );
 });
+
+test("public demo SQL export is importable and never overwrites an existing file", async () => {
+  const { mkdtemp, readFile, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { execFileSync } = await import("node:child_process");
+  const directory = await mkdtemp(join(tmpdir(), "yaap-demo-export-"));
+  const file = join(directory, "demo.sql");
+  const args = [
+    "scripts/seed-site.mjs",
+    "--demo",
+    "--sessions",
+    "100",
+    "--output",
+    file,
+    "--owner-id",
+    "owner",
+    "--workspace-id",
+    "workspace",
+  ];
+  const db = new DatabaseSync(":memory:");
+  try {
+    const output = execFileSync(process.execPath, args, {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DATABASE_URL: "postgresql://invalid.invalid/no-database",
+      },
+    });
+    assert.match(output, /No database was changed/);
+    assert.match(output, /YAAP_DEMO_SITE_ID=/);
+    for (const name of readdirSync("migrations")
+      .filter((name) => name.endsWith(".sql"))
+      .sort())
+      db.exec(readFileSync(join("migrations", name), "utf8"));
+    db.exec(
+      "INSERT INTO user(id,name,email) VALUES ('owner','Owner','owner@example.test'); INSERT INTO workspaces(id,owner_user_id,created_at,updated_at) VALUES ('workspace','owner',0,0)",
+    );
+    const sql = await readFile(file, "utf8");
+    db.exec(sql);
+    const share = db
+      .prepare(
+        "SELECT enabled,events,visitors,revenue,conversions FROM site_public_shares",
+      )
+      .get();
+    assert.deepEqual(Object.values(share), [1, 1, 1, 1, 1]);
+    assert.ok(
+      db.prepare("SELECT count(*) AS count FROM events").get().count > 100,
+    );
+    assert.throws(() =>
+      execFileSync(process.execPath, args, { stdio: "pipe" }),
+    );
+    assert.equal(await readFile(file, "utf8"), sql);
+  } finally {
+    db.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { eventFilters, type EventFilters } from "@/lib/event-filters";
 import { dimensionKeys } from "@/lib/report-filters";
-import { eventExplorerQuery } from "./queries";
+import { useReportQueries } from "./report-queries";
 import { ActiveFilters, ReportDates } from "./report-controls";
 
 const count = (value: number) => value.toLocaleString("en");
@@ -26,6 +26,7 @@ export function EventExplorer({
   filters: EventFilters;
   onChange: (filters: EventFilters) => void;
 }) {
+  const { eventExplorerQuery } = useReportQueries();
   const { data, error, isFetching, refetch } = useSuspenseQuery(
     eventExplorerQuery(siteId, filters),
   );

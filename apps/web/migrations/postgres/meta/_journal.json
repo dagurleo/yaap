@@ -99,6 +99,13 @@
       "when": 1789192801000,
       "tag": "0014_billing_trial_grace",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789264395168,
+      "tag": "0015_public_site_sharing",
+      "breakpoints": true
     }
   ]
 }

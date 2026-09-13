@@ -4,7 +4,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useMatches, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { HeaderAccount } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/auth/client";
 import type { BillingPlanKey } from "@/lib/billing-plans";
 import type { BillingEntitlementState } from "@/server/billing/entitlements";
 import { billingPortalFn, checkoutFn, reconcileBillingFn } from "./functions";
@@ -108,12 +109,20 @@ export function BillingPage({ search }: { search: BillingSearch }) {
   const { data } = useSuspenseQuery(billingQuery());
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const access = useMatches({
+    select: (matches) =>
+      matches.find((match) => match.routeId === "/_app")?.context.access,
+  });
+  const owner = access?.user;
   const initialPlan = data.entitlements.planKey ?? data.plans[0]?.key;
   const [selectedPlan, setSelectedPlan] = useState<BillingPlanKey | undefined>(
     initialPlan,
   );
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [verificationState, setVerificationState] = useState<
+    "idle" | "sending" | "sent"
+  >("idle");
   const [reconcileState, setReconcileState] = useState<
     "idle" | "checking" | "complete" | "delayed"
   >(
@@ -204,11 +213,30 @@ export function BillingPage({ search }: { search: BillingSearch }) {
     [data.plans, displayedPlanKey],
   );
   const status = statusCopy[data.entitlements.state];
+  const verificationRequired =
+    data.mode === "hosted" && !!owner && !owner.emailVerified;
   const canCheckout =
     data.mode === "hosted" &&
+    !verificationRequired &&
     !subscribed &&
     !!selectedPlan &&
     !checkout.isPending;
+
+  async function resendVerificationEmail() {
+    if (!owner || owner.emailVerified) return;
+    setVerificationState("sending");
+    setError("");
+    const result = await authClient.sendVerificationEmail({
+      email: owner.email,
+      callbackURL: "/app/billing",
+    });
+    if (result.error) {
+      setVerificationState("idle");
+      setError(result.error.message ?? "Could not send the verification email");
+      return;
+    }
+    setVerificationState("sent");
+  }
 
   function dismissNotice() {
     setMessage("");
@@ -296,6 +324,28 @@ export function BillingPage({ search }: { search: BillingSearch }) {
         >
           {error}
         </p>
+      )}
+
+      {verificationRequired && (
+        <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-lg border bg-card px-4 py-3 text-sm sm:flex-row sm:items-center">
+          <div>
+            <p className="font-medium">Verify your account email</p>
+            <p className="mt-1 text-muted-foreground">
+              Verify {owner.email} before starting a trial or subscription.
+            </p>
+          </div>
+          <Button
+            variant="default"
+            disabled={verificationState !== "idle"}
+            onClick={() => void resendVerificationEmail()}
+          >
+            {verificationState === "sending"
+              ? "Sending…"
+              : verificationState === "sent"
+                ? "Verification email sent"
+                : "Send verification email"}
+          </Button>
+        </div>
       )}
 
       {data.mode === "self_hosted" ? (

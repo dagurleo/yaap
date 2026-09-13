@@ -53,7 +53,7 @@ export function LandingHeader({
         </nav>
         <div className="nav-end">
           <a href={hosted ? "/signup" : "/app"}>
-            {hosted ? "Sign up" : "Sign in"} <span aria-hidden="true">↗</span>
+            {hosted ? "Sign up" : "Sign in"}
           </a>
         </div>
         <a

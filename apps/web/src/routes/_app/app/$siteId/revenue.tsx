@@ -1,3 +1,4 @@
+import { useReportQueries } from "@/features/dashboard/report-queries";
 import { dashboardPending } from "@/features/dashboard/dashboard-pending";
 import { Suspense, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -46,6 +47,20 @@ function Revenue() {
   const { siteId } = Route.useParams(),
     filters = Route.useSearch(),
     navigate = Route.useNavigate();
+  return (
+    <RevenueReport siteId={siteId} filters={filters} navigate={navigate} />
+  );
+}
+export function RevenueReport({
+  siteId,
+  filters,
+  navigate,
+}: {
+  siteId: string;
+  filters: ReturnType<typeof Route.useSearch>;
+  navigate: ReturnType<typeof Route.useNavigate>;
+}) {
+  const { revenueQuery } = useReportQueries();
   const { data, error, refetch, isFetching } = useSuspenseQuery(
     revenueQuery(siteId, filters),
   );

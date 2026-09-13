@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { GraphiteIcon } from "@/components/graphite-icon";
 import { HeaderAccount } from "@/components/account-menu";
+import { Button } from "@/components/ui/button";
+import { ReportLink, usePublicDashboard } from "./public-context";
 import {
   ChartNoAxesCombined,
   Users,
@@ -36,6 +38,7 @@ export function WorkspaceHelp({
   siteId: string;
   label?: boolean;
 }) {
+  const shared = usePublicDashboard();
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -60,18 +63,28 @@ export function WorkspaceHelp({
             reports. Anonymous visits count toward pageviews; visitor and
             session reports require enabled identifiers.
           </p>
-          <p>
-            Open Events for your tracking snippet and recent activity. Settings
-            controls bot filtering, retention and ingestion health.
-          </p>
-          <Link
-            className="underline"
-            to="/app/$siteId/events"
-            search={{ days: 7 }}
-            params={{ siteId }}
-          >
-            Installation & events
-          </Link>
+          {!shared && (
+            <p>
+              Open Events for your tracking snippet and recent activity.
+              Settings controls bot filtering, retention and ingestion health.
+            </p>
+          )}
+          {shared && (
+            <p>
+              This dashboard is shared for viewing. Use the sidebar to explore
+              the available reports.
+            </p>
+          )}
+          {(!shared || shared.site.capabilities.events) && (
+            <ReportLink
+              className="underline"
+              to="/app/$siteId/events"
+              search={{ days: 7 }}
+              params={{ siteId }}
+            >
+              {shared ? "Recent events" : "Installation & events"}
+            </ReportLink>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -84,13 +97,16 @@ export function WorkspaceTools({
   sites,
   siteId,
   filters,
+  canManage = false,
 }: {
   tabs?: ReactNode;
   actions?: ReactNode;
   sites: { id: string; name: string; origin: string }[];
   siteId: string;
   filters: ReportFilters;
+  canManage?: boolean;
 }) {
+  const shared = usePublicDashboard();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   useEffect(() => {
@@ -115,6 +131,17 @@ export function WorkspaceTools({
     { label: "Events & installation", icon: Zap, to: "/app/$siteId/events" },
     { label: "Settings", icon: Settings2, to: "/app/$siteId/settings" },
   ] as const;
+  const availablePages = pages.filter((page) => {
+    if (page.to === "/app/$siteId/settings") return canManage && !shared;
+    if (!shared) return true;
+    const report = page.to.split("/").at(-1)!;
+    return (
+      report === "overview" ||
+      (report === "funnels"
+        ? shared.site.capabilities.conversions
+        : shared.site.capabilities[report as "visitors" | "revenue" | "events"])
+    );
+  });
   return (
     <header
       className={`workspace-topbar${tabs ? " workspace-topbar-with-tabs" : ""}`}
@@ -123,6 +150,11 @@ export function WorkspaceTools({
         {tabs}
         <div className="workspace-top-right">
           {actions}
+          {shared && (
+            <span className="text-sm text-muted-foreground">
+              {shared.isDemo ? "Sample data" : "Read only"}
+            </span>
+          )}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <button
@@ -149,12 +181,27 @@ export function WorkspaceTools({
                 <CommandList>
                   <CommandEmpty>No matching websites or reports.</CommandEmpty>
                   <CommandGroup heading="Reports">
-                    {pages.map((page) => (
+                    {availablePages.map((page) => (
                       <CommandItem
                         key={page.to}
-                        value={page.label}
+                        value={
+                          shared && page.to === "/app/$siteId/events"
+                            ? "Events"
+                            : page.label
+                        }
                         onSelect={() => {
                           setOpen(false);
+                          if (shared) {
+                            void navigate({
+                              to: "/share/$publicId/$report",
+                              params: {
+                                publicId: shared.publicId,
+                                report: page.to.split("/").at(-1)!,
+                              },
+                              search: filters,
+                            });
+                            return;
+                          }
                           void navigate({
                             to: page.to,
                             params: { siteId },
@@ -169,7 +216,9 @@ export function WorkspaceTools({
                         }}
                       >
                         <page.icon aria-hidden="true" />
-                        {page.label}
+                        {shared && page.to === "/app/$siteId/events"
+                          ? "Events"
+                          : page.label}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -182,6 +231,17 @@ export function WorkspaceTools({
                         keywords={[site.name, site.origin]}
                         onSelect={() => {
                           setOpen(false);
+                          if (shared) {
+                            void navigate({
+                              to: "/share/$publicId/$report",
+                              params: {
+                                publicId: shared.publicId,
+                                report: "overview",
+                              },
+                              search: filters,
+                            });
+                            return;
+                          }
                           void navigate({
                             to: "/app/$siteId/overview",
                             params: { siteId: site.id },
@@ -210,16 +270,24 @@ export function WorkspaceTools({
             </DialogContent>
           </Dialog>
           <WorkspaceHelp siteId={siteId} />
-          <Link
-            className="workspace-icon-button"
-            to="/app/$siteId/events"
-            search={{ days: 7 }}
-            params={{ siteId }}
-            aria-label="Recent events"
-          >
-            <GraphiteIcon name="bell" />
-          </Link>
-          <HeaderAccount />
+          {(!shared || shared.site.capabilities.events) && (
+            <ReportLink
+              className="workspace-icon-button"
+              to="/app/$siteId/events"
+              search={{ days: 7 }}
+              params={{ siteId }}
+              aria-label="Recent events"
+            >
+              <GraphiteIcon name="bell" />
+            </ReportLink>
+          )}
+          {shared ? (
+            <Button asChild size="sm" className="hidden min-[701px]:inline-flex">
+              <Link to="/">Get started</Link>
+            </Button>
+          ) : (
+            <HeaderAccount />
+          )}
         </div>
       </div>
     </header>

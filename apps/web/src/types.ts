@@ -28,6 +28,8 @@ export interface BillingReceiptMessage {
 export type EventQueueMessage = AnalyticsEvent | BillingReceiptMessage;
 
 export interface Env {
+  /** Synthetic site used by /demo; never configure a customer site here. */
+  YAAP_DEMO_SITE_ID?: string;
   DB?: D1Database;
   DATABASE_PROVIDER?: "d1" | "postgres";
   HYPERDRIVE?: Hyperdrive;

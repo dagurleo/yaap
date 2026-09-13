@@ -6,12 +6,13 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { reportFilters } from "@/lib/report-filters";
-import { liveQuery } from "./queries";
+import { useReportQueries } from "./report-queries";
 import { BreakdownIcon } from "./breakdown-icon";
 import { TrafficSourceIcon } from "./traffic-source-icon";
 
 const regions = new Intl.DisplayNames(["en"], { type: "region" });
 export function OnlineNow({ siteId }: { siteId: string }) {
+  const { liveQuery } = useReportQueries();
   // Presence always describes this website now, independent of report dates/segments.
   const live = useQuery(liveQuery(siteId, reportFilters({})));
   const online = live.data?.online;

@@ -1,5 +1,5 @@
-import {useQuery} from "@tanstack/react-query";
-import {liveQuery} from "./queries";
+import { useQuery } from "@tanstack/react-query";
+import { useReportQueries } from "./report-queries";
 import { FilterValue, type ApplyFilter } from "./report-controls";
 import { unknownValue, type Dimension } from "@/lib/report-filters";
 import { useState, type ReactNode } from "react";
@@ -94,7 +94,11 @@ export function VisitorInsights({
   data: Report;
   onFilter: ApplyFilter;
 }) {
-  const live = useQuery(liveQuery(data.site.id,data.filters));
+  const { liveQuery } = useReportQueries();
+  const live = useQuery({
+    ...liveQuery(data.site.id, data.filters),
+    enabled: data.site.capabilities.visitors,
+  });
   const [geo, setGeo] = useState<"countries" | "regions" | "cities">(
     "countries",
   );

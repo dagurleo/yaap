@@ -1,6 +1,6 @@
 import { formatTimestamp } from "@/lib/report-timezone";
 import { useReportingTimezone } from "./report-timezone";
-import { Link } from "@tanstack/react-router";
+import { ReportLink as Link } from "./public-context";
 import { money } from "@/lib/money";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { FileText, MousePointer2, Flag } from "lucide-react";
@@ -11,10 +11,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { journeyQuery } from "./queries";
+import { useReportQueries } from "./report-queries";
 import type { JourneyEvent } from "../../server/visitors";
 
-export const visitorLabel = (id: string) => `Visitor ${id.slice(0, 8)}`;
+export const visitorLabel = (id: string) => {
+  const seeded =
+    id.match(/^[a-f0-9-]{36}-v(\d+)$/) ?? id.match(/^demo-visitor-(\d+-\d+)$/);
+  return `Visitor ${seeded ? seeded[1] : id.slice(0, 8)}`;
+};
 export const timestamp = formatTimestamp;
 export function JourneyDrawer({
   siteId,
@@ -29,6 +33,7 @@ export function JourneyDrawer({
   onClose: () => void;
   restoreFocus: () => void;
 }) {
+  const { journeyQuery } = useReportQueries();
   const timezone = useReportingTimezone();
   const query = useInfiniteQuery(journeyQuery(siteId, visitorId, asOf));
   const summary = query.data?.pages[0];

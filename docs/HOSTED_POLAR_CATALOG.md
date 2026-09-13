@@ -1,6 +1,6 @@
 # Hosted Polar catalog proposal
 
-2026-09-12. Concrete launch proposal. The six products below are provisioned only in the Polar sandbox; no matching production products have been created. This is the latest packaging recommendation after the competitor, retention, single-node ARM and allowance-utilization discussion. Read with [billing scope](HOSTED_BILLING_SCOPE.md), [competitor research](HOSTED_PRICING_RESEARCH.md) and [infrastructure scenarios](HOSTED_INFRASTRUCTURE_COSTS.md).
+2026-09-13. Concrete launch proposal. The six products below are provisioned separately in both Polar sandbox and production. Production products remain private until the launch checklist is complete. This is the latest packaging recommendation after the competitor, retention, single-node ARM and allowance-utilization discussion. Read with [billing scope](HOSTED_BILLING_SCOPE.md), [competitor research](HOSTED_PRICING_RESEARCH.md) and [infrastructure scenarios](HOSTED_INFRASTRUCTURE_COSTS.md).
 
 The [billing implementation plan](HOSTED_BILLING_IMPLEMENTATION_PLAN.md) turns this catalog and the confirmed limit-triggered upgrade flow into staged engineering work, including durable accounting and acceptance tests. Use it as the new-session execution reference.
 
@@ -31,6 +31,27 @@ Provisioned and verified on 2026-09-12 in Polar organization `Mucho ehf (Sandbox
 | hosted_10m_monthly_v1  | 08eaacf2-ec13-4e20-82fb-3fbdd1faf3b2 |
 
 All six list back as private, monthly recurring fixed-price USD products with tax-exclusive pricing, no Polar trial and no attached benefits. Their metadata records `yaap_plan_key`, `yaap_catalog_version=1`, `event_allowance` and `admission_ceiling`. The app's server-side sandbox allowlist remains authoritative.
+
+### Provisioned production mapping
+
+Provisioned and verified on 2026-09-13 in Polar organization `Mucho ehf` (`0ceee3dc-4cda-4ee5-8607-876531edb2c9`). These IDs are production-only and must never be used in sandbox configuration.
+
+| Internal plan key      | Polar production product ID          |
+| ---------------------- | ------------------------------------ |
+| hosted_100k_monthly_v1 | c93b6b10-460f-402c-b444-bca177b69c52 |
+| hosted_500k_monthly_v1 | 4fedda15-07be-4ee5-a66c-07f0c077b006 |
+| hosted_1m_monthly_v1   | 89a2fd87-2257-420f-a8dd-8d6c25ee6dc2 |
+| hosted_2m_monthly_v1   | 377deaa2-6841-4dbc-b8f1-142f87a9eb38 |
+| hosted_5m_monthly_v1   | b847eff0-df95-4cbf-b4f2-1a5cd45dc107 |
+| hosted_10m_monthly_v1  | 3abc5bcc-a64a-4467-8086-7da82d46af21 |
+
+All six production products list back as private, active, monthly recurring fixed-price USD products with tax-exclusive pricing, no Polar trial and no attached benefits. Their metadata records `app=yaap`, the internal plan key, catalog version, allowance and admission ceiling. No production checkout, customer, subscription or webhook was created during product provisioning.
+
+The production Worker was configured with `POLAR_ENVIRONMENT=production` and the following non-secret allowlist on 2026-09-13. Its production access token and webhook signing secret are encrypted Worker secrets, not source-controlled variables:
+
+```env
+POLAR_PRODUCT_IDS={"hosted_100k_monthly_v1":"c93b6b10-460f-402c-b444-bca177b69c52","hosted_500k_monthly_v1":"4fedda15-07be-4ee5-a66c-07f0c077b006","hosted_1m_monthly_v1":"89a2fd87-2257-420f-a8dd-8d6c25ee6dc2","hosted_2m_monthly_v1":"377deaa2-6841-4dbc-b8f1-142f87a9eb38","hosted_5m_monthly_v1":"b847eff0-df95-4cbf-b4f2-1a5cd45dc107","hosted_10m_monthly_v1":"3abc5bcc-a64a-4467-8086-7da82d46af21"}
+```
 
 Above 10M: contact us, with a separately agreed allowance and price. Do not create an unlimited-volume product. Keep any volume unavailable for purchase until its ingestion, reports and maintenance have passed appropriate capacity checks. The catalog does not establish those capacities.
 
@@ -93,4 +114,4 @@ Polar supports immediate prorated charges and next-period scheduled changes; an 
 3. Verify successful/failed payments, duplicate webhooks, upgrades, scheduled downgrades, cancellation, trial conversion and usage boundaries. Exercise supported volumes before making them purchasable.
 4. Create matching production products after the commercial terms and hosted behavior are ready. Keep production IDs separate; do not copy sandbox IDs.
 
-Only the six sandbox products recorded above were created. No production products, checkout links, customer accounts or billing settings were created or changed.
+Only the twelve products recorded above—six isolated sandbox products and six isolated production products—were created. A signed production webhook targets `https://yaap.sh/api/billing/webhooks/polar` using API version `2026-04`. No production checkout links, customer accounts, subscriptions or organization billing settings were created or changed during provisioning.

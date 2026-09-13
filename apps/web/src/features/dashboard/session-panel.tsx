@@ -14,7 +14,7 @@ import {
 import { BreakdownIcon } from "./breakdown-icon";
 import { FilterValue, type ApplyFilter } from "./report-controls";
 import { JourneyDrawer, visitorLabel } from "./journey-drawer";
-import { liveQuery } from "./queries";
+import { useReportQueries } from "./report-queries";
 import { TrafficSourceIcon } from "./traffic-source-icon";
 import type { overviewFn } from "./functions";
 type Report = Awaited<ReturnType<typeof overviewFn>>;
@@ -32,12 +32,14 @@ export function SessionPanel({
   data: Report;
   onFilter: ApplyFilter;
 }) {
+  const { liveQuery } = useReportQueries();
   const [tab, setTab] = useState<"entryPages" | "exitPages">("entryPages");
   const stats = data.sessionStats;
   const previous = data.comparison?.sessionStats;
   const live = useQuery({
     ...liveQuery(data.site.id, data.filters),
     initialData: data.live ?? undefined,
+    enabled: data.site.capabilities.visitors,
   });
   const [selected, setSelected] = useState<{ id: string; asOf: number } | null>(
     null,
@@ -130,83 +132,90 @@ export function SessionPanel({
           <p className="py-8 text-center">No sessions</p>
         )}
       </Card>
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <h3>Live activity</h3>
-          <div className="flex items-center gap-2 text-sm tabular-nums">
-            <span
-              aria-hidden="true"
-              className={`size-2 rounded-full ${live.data?.visitors ? "bg-success" : "bg-chart-previous"}`}
-            />
-            {live.data?.visitors ?? "—"}
+      {data.site.capabilities.visitors && (
+        <Card>
+          <div className="flex items-center justify-between gap-3">
+            <h3>Live activity</h3>
+            <div className="flex items-center gap-2 text-sm tabular-nums">
+              <span
+                aria-hidden="true"
+                className={`size-2 rounded-full ${live.data?.visitors ? "bg-success" : "bg-chart-previous"}`}
+              />
+              {live.data?.visitors ?? "—"}
+            </div>
           </div>
-        </div>
-        <p className="text-xs">Last 5 minutes</p>
-        {live.isError && (
-          <div
-            role="alert"
-            className="flex flex-wrap items-center gap-2 text-sm text-destructive"
-          >
-            Live refresh failed.
-            <Button size="sm" onClick={() => void live.refetch()}>
-              Retry
-            </Button>
-          </div>
-        )}
-        {live.data?.rows.length ? (
-          <ul role="list" className="divide-y divide-border">
-            {live.data?.rows.map((visitor) => (
-              <li key={visitor.visitorId} className="py-3 first:pt-0 last:pb-0">
-                <Button
-                  variant="ghost"
-                  className="h-auto w-full justify-start gap-3 whitespace-normal py-2 text-left"
-                  onClick={(event) => {
-                    trigger.current = event.currentTarget;
-                    setSelected({
-                      id: visitor.visitorId,
-                      asOf: live.data?.asOf ?? data.asOf,
-                    });
-                  }}
-                  aria-label={`View live journey for ${visitorLabel(visitor.visitorId)}`}
+          <p className="text-xs">Last 5 minutes</p>
+          {live.isError && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center gap-2 text-sm text-destructive"
+            >
+              Live refresh failed.
+              <Button size="sm" onClick={() => void live.refetch()}>
+                Retry
+              </Button>
+            </div>
+          )}
+          {live.data?.rows.length ? (
+            <ul role="list" className="divide-y divide-border">
+              {live.data?.rows.map((visitor) => (
+                <li
+                  key={visitor.visitorId}
+                  className="py-3 first:pt-0 last:pb-0"
                 >
-                  <BreakdownIcon kind="country" value={visitor.country} />
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div>{visitorLabel(visitor.visitorId)}</div>
-                    <div className="truncate font-normal text-muted-foreground">
-                      {visitor.name === "pageview"
-                        ? visitor.path
-                        : `${visitor.name} · ${visitor.path}`}
+                  <Button
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-3 whitespace-normal py-2 text-left"
+                    onClick={(event) => {
+                      trigger.current = event.currentTarget;
+                      setSelected({
+                        id: visitor.visitorId,
+                        asOf: live.data?.asOf ?? data.asOf,
+                      });
+                    }}
+                    aria-label={`View live journey for ${visitorLabel(visitor.visitorId)}`}
+                  >
+                    <BreakdownIcon kind="country" value={visitor.country} />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div>{visitorLabel(visitor.visitorId)}</div>
+                      <div className="truncate font-normal text-muted-foreground">
+                        {visitor.name === "pageview"
+                          ? visitor.path
+                          : `${visitor.name} · ${visitor.path}`}
+                      </div>
+                      <div className="flex min-w-0 items-center gap-1.5 text-xs font-normal text-muted-foreground">
+                        <TrafficSourceIcon value={visitor.source} />
+                        <span className="min-w-0 truncate">
+                          {visitor.source}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex min-w-0 items-center gap-1.5 text-xs font-normal text-muted-foreground">
-                      <TrafficSourceIcon value={visitor.source} />
-                      <span className="min-w-0 truncate">{visitor.source}</span>
+                    <div className="flex shrink-0 items-center gap-2 text-xs font-normal text-muted-foreground tabular-nums">
+                      {Math.floor(
+                        ((live.data?.asOf ?? data.asOf) - visitor.receivedAt) /
+                          1000,
+                      )}
+                      s
+                      <ArrowRight aria-hidden="true" className="size-4" />
                     </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2 text-xs font-normal text-muted-foreground tabular-nums">
-                    {Math.floor(
-                      ((live.data?.asOf ?? data.asOf) - visitor.receivedAt) /
-                        1000,
-                    )}
-                    s
-                    <ArrowRight aria-hidden="true" className="size-4" />
-                  </div>
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="py-8 text-center">
-            {live.isPending
-              ? "Loading…"
-              : live.isError
-                ? "Live activity unavailable"
-                : "No recent visitors"}
-          </p>
-        )}
-        {live.data && live.data.visitors > live.data.rows.length && (
-          <p className="text-xs">{live.data?.rows.length} most recent</p>
-        )}
-      </Card>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-8 text-center">
+              {live.isPending
+                ? "Loading…"
+                : live.isError
+                  ? "Live activity unavailable"
+                  : "No recent visitors"}
+            </p>
+          )}
+          {live.data && live.data.visitors > live.data.rows.length && (
+            <p className="text-xs">{live.data?.rows.length} most recent</p>
+          )}
+        </Card>
+      )}
       {selected && (
         <JourneyDrawer
           key={selected.id}

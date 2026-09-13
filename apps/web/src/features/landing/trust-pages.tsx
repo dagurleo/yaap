@@ -598,10 +598,10 @@ const contactSections: PublicSection[] = [
         </p>
         <div className="public-actions">
           <a className="button primary" href={documentationUrl}>
-            Read the docs <span aria-hidden="true">↗</span>
+            Read the docs
           </a>
           <a href={`${repositoryUrl}/issues`}>
-            Open a GitHub issue <span aria-hidden="true">↗</span>
+            Open a GitHub issue
           </a>
         </div>
         <p>
@@ -623,7 +623,7 @@ const contactSections: PublicSection[] = [
         </p>
         <p>
           <a href="/app/billing">
-            Go to Billing <span aria-hidden="true">↗</span>
+            Go to Billing
           </a>
         </p>
         {policyDetails.contactEmail ? (

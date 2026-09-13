@@ -885,3 +885,17 @@ export const paymentAttributions = sqliteTable(
     ),
   ],
 );
+
+export const sitePublicShares = sqliteTable("site_public_shares", {
+  siteId: text("site_id")
+    .primaryKey()
+    .references(() => sites.id, { onDelete: "cascade" }),
+  publicId: text("public_id").notNull().unique(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+  events: integer("events", { mode: "boolean" }).notNull().default(false),
+  visitors: integer("visitors", { mode: "boolean" }).notNull().default(false),
+  revenue: integer("revenue", { mode: "boolean" }).notNull().default(false),
+  conversions: integer("conversions", { mode: "boolean" })
+    .notNull()
+    .default(false),
+});
