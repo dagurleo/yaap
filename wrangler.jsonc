@@ -4,6 +4,9 @@
   "main": "apps/web/src/server.ts",
   "compatibility_date": "2026-09-09",
   "compatibility_flags": ["nodejs_compat"],
+  // Hosted deployments keep environment-specific runtime variables in the
+  // dashboard; do not delete them when publishing a new Worker version.
+  "keep_vars": true,
   // Optional Cloudflare Builds variable: YAAP_PLACEMENT_REGION (e.g. aws:us-east-2).
   // npm run build sets placement.region when provided; unset keeps the default.
   "assets": {

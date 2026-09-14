@@ -25,6 +25,11 @@ for (const path of ["public/script.js", "dist/client/script.js"])
     `${path}: must use the workspace client build`,
   );
 function validate(config, label) {
+  assert.equal(
+    config.keep_vars,
+    true,
+    `${label}: dashboard runtime variables must survive deploys`,
+  );
   const provider = config.vars?.DATABASE_PROVIDER ?? "d1";
   assert.ok(
     ["d1", "postgres"].includes(provider),
@@ -130,6 +135,7 @@ assert.deepEqual(
   source.placement,
   "build must preserve the selected Worker placement",
 );
+assert.equal(built.keep_vars, source.keep_vars);
 assert.deepEqual(
   built.send_email ?? [],
   source.send_email ?? [],
