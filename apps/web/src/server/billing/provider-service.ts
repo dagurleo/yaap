@@ -38,11 +38,27 @@ type HostedConfig = Extract<BillingConfig, { mode: "hosted" }>;
 type OperationRow = {
   id: string;
   operationKey: string;
+  kind: "checkout" | "upgrade" | "downgrade";
   requestFingerprint: string;
+  expectedSubscriptionRevision: string | null;
   selectedPlanKey: string;
   selectedPlanVersion: number;
   state: "pending" | "unknown" | "complete" | "failed";
   providerCheckoutId: string | null;
+};
+
+type ActiveSubscriptionRow = {
+  id: string;
+  polarSubscriptionId: string;
+  planKey: string;
+  providerStatus: string;
+  currentPeriodStartsAt: number;
+  currentPeriodEndsAt: number;
+  cancelAtPeriodEnd: number | boolean;
+  pendingPlanKey: string | null;
+  providerRevision: string;
+  persisted: number;
+  reserved: number;
 };
 
 function hosted(env: Env) {
@@ -56,10 +72,23 @@ function providerFor(config: HostedConfig, provider?: BillingProvider) {
   return provider ?? createBillingProvider(config);
 }
 
-function fingerprint(workspaceId: string, planKey: BillingPlanKey) {
+function checkoutFingerprint(workspaceId: string, planKey: BillingPlanKey) {
   return createHash("sha256")
     .update(
       `${workspaceId}\ncheckout\n${planKey}\n${billingPlan(planKey).version}`,
+    )
+    .digest("hex");
+}
+
+function upgradeFingerprint(
+  workspaceId: string,
+  subscriptionId: string,
+  revision: string,
+  planKey: BillingPlanKey,
+) {
+  return createHash("sha256")
+    .update(
+      `${workspaceId}\nupgrade\n${subscriptionId}\n${revision}\n${planKey}\n${billingPlan(planKey).version}`,
     )
     .digest("hex");
 }
@@ -133,7 +162,7 @@ async function operationByKey(
   operationKey: string,
 ) {
   const [row] = await createDb(env).all<OperationRow>(
-    sql`select id,operation_key as "operationKey",request_fingerprint as "requestFingerprint",selected_plan_key as "selectedPlanKey",selected_plan_version as "selectedPlanVersion",state,provider_checkout_id as "providerCheckoutId"
+    sql`select id,operation_key as "operationKey",kind,request_fingerprint as "requestFingerprint",expected_subscription_revision as "expectedSubscriptionRevision",selected_plan_key as "selectedPlanKey",selected_plan_version as "selectedPlanVersion",state,provider_checkout_id as "providerCheckoutId"
       from billing_operations where workspace_id=${workspaceId} and operation_key=${operationKey} limit 1`,
   );
   return row;
@@ -141,7 +170,7 @@ async function operationByKey(
 
 async function openOperation(env: Env, workspaceId: string) {
   const [row] = await createDb(env).all<OperationRow>(
-    sql`select id,operation_key as "operationKey",request_fingerprint as "requestFingerprint",selected_plan_key as "selectedPlanKey",selected_plan_version as "selectedPlanVersion",state,provider_checkout_id as "providerCheckoutId"
+    sql`select id,operation_key as "operationKey",kind,request_fingerprint as "requestFingerprint",expected_subscription_revision as "expectedSubscriptionRevision",selected_plan_key as "selectedPlanKey",selected_plan_version as "selectedPlanVersion",state,provider_checkout_id as "providerCheckoutId"
       from billing_operations where workspace_id=${workspaceId} and kind='checkout' and state in ('pending','unknown') order by created_at limit 1`,
   );
   return row;
@@ -277,7 +306,7 @@ export async function createHostedCheckout(
   if (active)
     throw new HttpError(409, "This account already has a subscription");
 
-  const requestFingerprint = fingerprint(workspace.id, planKey);
+  const requestFingerprint = checkoutFingerprint(workspace.id, planKey);
   const keyed = await operationByKey(env, workspace.id, operationKey);
   if (keyed) {
     if (keyed.requestFingerprint !== requestFingerprint)
@@ -315,7 +344,9 @@ export async function createHostedCheckout(
   const operation: OperationRow = {
     id,
     operationKey,
+    kind: "checkout",
     requestFingerprint,
+    expectedSubscriptionRevision: null,
     selectedPlanKey: planKey,
     selectedPlanVersion: billingPlan(planKey).version,
     state: "pending",
@@ -370,6 +401,221 @@ export async function createHostedCheckout(
       allowCreate: true,
     },
   );
+}
+
+async function activeSubscription(
+  env: Env,
+  workspaceId: string,
+  environment: HostedConfig["environment"],
+) {
+  const [row] = await createDb(env).all<ActiveSubscriptionRow>(
+    sql`select s.id,s.polar_subscription_id as "polarSubscriptionId",s.plan_key as "planKey",s.provider_status as "providerStatus",s.current_period_starts_at as "currentPeriodStartsAt",s.current_period_ends_at as "currentPeriodEndsAt",s.cancel_at_period_end as "cancelAtPeriodEnd",s.pending_plan_key as "pendingPlanKey",s.provider_revision as "providerRevision",coalesce(p.persisted_count,0) as persisted,coalesce(p.reserved_count,0) as reserved
+      from billing_subscriptions s
+      left join billing_usage_periods p on p.source='subscription' and p.source_id=s.id and p.starts_at=s.current_period_starts_at
+      where s.workspace_id=${workspaceId} and s.environment=${environment} and s.provider_status not in ('canceled','revoked')
+      order by s.current_period_ends_at desc limit 1`,
+  );
+  return row ?? null;
+}
+
+function validateUpgrade(
+  row: ActiveSubscriptionRow | null,
+  targetPlanKey: BillingPlanKey,
+) {
+  if (!row || !isBillingPlanKey(row.planKey))
+    throw new HttpError(409, "No active subscription is available to upgrade");
+  if (row.providerStatus !== "active")
+    throw new HttpError(409, "Only an active subscription can be upgraded");
+  if (row.cancelAtPeriodEnd)
+    throw new HttpError(
+      409,
+      "Resume the subscription before changing its plan",
+    );
+  const current = billingPlan(row.planKey);
+  const target = billingPlan(targetPlanKey);
+  if (
+    target.monthlyPriceCents <= current.monthlyPriceCents ||
+    target.eventAllowance <= current.eventAllowance
+  )
+    throw new HttpError(400, "Choose a plan above the current plan");
+  if (target.currency !== current.currency)
+    throw new HttpError(409, "The selected plan uses another currency");
+  return { current, target };
+}
+
+export async function previewHostedUpgrade(
+  env: Env,
+  actorUserId: string,
+  targetPlanKey: unknown,
+  injectedProvider?: BillingProvider,
+  now = Date.now(),
+) {
+  const config = hosted(env);
+  if (!isBillingPlanKey(targetPlanKey))
+    throw new HttpError(400, "Invalid planKey");
+  const provider = providerFor(config, injectedProvider);
+  const { workspace } = await ownerContext(env, actorUserId);
+  try {
+    await reconcileWorkspace(env, workspace.id, provider);
+  } catch {
+    throw new HttpError(503, "Billing provider is temporarily unavailable");
+  }
+  const row = await activeSubscription(env, workspace.id, config.environment);
+  const { current, target } = validateUpgrade(row, targetPlanKey);
+  const periodLength = row.currentPeriodEndsAt - row.currentPeriodStartsAt;
+  const remainingFraction =
+    periodLength > 0
+      ? Math.max(0, Math.min(1, (row.currentPeriodEndsAt - now) / periodLength))
+      : 0;
+  const admitted = row.persisted + row.reserved;
+  return {
+    currentPlan: current,
+    targetPlan: target,
+    persisted: row.persisted,
+    reserved: row.reserved,
+    remainingCapacity: Math.max(0, target.eventAllowance - admitted),
+    estimatedChargeCents: Math.max(
+      0,
+      Math.round(
+        (target.monthlyPriceCents - current.monthlyPriceCents) *
+          remainingFraction,
+      ),
+    ),
+    currency: target.currency,
+    renewsAt: row.currentPeriodEndsAt,
+    expectedRevision: row.providerRevision,
+    clearsPendingChange: !!row.pendingPlanKey,
+  };
+}
+
+function providerErrorStatus(error: unknown) {
+  if (!error || typeof error !== "object" || !("statusCode" in error))
+    return null;
+  return typeof error.statusCode === "number" ? error.statusCode : null;
+}
+
+function completedUpgrade(row: ActiveSubscriptionRow, operationId: string) {
+  return {
+    operationId,
+    state: "complete" as const,
+    planKey: row.planKey as BillingPlanKey,
+  };
+}
+
+export async function executeHostedUpgrade(
+  env: Env,
+  actorUserId: string,
+  input: {
+    planKey: unknown;
+    operationKey: unknown;
+    expectedRevision: unknown;
+  },
+  injectedProvider?: BillingProvider,
+) {
+  const config = hosted(env);
+  if (!isBillingPlanKey(input.planKey))
+    throw new HttpError(400, "Invalid planKey");
+  if (
+    typeof input.operationKey !== "string" ||
+    !input.operationKey.trim() ||
+    input.operationKey.length > 128
+  )
+    throw new HttpError(400, "Invalid operationKey");
+  if (
+    typeof input.expectedRevision !== "string" ||
+    !input.expectedRevision ||
+    input.expectedRevision.length > 128
+  )
+    throw new HttpError(400, "Invalid subscription revision");
+
+  const provider = providerFor(config, injectedProvider);
+  const { db, workspace } = await ownerContext(env, actorUserId);
+  try {
+    await reconcileWorkspace(env, workspace.id, provider);
+  } catch {
+    throw new HttpError(503, "Billing provider is temporarily unavailable");
+  }
+  let row = await activeSubscription(env, workspace.id, config.environment);
+  const operationKey = input.operationKey.trim();
+  if (!row)
+    throw new HttpError(409, "No active subscription is available to upgrade");
+  const requestFingerprint = upgradeFingerprint(
+    workspace.id,
+    row.polarSubscriptionId,
+    input.expectedRevision,
+    input.planKey,
+  );
+  const keyed = await operationByKey(env, workspace.id, operationKey);
+  if (keyed) {
+    if (
+      keyed.kind !== "upgrade" ||
+      keyed.requestFingerprint !== requestFingerprint
+    )
+      throw new HttpError(
+        409,
+        "Operation key was already used for another request",
+      );
+    if (keyed.state === "failed")
+      throw new HttpError(409, "This upgrade attempt is no longer active");
+    if (row.planKey === input.planKey) return completedUpgrade(row, keyed.id);
+    throw new HttpError(503, "Upgrade is being reconciled; retry shortly");
+  }
+
+  validateUpgrade(row, input.planKey);
+  if (row.providerRevision !== input.expectedRevision)
+    throw new HttpError(
+      409,
+      "Billing details changed; review the upgrade again",
+    );
+
+  const id = crypto.randomUUID();
+  const now = Date.now();
+  try {
+    await db.run(
+      sql`insert into billing_operations(id,workspace_id,operation_key,kind,request_fingerprint,expected_subscription_revision,selected_plan_key,selected_plan_version,state,provider_reference,created_at,updated_at)
+        values(${id},${workspace.id},${operationKey},'upgrade',${requestFingerprint},${row.providerRevision},${input.planKey},${billingPlan(input.planKey).version},'pending',${row.polarSubscriptionId},${now},${now})`,
+    );
+  } catch {
+    throw new HttpError(409, "Another plan change is already in progress");
+  }
+
+  try {
+    const updated = await provider.updateSubscription(row.polarSubscriptionId, {
+      selectedProductId: config.productIds[input.planKey],
+      prorationBehavior: "invoice",
+    });
+    if (
+      updated.id !== row.polarSubscriptionId ||
+      updated.externalCustomerId !== workspace.id ||
+      updated.productId !== config.productIds[input.planKey] ||
+      updated.status !== "active" ||
+      updated.currentPeriodStartsAt !== row.currentPeriodStartsAt ||
+      updated.currentPeriodEndsAt !== row.currentPeriodEndsAt
+    )
+      throw new Error("Provider subscription does not match the upgrade");
+    await reconcileWorkspace(env, workspace.id, provider);
+    row = await activeSubscription(env, workspace.id, config.environment);
+    if (!row || row.planKey !== input.planKey)
+      throw new Error("Provider upgrade has not reconciled yet");
+    return completedUpgrade(row, id);
+  } catch (error) {
+    const status = providerErrorStatus(error);
+    if (status && status >= 400 && status < 500) {
+      await db.run(
+        sql`update billing_operations set state='failed',bounded_error=${boundedError(error)},updated_at=${Date.now()} where id=${id} and state='pending'`,
+      );
+      if (status === 402)
+        throw new HttpError(
+          402,
+          "The prorated payment failed; your current plan was not changed",
+        );
+      throw new HttpError(409, "Polar could not apply this plan change");
+    }
+    await db.run(
+      sql`update billing_operations set state='unknown',bounded_error=${boundedError(error)},updated_at=${Date.now()} where id=${id} and state='pending'`,
+    );
+    throw new HttpError(503, "Upgrade is being reconciled; retry shortly");
+  }
 }
 
 function localStatus(status: string) {
@@ -454,7 +700,7 @@ export async function reconcileWorkspace(
           where exists(select 1 from billing_subscriptions where id=${subscriptionId} and provider_revision=${revision} and provider_status='active')
           on conflict(id) do update set plan_key=excluded.plan_key,plan_version=excluded.plan_version,ends_at=excluded.ends_at,allowance=excluded.allowance,admission_ceiling=excluded.admission_ceiling,updated_at=excluded.updated_at`,
         sql`update billing_operations set state='complete',provider_reference=${selected.id},bounded_error=null,updated_at=${now}
-          where workspace_id=${workspaceId} and state in ('pending','unknown')`,
+          where workspace_id=${workspaceId} and selected_plan_key=${plan.key} and state in ('pending','unknown')`,
       );
     }
   }
@@ -517,10 +763,11 @@ export async function repairBillingProviderState(
   const rows = await db.all<{
     id: string;
     workspaceId: string;
+    kind: string;
     selectedPlanKey: string;
     updatedAt: number;
   }>(
-    sql`select id,workspace_id as "workspaceId",selected_plan_key as "selectedPlanKey",updated_at as "updatedAt" from billing_operations
+    sql`select id,workspace_id as "workspaceId",kind,selected_plan_key as "selectedPlanKey",updated_at as "updatedAt" from billing_operations
       where state in ('pending','unknown') and updated_at<=${now - 30_000}
       order by updated_at,id limit ${limit}`,
   );
@@ -531,6 +778,14 @@ export async function repairBillingProviderState(
         sql`select id from billing_operations where id=${row.id} and state in ('pending','unknown') limit 1`,
       );
       if (stillOpen && isBillingPlanKey(row.selectedPlanKey)) {
+        if (row.kind !== "checkout") {
+          if (row.updatedAt <= now - 5 * 60_000)
+            await db.run(
+              sql`update billing_operations set state='failed',bounded_error='Provider plan change was not confirmed',updated_at=${now}
+                where id=${row.id} and state in ('pending','unknown')`,
+            );
+          continue;
+        }
         const checkouts = await provider.listOpenCheckouts(row.workspaceId);
         if (checkouts.length > 1)
           throw new Error("Multiple provider checkout sessions require review");

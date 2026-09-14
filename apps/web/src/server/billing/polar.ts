@@ -33,6 +33,8 @@ export type ProviderSubscription = {
   revision: string;
 };
 
+export type ProviderProrationBehavior = "invoice" | "next_period";
+
 export interface BillingProvider {
   createCheckout(input: {
     externalCustomerId: string;
@@ -56,6 +58,13 @@ export interface BillingProvider {
   listSubscriptions(
     externalCustomerId: string,
   ): Promise<ProviderSubscription[]>;
+  updateSubscription(
+    id: string,
+    input: {
+      selectedProductId: string;
+      prorationBehavior: ProviderProrationBehavior;
+    },
+  ): Promise<ProviderSubscription>;
   createPortalSession(
     externalCustomerId: string,
     returnUrl: string,
@@ -164,6 +173,23 @@ function checkout(
   } satisfies ProviderCheckout;
 }
 
+function subscription(
+  value: Awaited<ReturnType<Polar["subscriptions"]["get"]>>,
+): ProviderSubscription {
+  return {
+    id: value.id,
+    status: value.status,
+    externalCustomerId: value.customer.externalId ?? null,
+    customerId: value.customerId,
+    productId: value.productId,
+    checkoutId: value.checkoutId,
+    currentPeriodStartsAt: value.currentPeriodStart.getTime(),
+    currentPeriodEndsAt: value.currentPeriodEnd.getTime(),
+    cancelAtPeriodEnd: value.cancelAtPeriodEnd,
+    revision: (value.modifiedAt ?? value.createdAt).toISOString(),
+  };
+}
+
 /** The only production adapter allowed to make Polar API calls. */
 export function createBillingProvider(
   config: HostedBillingConfig,
@@ -243,18 +269,18 @@ export function createBillingProvider(
       });
       if (page.result.pagination.totalCount > 100)
         throw new Error("Provider subscription result exceeds recovery bound");
-      return page.result.items.map((value) => ({
-        id: value.id,
-        status: value.status,
-        externalCustomerId: value.customer.externalId ?? null,
-        customerId: value.customerId,
-        productId: value.productId,
-        checkoutId: value.checkoutId,
-        currentPeriodStartsAt: value.currentPeriodStart.getTime(),
-        currentPeriodEndsAt: value.currentPeriodEnd.getTime(),
-        cancelAtPeriodEnd: value.cancelAtPeriodEnd,
-        revision: (value.modifiedAt ?? value.createdAt).toISOString(),
-      }));
+      return page.result.items.map(subscription);
+    },
+    async updateSubscription(id, input) {
+      return subscription(
+        await client.subscriptions.update({
+          id,
+          subscriptionUpdate: {
+            productId: input.selectedProductId,
+            prorationBehavior: input.prorationBehavior,
+          },
+        }),
+      );
     },
     async createPortalSession(externalCustomerId, returnUrl) {
       const session = await client.customerSessions.create({

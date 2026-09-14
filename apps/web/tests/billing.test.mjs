@@ -62,8 +62,10 @@ function fakeProvider() {
     subscriptions: [],
     createCalls: 0,
     updateCalls: 0,
+    subscriptionUpdateCalls: [],
     portalCalls: 0,
     failCreateOnce: false,
+    failUpgradeOnce: false,
     createDelay: 0,
   };
   const provider = {
@@ -119,6 +121,22 @@ function fakeProvider() {
     async listSubscriptions(externalCustomerId) {
       assert.equal(externalCustomerId, "billing-workspace");
       return state.subscriptions;
+    },
+    async updateSubscription(id, input) {
+      state.subscriptionUpdateCalls.push({ id, ...input });
+      if (state.failUpgradeOnce) {
+        state.failUpgradeOnce = false;
+        throw Object.assign(new Error("payment failed"), { statusCode: 402 });
+      }
+      const subscription = state.subscriptions.find(
+        (candidate) => candidate.id === id,
+      );
+      if (!subscription) throw new Error("subscription not found");
+      subscription.productId = input.selectedProductId;
+      subscription.revision = new Date(
+        Date.parse(subscription.revision) + 1,
+      ).toISOString();
+      return subscription;
     },
     async createPortalSession(externalCustomerId) {
       state.portalCalls += 1;
@@ -376,8 +394,9 @@ test("Polar customer provisioning binds checkout identity to the workspace", asy
   );
 });
 
-test("Polar portal sessions identify the workspace owner member", async () => {
+test("Polar portal and upgrade requests use explicit member and proration inputs", async () => {
   const calls = [];
+  const subscriptionCalls = [];
   const provider = polarModule.createBillingProvider(
     configModule.billingConfig(hostedConfig),
     {
@@ -388,6 +407,24 @@ test("Polar portal sessions identify the workspace owner member", async () => {
             customerPortalUrl: "https://sandbox.polar.sh/portal/session",
             expiresAt: new Date(1_800_000_000_000),
             customerId: "polar-customer-1",
+          };
+        },
+      },
+      subscriptions: {
+        async update(input) {
+          subscriptionCalls.push(input);
+          return {
+            id: input.id,
+            status: "active",
+            customer: { externalId: "billing-workspace" },
+            customerId: "polar-customer-1",
+            productId: input.subscriptionUpdate.productId,
+            checkoutId: "checkout-1",
+            currentPeriodStart: new Date(1_790_000_000_000),
+            currentPeriodEnd: new Date(1_800_000_000_000),
+            cancelAtPeriodEnd: false,
+            modifiedAt: new Date(1_795_000_000_000),
+            createdAt: new Date(1_790_000_000_000),
           };
         },
       },
@@ -408,6 +445,21 @@ test("Polar portal sessions identify the workspace owner member", async () => {
   ]);
   assert.equal(session.url, "https://sandbox.polar.sh/portal/session");
   assert.equal(session.customerId, "polar-customer-1");
+
+  const subscription = await provider.updateSubscription("subscription-1", {
+    selectedProductId: productIds.hosted_1m_monthly_v1,
+    prorationBehavior: "invoice",
+  });
+  assert.deepEqual(subscriptionCalls, [
+    {
+      id: "subscription-1",
+      subscriptionUpdate: {
+        productId: productIds.hosted_1m_monthly_v1,
+        prorationBehavior: "invoice",
+      },
+    },
+  ]);
+  assert.equal(subscription.productId, productIds.hosted_1m_monthly_v1);
 });
 
 test("entitlements preserve usage across warnings and stop at the ceiling", () => {
@@ -1077,6 +1129,195 @@ test("concurrent checkout tabs cannot issue parallel provider creates", async ()
           .first()
       ).count,
       1,
+    );
+  } finally {
+    await mf.dispose();
+  }
+});
+
+test("subscription upgrades preview proration and preserve current-period usage", async () => {
+  const { mf, db } = await billingDatabase();
+  try {
+    await seedBillingOwner(db);
+    await seedBillingViewer(db);
+    const env = { DB: db, ...hostedConfig };
+    const { state, provider } = fakeProvider();
+    const startsAt = Date.UTC(2026, 8, 1);
+    const endsAt = startsAt + 30 * 86_400_000;
+    const now = startsAt + 15 * 86_400_000;
+    state.subscriptions = [
+      activeSubscription({
+        productId: productIds.hosted_500k_monthly_v1,
+        currentPeriodStartsAt: startsAt,
+        currentPeriodEndsAt: endsAt,
+        revision: new Date(startsAt).toISOString(),
+      }),
+    ];
+    await providerServiceModule.reconcileWorkspace(
+      env,
+      "billing-workspace",
+      provider,
+    );
+    await db
+      .prepare(
+        "UPDATE billing_usage_periods SET persisted_count=400000,reserved_count=100000 WHERE workspace_id='billing-workspace' AND source='subscription'",
+      )
+      .run();
+
+    await assert.rejects(
+      providerServiceModule.previewHostedUpgrade(
+        env,
+        "billing-viewer",
+        "hosted_1m_monthly_v1",
+        provider,
+        now,
+      ),
+      (error) => error.status === 403,
+    );
+    const preview = await providerServiceModule.previewHostedUpgrade(
+      env,
+      "billing-owner",
+      "hosted_1m_monthly_v1",
+      provider,
+      now,
+    );
+    assert.equal(preview.currentPlan.key, "hosted_500k_monthly_v1");
+    assert.equal(preview.targetPlan.key, "hosted_1m_monthly_v1");
+    assert.equal(preview.estimatedChargeCents, 500);
+    assert.equal(preview.persisted, 400_000);
+    assert.equal(preview.reserved, 100_000);
+    assert.equal(preview.remainingCapacity, 500_000);
+    assert.equal(preview.renewsAt, endsAt);
+
+    const input = {
+      planKey: "hosted_1m_monthly_v1",
+      operationKey: "upgrade-half-period",
+      expectedRevision: preview.expectedRevision,
+    };
+    const upgraded = await providerServiceModule.executeHostedUpgrade(
+      env,
+      "billing-owner",
+      input,
+      provider,
+    );
+    assert.equal(upgraded.state, "complete");
+    assert.equal(upgraded.planKey, "hosted_1m_monthly_v1");
+    assert.deepEqual(state.subscriptionUpdateCalls, [
+      {
+        id: "subscription-1",
+        selectedProductId: productIds.hosted_1m_monthly_v1,
+        prorationBehavior: "invoice",
+      },
+    ]);
+    assert.deepEqual(
+      await db
+        .prepare(
+          "SELECT plan_key AS planKey,allowance,admission_ceiling AS admissionCeiling,persisted_count AS persisted,reserved_count AS reserved,starts_at AS startsAt,ends_at AS endsAt FROM billing_usage_periods WHERE workspace_id='billing-workspace' AND source='subscription'",
+        )
+        .first(),
+      {
+        planKey: "hosted_1m_monthly_v1",
+        allowance: 1_000_000,
+        admissionCeiling: 1_100_000,
+        persisted: 400_000,
+        reserved: 100_000,
+        startsAt,
+        endsAt,
+      },
+    );
+
+    const duplicate = await providerServiceModule.executeHostedUpgrade(
+      env,
+      "billing-owner",
+      input,
+      provider,
+    );
+    assert.equal(duplicate.state, "complete");
+    assert.equal(state.subscriptionUpdateCalls.length, 1);
+    assert.equal(
+      (
+        await db
+          .prepare(
+            "SELECT state FROM billing_operations WHERE operation_key='upgrade-half-period'",
+          )
+          .first()
+      ).state,
+      "complete",
+    );
+  } finally {
+    await mf.dispose();
+  }
+});
+
+test("failed or stale prorated upgrades leave the current plan unchanged", async () => {
+  const { mf, db } = await billingDatabase();
+  try {
+    await seedBillingOwner(db);
+    const env = { DB: db, ...hostedConfig };
+    const { state, provider } = fakeProvider();
+    state.subscriptions = [
+      activeSubscription({
+        productId: productIds.hosted_500k_monthly_v1,
+      }),
+    ];
+    const preview = await providerServiceModule.previewHostedUpgrade(
+      env,
+      "billing-owner",
+      "hosted_1m_monthly_v1",
+      provider,
+    );
+
+    state.subscriptions[0].revision = new Date(
+      Date.parse(state.subscriptions[0].revision) + 1,
+    ).toISOString();
+    await assert.rejects(
+      providerServiceModule.executeHostedUpgrade(
+        env,
+        "billing-owner",
+        {
+          planKey: "hosted_1m_monthly_v1",
+          operationKey: "stale-upgrade",
+          expectedRevision: preview.expectedRevision,
+        },
+        provider,
+      ),
+      (error) => error.status === 409 && /review/i.test(error.message),
+    );
+    assert.equal(state.subscriptionUpdateCalls.length, 0);
+
+    const fresh = await providerServiceModule.previewHostedUpgrade(
+      env,
+      "billing-owner",
+      "hosted_1m_monthly_v1",
+      provider,
+    );
+    state.failUpgradeOnce = true;
+    await assert.rejects(
+      providerServiceModule.executeHostedUpgrade(
+        env,
+        "billing-owner",
+        {
+          planKey: "hosted_1m_monthly_v1",
+          operationKey: "failed-payment-upgrade",
+          expectedRevision: fresh.expectedRevision,
+        },
+        provider,
+      ),
+      (error) => error.status === 402,
+    );
+    assert.equal(
+      state.subscriptions[0].productId,
+      productIds.hosted_500k_monthly_v1,
+    );
+    assert.equal(
+      (
+        await db
+          .prepare(
+            "SELECT state FROM billing_operations WHERE operation_key='failed-payment-upgrade'",
+          )
+          .first()
+      ).state,
+      "failed",
     );
   } finally {
     await mf.dispose();

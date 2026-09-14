@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "billing_operations_open_change" ON "billing_operations" USING btree ("workspace_id") WHERE "billing_operations"."kind" in ('upgrade','downgrade') and "billing_operations"."state" in ('pending','unknown');

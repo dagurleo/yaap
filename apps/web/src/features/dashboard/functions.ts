@@ -49,6 +49,8 @@ import { billingOverview } from "../../server/billing/service";
 import {
   createHostedCheckout,
   createHostedPortalSession,
+  executeHostedUpgrade,
+  previewHostedUpgrade,
   reconcileHostedBilling,
 } from "../../server/billing/provider-service";
 import { isBillingPlanKey, type BillingPlanKey } from "../../lib/billing-plans";
@@ -117,6 +119,42 @@ export const billingPortalFn = createServerFn({ method: "POST" }).handler(
       appOrigin(getRequest(), context.env),
     ),
 );
+export const upgradePreviewFn = createServerFn({ method: "POST" })
+  .validator((data: { planKey: BillingPlanKey }) => {
+    if (!data || !isBillingPlanKey(data.planKey))
+      throw new Error("Choose a valid upgrade plan");
+    return data;
+  })
+  .handler(async ({ data, context }) =>
+    previewHostedUpgrade(context.env, await actor(context.env), data.planKey),
+  );
+export const upgradeSubscriptionFn = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      planKey: BillingPlanKey;
+      operationKey: string;
+      expectedRevision: string;
+    }) => {
+      if (!data || !isBillingPlanKey(data.planKey))
+        throw new Error("Choose a valid upgrade plan");
+      if (
+        typeof data.operationKey !== "string" ||
+        !data.operationKey.trim() ||
+        data.operationKey.length > 128 ||
+        typeof data.expectedRevision !== "string" ||
+        !data.expectedRevision ||
+        data.expectedRevision.length > 128
+      )
+        throw new Error("Invalid upgrade confirmation");
+      return {
+        ...data,
+        operationKey: data.operationKey.trim(),
+      };
+    },
+  )
+  .handler(async ({ data, context }) =>
+    executeHostedUpgrade(context.env, await actor(context.env), data),
+  );
 export const addSiteFn = createServerFn({ method: "POST" })
   .validator((data: { name: string; origin: string; timezone?: string }) => {
     if (

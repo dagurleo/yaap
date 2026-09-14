@@ -354,6 +354,11 @@ export const billingOperations = sqliteTable(
       .where(
         sql`${table.kind}='checkout' and ${table.state} in ('pending','unknown')`,
       ),
+    uniqueIndex("billing_operations_open_change")
+      .on(table.workspaceId)
+      .where(
+        sql`${table.kind} in ('upgrade','downgrade') and ${table.state} in ('pending','unknown')`,
+      ),
     uniqueIndex("billing_operations_provider_checkout")
       .on(table.providerCheckoutId)
       .where(

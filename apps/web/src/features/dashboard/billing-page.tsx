@@ -15,13 +15,33 @@ import {
 import { HeaderAccount } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/auth/client";
-import type { BillingPlanKey } from "@/lib/billing-plans";
+import type { BillingPlan, BillingPlanKey } from "@/lib/billing-plans";
 import type { BillingEntitlementState } from "@/server/billing/entitlements";
-import { billingPortalFn, checkoutFn, reconcileBillingFn } from "./functions";
+import {
+  billingPortalFn,
+  checkoutFn,
+  reconcileBillingFn,
+  upgradePreviewFn,
+  upgradeSubscriptionFn,
+} from "./functions";
 import { billingQuery } from "./queries";
 
 type BillingSearch = {
   billing?: "pending" | "cancelled" | "return";
+};
+
+type UpgradePreview = {
+  operationKey: string;
+  currentPlan: BillingPlan;
+  targetPlan: BillingPlan;
+  persisted: number;
+  reserved: number;
+  remainingCapacity: number;
+  estimatedChargeCents: number;
+  currency: string;
+  renewsAt: number;
+  expectedRevision: string;
+  clearsPendingChange: boolean;
 };
 
 const statusCopy: Record<
@@ -120,6 +140,9 @@ export function BillingPage({ search }: { search: BillingSearch }) {
   );
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [upgradePreview, setUpgradePreview] = useState<UpgradePreview | null>(
+    null,
+  );
   const [verificationState, setVerificationState] = useState<
     "idle" | "sending" | "sent"
   >("idle");
@@ -192,6 +215,43 @@ export function BillingPage({ search }: { search: BillingSearch }) {
         reason instanceof Error ? reason.message : "Could not open billing",
       ),
   });
+  const previewUpgrade = useMutation({
+    mutationFn: (planKey: BillingPlanKey) =>
+      upgradePreviewFn({ data: { planKey } }),
+    onSuccess: (preview) =>
+      setUpgradePreview({ ...preview, operationKey: crypto.randomUUID() }),
+    onError: (reason) =>
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not prepare the upgrade",
+      ),
+  });
+  const upgrade = useMutation({
+    mutationFn: (preview: UpgradePreview) =>
+      upgradeSubscriptionFn({
+        data: {
+          planKey: preview.targetPlan.key,
+          expectedRevision: preview.expectedRevision,
+          operationKey: preview.operationKey,
+        },
+      }),
+    onSuccess: async ({ planKey }) => {
+      setSelectedPlan(planKey);
+      setUpgradePreview(null);
+      setMessage("Upgrade complete. Your new allowance is active.");
+      await queryClient.invalidateQueries({ queryKey: ["billing"] });
+    },
+    onError: (reason) => {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not apply the upgrade",
+      );
+      if (reason instanceof Error && /changed|review/i.test(reason.message))
+        setUpgradePreview(null);
+    },
+  });
 
   const period = data.entitlements.period;
   const admitted = period ? period.persisted + period.reserved : 0;
@@ -221,6 +281,18 @@ export function BillingPage({ search }: { search: BillingSearch }) {
     !subscribed &&
     !!selectedPlan &&
     !checkout.isPending;
+  const selectedPlanDetails = selectedPlan
+    ? data.plans.find((plan) => plan.key === selectedPlan)
+    : undefined;
+  const selectedPlanIsUpgrade =
+    !!subscription &&
+    subscription.status === "active" &&
+    !subscription.cancelAtPeriodEnd &&
+    syncState === "current" &&
+    !!currentPlan &&
+    !!selectedPlanDetails &&
+    selectedPlanDetails.monthlyPriceCents > currentPlan.monthlyPriceCents &&
+    selectedPlanDetails.eventAllowance > currentPlan.eventAllowance;
 
   async function resendVerificationEmail() {
     if (!owner || owner.emailVerified) return;
@@ -519,7 +591,7 @@ export function BillingPage({ search }: { search: BillingSearch }) {
               </h2>
               <p className="mt-1 max-w-2xl text-base text-muted-foreground sm:text-sm">
                 {subscribed
-                  ? "Your current plan is marked below. Use the billing portal for payment details and subscription changes."
+                  ? "Choose a larger plan to increase this period’s allowance immediately. Use the billing portal for payment details and cancellation."
                   : "All plans include every analytics feature. Choose by monthly event volume."}
               </p>
             </div>
@@ -529,20 +601,35 @@ export function BillingPage({ search }: { search: BillingSearch }) {
               {data.plans.map((plan) => {
                 const current = plan.key === displayedPlanKey;
                 const selected = plan.key === selectedPlan;
+                const upgradeOption =
+                  subscribed &&
+                  !!currentPlan &&
+                  plan.monthlyPriceCents > currentPlan.monthlyPriceCents &&
+                  plan.eventAllowance > currentPlan.eventAllowance;
                 return (
                   <label
                     key={plan.key}
                     className="billing-plan-option"
-                    data-selected={!subscribed && selected}
+                    data-selected={selected && !current}
                     data-current={current}
                   >
                     <input
                       type="radio"
                       name="billing-plan"
                       value={plan.key}
-                      checked={subscribed ? current : selected}
-                      disabled={subscribed}
-                      onChange={() => setSelectedPlan(plan.key)}
+                      checked={selected}
+                      disabled={
+                        subscribed &&
+                        (!upgradeOption ||
+                          subscription?.status !== "active" ||
+                          !!subscription.cancelAtPeriodEnd ||
+                          syncState !== "current")
+                      }
+                      onChange={() => {
+                        setSelectedPlan(plan.key);
+                        setUpgradePreview(null);
+                        setError("");
+                      }}
                     />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="flex items-center justify-between gap-3">
@@ -596,6 +683,139 @@ export function BillingPage({ search }: { search: BillingSearch }) {
                   before paying.
                 </p>
               </div>
+            )}
+
+            {subscribed && selectedPlanIsUpgrade && !upgradePreview && (
+              <div className="mt-7 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                <Button
+                  variant="primary"
+                  disabled={previewUpgrade.isPending}
+                  onClick={() => {
+                    if (!selectedPlan) return;
+                    setError("");
+                    previewUpgrade.mutate(selectedPlan);
+                  }}
+                >
+                  <ArrowUpRight aria-hidden="true" />
+                  {previewUpgrade.isPending ? "Calculating…" : "Review upgrade"}
+                </Button>
+                <p className="text-sm text-muted-foreground">
+                  Upgrades take effect immediately after the prorated payment
+                  succeeds.
+                </p>
+              </div>
+            )}
+
+            {subscribed && upgradePreview && (
+              <section
+                className="mt-7 rounded-lg border bg-card p-5"
+                aria-labelledby="upgrade-confirmation-heading"
+              >
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                  <div>
+                    <h3
+                      id="upgrade-confirmation-heading"
+                      className="font-semibold"
+                    >
+                      Confirm immediate upgrade
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {compactEventFormatter.format(
+                        upgradePreview.currentPlan.eventAllowance,
+                      )}{" "}
+                      →{" "}
+                      {compactEventFormatter.format(
+                        upgradePreview.targetPlan.eventAllowance,
+                      )}{" "}
+                      events per month
+                    </p>
+                  </div>
+                  <span className="text-sm font-medium">
+                    {formatPrice(
+                      upgradePreview.targetPlan.monthlyPriceCents,
+                      upgradePreview.currency,
+                    )}{" "}
+                    / month
+                  </span>
+                </div>
+
+                <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-muted-foreground">
+                      Estimated charge today
+                    </dt>
+                    <dd className="mt-1 font-medium">
+                      About{" "}
+                      {formatPrice(
+                        upgradePreview.estimatedChargeCents,
+                        upgradePreview.currency,
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Next renewal</dt>
+                    <dd className="mt-1 font-medium">
+                      {formatPrice(
+                        upgradePreview.targetPlan.monthlyPriceCents,
+                        upgradePreview.currency,
+                      )}{" "}
+                      on {formatDate(upgradePreview.renewsAt)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Usage retained</dt>
+                    <dd className="mt-1 font-medium">
+                      {eventFormatter.format(
+                        upgradePreview.persisted + upgradePreview.reserved,
+                      )}{" "}
+                      events
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">
+                      Capacity after upgrade
+                    </dt>
+                    <dd className="mt-1 font-medium">
+                      {eventFormatter.format(upgradePreview.remainingCapacity)}{" "}
+                      events remaining
+                    </dd>
+                  </div>
+                </dl>
+
+                {upgradePreview.clearsPendingChange && (
+                  <p className="mt-4 text-sm text-amber-600 dark:text-amber-400">
+                    This immediate upgrade replaces the currently scheduled plan
+                    change.
+                  </p>
+                )}
+                <p className="mt-4 text-sm text-muted-foreground">
+                  This is a pre-tax estimate. Polar calculates the final
+                  prorated charge using the remaining days, discounts, and
+                  applicable tax. Your plan changes only if payment succeeds.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Button
+                    variant="primary"
+                    disabled={upgrade.isPending}
+                    onClick={() => {
+                      setError("");
+                      upgrade.mutate(upgradePreview);
+                    }}
+                  >
+                    <CreditCard aria-hidden="true" />
+                    {upgrade.isPending
+                      ? "Applying upgrade…"
+                      : "Confirm upgrade & pay"}
+                  </Button>
+                  <Button
+                    variant="default"
+                    disabled={upgrade.isPending}
+                    onClick={() => setUpgradePreview(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </section>
             )}
           </section>
         </>
