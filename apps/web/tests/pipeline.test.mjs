@@ -173,7 +173,7 @@ test("fresh migrations support app and auth health; private API rejects anonymou
   assert.equal(pricing.status, 200);
   const pricingHtml = await pricing.text();
   assert.match(pricingHtml, /All the analytics/);
-  assert.match(pricingHtml, /Hosted plans are coming soon/);
+  assert.match(pricingHtml, /Monthly hosted plans/);
   assert.doesNotMatch(pricingHtml, /class="site-header/);
   assert.doesNotMatch(pricingHtml, /Start your free trial/);
   const workspace = await request("/app");
