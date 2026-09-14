@@ -220,10 +220,6 @@
 .yaap-landing .pricing-start .button {
   justify-content: space-between;
 }
-.yaap-landing .pricing-total .pricing-coming-soon {
-  color: #2458eb;
-  font-weight: 550;
-}
 .yaap-landing .pricing-included {
   grid-column: 1 / -1;
   padding: 28px 40px 32px;

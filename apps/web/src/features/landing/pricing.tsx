@@ -132,14 +132,10 @@ export function PricingSection({
               <p>Billed monthly in USD. Plus applicable tax.</p>
             </div>
             <div className="pricing-start">
-              {hosted ? (
+              {hosted && (
                 <a className="button primary" href="/signup">
                   Start your free trial
                 </a>
-              ) : (
-                <p className="pricing-coming-soon">
-                  Hosted plans are coming soon.
-                </p>
               )}
               <p>
                 14 days free · No credit card

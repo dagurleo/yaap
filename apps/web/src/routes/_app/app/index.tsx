@@ -6,6 +6,7 @@ import { ArrowUpRight, Globe2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { sitesQuery } from "@/features/dashboard/queries";
 import { WebsiteLayout } from "@/features/dashboard/website-layout";
+import { WebsiteFavicon } from "@/features/dashboard/website-favicon";
 import type { SafeSite } from "@/server/access";
 
 export const Route = createFileRoute("/_app/app/")({
@@ -122,7 +123,7 @@ function SiteCard({ site }: { site: SafeSite }) {
         search={{ days: 7 }}
         aria-label={`Open ${site.name} analytics`}
       >
-        <Globe2 className="sites-home-icon" aria-hidden="true" size={24} />
+        <WebsiteFavicon origin={site.origin} size="md" />
         <div>
           <div className="sites-home-card-title">
             <h2>{site.name}</h2>

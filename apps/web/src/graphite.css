@@ -897,16 +897,6 @@
   background: var(--accent);
   border-color: var(--selected-border);
 }
-.website-switcher-icon {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  background: var(--primary);
-  color: var(--primary-foreground);
-}
 .website-switcher-chevron {
   color: var(--muted-foreground);
 }
@@ -1075,10 +1065,6 @@
   font-size: 13px;
   margin-top: 5px;
   overflow-wrap: anywhere;
-}
-.sites-home-icon {
-  color: var(--chart-1);
-  flex-shrink: 0;
 }
 .sites-home-arrow {
   color: var(--muted-foreground);
@@ -1309,13 +1295,6 @@
   border-radius: 8px;
   box-shadow: none;
 }
-.dashboard-sidebar .website-switcher-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  background: var(--selected);
-  color: var(--accent-foreground);
-}
 .dashboard-sidebar .website-switcher > span > span:first-child {
   font-size: 13px;
   font-weight: 550;
@@ -1407,17 +1386,6 @@
 .website-context-control .website-switcher[data-state="open"],
 .website-context-settings:hover {
   background: var(--muted);
-}
-.website-context-control .website-switcher-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  background: #2458eb;
-  color: white;
-}
-.website-context-control .website-switcher-icon svg {
-  width: 14px;
-  height: 14px;
 }
 .website-context-name {
   overflow: hidden;

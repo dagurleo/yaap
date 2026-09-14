@@ -11,8 +11,8 @@ import {
   CircleDollarSign,
   Zap,
   Settings2,
-  Globe,
 } from "lucide-react";
+import { WebsiteFavicon } from "./website-favicon";
 import {
   Command,
   CommandInput,
@@ -249,7 +249,7 @@ export function WorkspaceTools({
                           });
                         }}
                       >
-                        <Globe aria-hidden="true" />
+                        <WebsiteFavicon origin={site.origin} />
                         <span className="truncate">{site.name}</span>
                         <span className="ml-auto max-w-[45%] truncate text-xs text-muted-foreground">
                           {site.origin.replace(/^https?:\/\//, "")}
@@ -282,7 +282,11 @@ export function WorkspaceTools({
             </ReportLink>
           )}
           {shared ? (
-            <Button asChild size="sm" className="hidden min-[701px]:inline-flex">
+            <Button
+              asChild
+              size="sm"
+              className="hidden min-[701px]:inline-flex"
+            >
               <Link to="/">Get started</Link>
             </Button>
           ) : (

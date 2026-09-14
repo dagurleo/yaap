@@ -16,9 +16,10 @@ import {
   useRouteContext,
 } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Globe2, Plus, X, Settings, Check } from "lucide-react";
+import { Plus, X, Settings, Check } from "lucide-react";
 import { GraphiteIcon } from "@/components/graphite-icon";
 import { WorkspaceTools, WorkspaceHelp } from "./workspace-tools";
+import { WebsiteFavicon } from "./website-favicon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -137,9 +138,7 @@ function WebsiteLayoutContent({
             aria-label="Choose website"
             size="sm"
           >
-            <span className="website-switcher-icon">
-              <Globe2 aria-hidden="true" />
-            </span>
+            {selected && <WebsiteFavicon origin={selected.origin} />}
             <span className="website-context-name" title={selected?.name}>
               {selected
                 ? selected.origin.replace(/^https?:\/\//, "")
@@ -166,9 +165,7 @@ function WebsiteLayoutContent({
                   aria-current={site.id === selectedSiteId ? "page" : undefined}
                   className="min-w-0"
                 >
-                  <span className="website-menu-icon">
-                    <Globe2 aria-hidden="true" />
-                  </span>
+                  <WebsiteFavicon origin={site.origin} />
                   <span className="min-w-0 flex-1 truncate">{site.name}</span>
                   {site.id === selectedSiteId && <Check aria-hidden="true" />}
                 </ReportLink>
@@ -194,9 +191,7 @@ function WebsiteLayoutContent({
                     }
                     className="min-w-0"
                   >
-                    <span className="website-menu-icon">
-                      <Globe2 aria-hidden="true" />
-                    </span>
+                    <WebsiteFavicon origin={site.origin} />
                     <span className="min-w-0 flex-1 truncate">{site.name}</span>
                     <span className="website-viewer-badge">Viewer</span>
                     {site.id === selectedSiteId && <Check aria-hidden="true" />}

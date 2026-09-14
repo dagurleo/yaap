@@ -345,9 +345,8 @@ function Questions({ hosted }: { hosted: boolean }) {
           <details>
             <summary>Is this a hosted subscription?</summary>
             <p>
-              {hosted
-                ? "You can start a hosted subscription with a 14-day trial, or self-host Yaap and cover your own infrastructure costs."
-                : "Hosted plans are coming soon. You can already self-host Yaap and cover your own Cloudflare infrastructure costs."}
+              You can start a hosted subscription with a 14-day trial, or
+              self-host Yaap and cover your own infrastructure costs.
             </p>
           </details>
         </div>
