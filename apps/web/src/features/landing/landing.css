@@ -480,6 +480,9 @@
   max-width: none;
   flex-shrink: 0;
 }
+.yaap-landing .brand-lockup-dark {
+  display: none;
+}
 .yaap-landing .wordmark > a {
   display: inline-flex;
   align-items: center;
@@ -531,6 +534,31 @@
 }
 .yaap-landing .github-button svg {
   flex-shrink: 0;
+}
+.yaap-landing .theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.yaap-landing .theme-toggle:hover {
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+.yaap-landing .theme-toggle svg {
+  grid-area: 1 / 1;
+  width: 18px;
+  height: 18px;
+}
+.yaap-landing .theme-toggle-sun {
+  display: none;
 }
 .yaap-landing .mobile-menu {
   display: none;
@@ -769,6 +797,9 @@
   border-radius: 6px;
   overflow: hidden;
   background: white;
+}
+.yaap-landing .product-capture-dark {
+  display: none;
 }
 .yaap-landing .product-capture img {
   display: block;
@@ -1625,6 +1656,196 @@
     gap: 12px;
   }
 }
+
+/* The root theme is resolved before paint and can follow the OS or a saved choice. */
+:root[data-theme="dark"] .yaap-landing {
+  --brand: #6f95ff;
+  --brand-hover: #89a8ff;
+  --brand-soft: #182442;
+  --ink: #f4f6fa;
+  --muted: #a8b2bf;
+  --line: #ffffff1a;
+  background: #0b0f14;
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .yaap-home .hero h1 em,
+:root[data-theme="dark"] .yaap-landing .pricing-heading h1 span,
+:root[data-theme="dark"] .yaap-landing .pricing-heading h2 span {
+  color: var(--ink);
+}
+:root[data-theme="dark"] .yaap-landing .brand-lockup-light,
+:root[data-theme="dark"] .yaap-landing .product-capture-light {
+  display: none;
+}
+:root[data-theme="dark"] .yaap-landing .brand-lockup-dark,
+:root[data-theme="dark"] .yaap-landing .product-capture-dark,
+:root[data-theme="dark"] .yaap-landing .theme-toggle-sun {
+  display: block;
+}
+:root[data-theme="dark"] .yaap-landing .theme-toggle-moon {
+  display: none;
+}
+:root[data-theme="dark"] .yaap-landing .github-button {
+  border: 1px solid var(--line);
+  background: #171e28;
+  color: var(--ink);
+}
+:root[data-theme="dark"] .yaap-landing .github-button:hover {
+  background: #202a37;
+  color: var(--ink);
+}
+:root[data-theme="dark"] .yaap-landing .theme-toggle {
+  background: #111720;
+}
+:root[data-theme="dark"] .yaap-landing .theme-toggle:hover {
+  background: #202a37;
+}
+:root[data-theme="dark"] .yaap-landing .primary {
+  background: #3f65d9;
+  box-shadow: none;
+}
+:root[data-theme="dark"] .yaap-landing .primary:hover {
+  background: #3558c4;
+}
+:root[data-theme="dark"] .yaap-landing .skip-link,
+:root[data-theme="dark"] .yaap-landing .mobile-menu details[open] nav {
+  background: #111720;
+  box-shadow: none;
+}
+:root[data-theme="dark"] .yaap-home .globe-stage::after {
+  background: #00000080;
+}
+:root[data-theme="dark"] .yaap-home .globe-skeleton::before {
+  background: #151d27;
+}
+:root[data-theme="dark"] .yaap-home .visitor-location {
+  background: #111720f2;
+}
+:root[data-theme="dark"] .yaap-home .product-capture {
+  background: #111720;
+}
+:root[data-theme="dark"] .yaap-home .feature-report-row::before {
+  background: #182442;
+}
+:root[data-theme="dark"]
+  .yaap-home
+  .feature-funnel
+  .feature-report-row:nth-child(1)::before {
+  background: #1d2d55;
+}
+:root[data-theme="dark"]
+  .yaap-home
+  .feature-funnel
+  .feature-report-row:nth-child(2)::before {
+  background: #294478;
+}
+:root[data-theme="dark"]
+  .yaap-home
+  .feature-funnel
+  .feature-report-row:nth-child(3)::before {
+  background: #3f65ad;
+}
+:root[data-theme="dark"] .yaap-home .architecture,
+:root[data-theme="dark"] .yaap-landing .pricing-board {
+  border-color: var(--line);
+  background: #111720;
+  box-shadow: none;
+}
+:root[data-theme="dark"] .yaap-landing .pricing-section,
+:root[data-theme="dark"] .yaap-landing .pricing-self-host,
+:root[data-theme="dark"] .yaap-landing .landing-footer {
+  border-color: var(--line);
+}
+:root[data-theme="dark"] .yaap-landing .pricing-volume span,
+:root[data-theme="dark"] .yaap-landing .pricing-stops button,
+:root[data-theme="dark"] .yaap-landing .pricing-price > span:nth-child(2) {
+  color: var(--muted);
+}
+:root[data-theme="dark"]
+  .yaap-landing
+  .pricing-slider
+  input::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    var(--brand) 0%,
+    var(--brand) var(--pricing-progress),
+    #2b3440 var(--pricing-progress),
+    #2b3440 100%
+  );
+}
+:root[data-theme="dark"] .yaap-landing .pricing-slider input::-moz-range-track {
+  background: #2b3440;
+}
+:root[data-theme="dark"]
+  .yaap-landing
+  .pricing-slider
+  input::-moz-range-progress {
+  background: var(--brand);
+}
+:root[data-theme="dark"]
+  .yaap-landing
+  .pricing-slider
+  input::-webkit-slider-thumb,
+:root[data-theme="dark"] .yaap-landing .pricing-slider input::-moz-range-thumb {
+  border-color: var(--brand);
+  background: #111720;
+  box-shadow: none;
+}
+:root[data-theme="dark"]
+  .yaap-landing
+  .pricing-stops
+  button[aria-pressed="true"],
+:root[data-theme="dark"] .yaap-landing .pricing-stops button:hover,
+:root[data-theme="dark"] .yaap-landing .pricing-after a:hover,
+:root[data-theme="dark"] .yaap-landing .footer-main li a:hover {
+  color: var(--brand);
+}
+:root[data-theme="dark"] .yaap-landing .pricing-total,
+:root[data-theme="dark"] .yaap-landing .pricing-included,
+:root[data-theme="dark"] .yaap-landing .footer-bottom {
+  border-color: var(--line);
+}
+:root[data-theme="dark"] .yaap-landing .pricing-included > p,
+:root[data-theme="dark"] .yaap-landing .pricing-after a {
+  color: var(--ink);
+}
+:root[data-theme="dark"] .yaap-landing .footer-main li a {
+  color: var(--muted);
+}
+:root[data-theme="dark"] .yaap-landing .public-sidebar,
+:root[data-theme="dark"] .yaap-landing .public-sidebar-help,
+:root[data-theme="dark"] .yaap-landing .public-article > section,
+:root[data-theme="dark"] .yaap-landing .public-related {
+  border-color: var(--line);
+}
+:root[data-theme="dark"] .yaap-landing .public-sidebar nav > p,
+:root[data-theme="dark"] .yaap-landing .public-sidebar-help a,
+:root[data-theme="dark"] .yaap-landing .public-prose strong,
+:root[data-theme="dark"] .yaap-landing .public-prose a:not(.button),
+:root[data-theme="dark"] .yaap-landing .public-related a,
+:root[data-theme="dark"] .yaap-landing .public-notice p:first-child {
+  color: var(--ink);
+}
+:root[data-theme="dark"] .yaap-landing .public-sidebar li a,
+:root[data-theme="dark"] .yaap-landing .public-section-heading > span,
+:root[data-theme="dark"] .yaap-landing .public-prose p,
+:root[data-theme="dark"] .yaap-landing .public-prose ul {
+  color: var(--muted);
+}
+:root[data-theme="dark"] .yaap-landing .public-prose a:not(.button),
+:root[data-theme="dark"] .yaap-landing .public-related a {
+  text-decoration-color: #ffffff50;
+}
+:root[data-theme="dark"] .yaap-landing .public-sidebar li a:hover,
+:root[data-theme="dark"] .yaap-landing .public-prose a:not(.button):hover,
+:root[data-theme="dark"] .yaap-landing .public-related a:hover {
+  color: var(--brand);
+  text-decoration-color: currentColor;
+}
+:root[data-theme="dark"] .yaap-landing .public-notice {
+  border-color: var(--brand);
+}
+
 @media print {
   .yaap-landing > header,
   .yaap-landing > footer,
@@ -1634,7 +1855,21 @@
     display: none;
   }
   .yaap-landing {
+    --brand: #2458eb;
+    --brand-hover: #1945c7;
+    --brand-soft: #edf2ff;
+    --ink: #262c32;
+    --muted: #596570;
+    --line: #262c3220;
     background: white;
+    color: var(--ink);
+    color-scheme: light;
+  }
+  .yaap-landing .brand-lockup-light {
+    display: block;
+  }
+  .yaap-landing .brand-lockup-dark {
+    display: none;
   }
   .yaap-landing .public-layout {
     display: block;

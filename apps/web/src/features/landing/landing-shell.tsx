@@ -1,4 +1,6 @@
 import { useEffect, type MouseEvent, type KeyboardEvent } from "react";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import { documentationUrl, repositoryUrl } from "./policy-details";
 import {
   registerPublicAgentTools,
@@ -23,6 +25,7 @@ export function LandingHeader({
   hosted: boolean;
   pricing?: boolean;
 }) {
+  const { setTheme } = useTheme();
   useEffect(() => {
     const context = (
       document as Document & { modelContext?: PublicModelContext }
@@ -30,14 +33,26 @@ export function LandingHeader({
     if (context?.registerTool)
       return registerPublicAgentTools(context, window.location.origin, hosted);
   }, [hosted]);
+  function toggleTheme() {
+    setTheme(
+      document.documentElement.dataset.theme === "dark" ? "light" : "dark",
+    );
+  }
   return (
     <header>
       <div className="wrap nav">
         <div className="wordmark">
           <a href="/" aria-label="Yaap homepage">
             <img
-              className="brand-lockup"
+              className="brand-lockup brand-lockup-light"
               src="/brand/logo-light.svg"
+              alt=""
+              width="209"
+              height="64"
+            />
+            <img
+              className="brand-lockup brand-lockup-dark"
+              src="/brand/logo-dark.svg"
               alt=""
               width="209"
               height="64"
@@ -73,6 +88,16 @@ export function LandingHeader({
           </svg>
           <span>GitHub</span>
         </a>
+        <button
+          className="theme-toggle"
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Switch between light and dark mode"
+          title="Switch color theme"
+        >
+          <Moon className="theme-toggle-moon" aria-hidden="true" />
+          <Sun className="theme-toggle-sun" aria-hidden="true" />
+        </button>
         <div
           className="mobile-menu"
           onClick={closeMobileMenu}
@@ -107,8 +132,15 @@ export function LandingFooter() {
             <div className="wordmark">
               <a href="/" aria-label="Yaap homepage">
                 <img
-                  className="brand-lockup"
+                  className="brand-lockup brand-lockup-light"
                   src="/brand/logo-light.svg"
+                  alt=""
+                  width="209"
+                  height="64"
+                />
+                <img
+                  className="brand-lockup brand-lockup-dark"
+                  src="/brand/logo-dark.svg"
                   alt=""
                   width="209"
                   height="64"

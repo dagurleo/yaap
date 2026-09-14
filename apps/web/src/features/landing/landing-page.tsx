@@ -86,7 +86,7 @@ function ProductPreview() {
     >
       <div className="wrap">
         <figure className="product-figure">
-          <picture className="product-capture">
+          <picture className="product-capture product-capture-light">
             <source
               media="(max-width: 700px)"
               srcSet="/landing/traffic-mobile.png"
@@ -95,6 +95,21 @@ function ProductPreview() {
             />
             <img
               src="/landing/traffic-desktop.png"
+              width="1708"
+              height="974"
+              alt="Yaap traffic overview with 77,565 pageviews, 16,887 visitors, 18,437 sessions and 5.3% purchase conversion; a daily chart and source and page rankings."
+              decoding="async"
+            />
+          </picture>
+          <picture className="product-capture product-capture-dark">
+            <source
+              media="(max-width: 700px)"
+              srcSet="/landing/traffic-mobile-dark.png"
+              width="380"
+              height="720"
+            />
+            <img
+              src="/landing/traffic-desktop-dark.png"
               width="1708"
               height="974"
               alt="Yaap traffic overview with 77,565 pageviews, 16,887 visitors, 18,437 sessions and 5.3% purchase conversion; a daily chart and source and page rankings."
@@ -245,8 +260,15 @@ function Ownership() {
           <div className="worker">
             <div className="worker-brand" role="img" aria-label="Yaap">
               <img
-                className="brand-lockup"
+                className="brand-lockup brand-lockup-light"
                 src="/brand/logo-light.svg"
+                alt=""
+                width="209"
+                height="64"
+              />
+              <img
+                className="brand-lockup brand-lockup-dark"
+                src="/brand/logo-dark.svg"
                 alt=""
                 width="209"
                 height="64"

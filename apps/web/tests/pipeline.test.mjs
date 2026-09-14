@@ -760,6 +760,10 @@ test("Start renders private pages on the server and guards every server function
   const directoryHtml = await ownerWorkspace.text();
   assert.match(directoryHtml, /Your websites/);
   assert.match(directoryHtml, /Search websites/);
+  assert.match(directoryHtml, /Last 7 days/);
+  assert.match(directoryHtml, /pageviews/);
+  assert.match(directoryHtml, /today/);
+  assert.match(directoryHtml, /3 pageviews in the last 7 days, 3 today/);
   assert.ok(directoryHtml.includes(`/app/${site.id}/overview`));
   const billingPage = await request("/app/billing", { cookie: ownerCookie });
   assert.equal(billingPage.status, 200, await billingPage.clone().text());

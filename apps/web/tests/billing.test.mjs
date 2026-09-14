@@ -52,7 +52,7 @@ const hostedConfig = {
   YAAP_HOSTING_MODE: "hosted",
   POLAR_ENVIRONMENT: "sandbox",
   POLAR_ACCESS_TOKEN: "test-token",
-  POLAR_WEBHOOK_SECRET: "test-webhook-secret",
+  POLAR_WEBHOOK_SECRET: `whsec_${Buffer.from("test-webhook-secret").toString("base64")}`,
   POLAR_PRODUCT_IDS: JSON.stringify(productIds),
 };
 
@@ -1200,6 +1200,58 @@ test("signed webhook receipts activate once and portal sessions stay workspace-b
     await assert.rejects(
       webhookModule.polarWebhook(bad, env, provider),
       (error) => error.status === 403,
+    );
+  } finally {
+    await mf.dispose();
+  }
+});
+
+test("webhooks accept the Standard Webhooks signing scheme", async () => {
+  const { mf, db } = await billingDatabase();
+  try {
+    await seedBillingOwner(db);
+    const env = { DB: db, ...hostedConfig };
+    const { state, provider } = fakeProvider();
+    state.subscriptions = [activeSubscription()];
+    const now = new Date();
+    const body = JSON.stringify({
+      type: "subscription.created",
+      timestamp: now.toISOString(),
+      data: {
+        id: "subscription-1",
+        customer: { external_id: "billing-workspace" },
+      },
+    });
+    const eventId = "standard-webhook-event-1";
+    const signature = new Webhook(hostedConfig.POLAR_WEBHOOK_SECRET).sign(
+      eventId,
+      now,
+      body,
+    );
+    const response = await webhookModule.polarWebhook(
+      new Request("https://app.example/api/billing/webhooks/polar", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "webhook-id": eventId,
+          "webhook-timestamp": String(Math.floor(now.getTime() / 1000)),
+          "webhook-signature": signature,
+        },
+        body,
+      }),
+      env,
+      provider,
+    );
+
+    assert.equal(response.status, 202);
+    assert.deepEqual(
+      await db
+        .prepare(
+          "SELECT state,attempts,subject_id AS subjectId FROM billing_webhook_receipts WHERE event_id=?",
+        )
+        .bind(eventId)
+        .first(),
+      { state: "complete", attempts: 1, subjectId: "billing-workspace" },
     );
   } finally {
     await mf.dispose();

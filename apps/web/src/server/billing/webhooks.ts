@@ -3,6 +3,7 @@ import {
   WebhookVerificationError,
 } from "@polar-sh/sdk/webhooks";
 import { sql } from "drizzle-orm";
+import { Webhook } from "standardwebhooks";
 import { createDb } from "../../db";
 import { HttpError, isRecord, json, readBody } from "../../http";
 import type { Env } from "../../types";
@@ -23,11 +24,41 @@ function value(object: unknown, key: string) {
 
 function externalSubject(event: unknown) {
   const data = value(event, "data");
-  const direct = value(data, "externalCustomerId") ?? value(data, "externalId");
+  const direct =
+    value(data, "externalCustomerId") ??
+    value(data, "external_customer_id") ??
+    value(data, "externalId") ??
+    value(data, "external_id");
   if (typeof direct === "string" && direct) return direct;
   const customer = value(data, "customer");
-  const nested = value(customer, "externalId");
+  const nested =
+    value(customer, "externalId") ?? value(customer, "external_id");
   return typeof nested === "string" && nested ? nested : null;
+}
+
+function validatePolarEvent(
+  body: string,
+  headers: Record<string, string>,
+  secret: string,
+) {
+  try {
+    // Polar's stable SDK verifies secrets created before 8 September 2026.
+    return validateEvent(body, headers, secret);
+  } catch (error) {
+    if (!(error instanceof WebhookVerificationError)) throw error;
+  }
+
+  try {
+    // New and reset secrets use the Standard Webhooks key derivation. The
+    // stable Polar SDK does not support it yet, so verify that scheme directly.
+    const event = new Webhook(secret).verify(body, headers);
+    if (!isRecord(event) || typeof event.type !== "string" || !event.type)
+      throw new SyntaxError("Invalid webhook event");
+    return event as { type: string; data?: unknown };
+  } catch (error) {
+    if (error instanceof SyntaxError) throw error;
+    throw new WebhookVerificationError("No matching signature found");
+  }
 }
 
 function boundedError(error: unknown) {
@@ -91,9 +122,9 @@ export async function polarWebhook(
   if (!eventId || eventId.length > 200)
     throw new HttpError(400, "Invalid webhook ID");
   const bytes = await readBody(request, 65_536);
-  let event: ReturnType<typeof validateEvent>;
+  let event: ReturnType<typeof validatePolarEvent>;
   try {
-    event = validateEvent(
+    event = validatePolarEvent(
       new TextDecoder("utf-8", { fatal: true }).decode(bytes),
       Object.fromEntries(request.headers),
       config.webhookSecret,

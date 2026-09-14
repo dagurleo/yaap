@@ -38,13 +38,13 @@ import { redirect } from "@tanstack/react-router";
 import {
   getAccess,
   requireUser,
-  listSites,
   addSite,
   siteEvents,
   siteLive,
   appOrigin,
   hostedRegistrationAvailable,
 } from "../../server/services";
+import { listDashboardSites } from "../../server/access";
 import { billingOverview } from "../../server/billing/service";
 import {
   createHostedCheckout,
@@ -79,7 +79,8 @@ export const registrationAvailableFn = createServerFn({
   method: "GET",
 }).handler(({ context }) => hostedRegistrationAvailable(context.env));
 export const sitesFn = createServerFn({ method: "GET" }).handler(
-  async ({ context }) => listSites(context.env, await actor(context.env)),
+  async ({ context }) =>
+    listDashboardSites(context.env, await actor(context.env)),
 );
 export const billingFn = createServerFn({ method: "GET" }).handler(
   async ({ context }) => billingOverview(context.env, await actor(context.env)),

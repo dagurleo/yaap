@@ -3,6 +3,7 @@ import { HttpError } from "../http";
 import type { Env } from "../types";
 import type { Site } from "../db/store";
 import { sql } from "drizzle-orm";
+import { calendarDate, dayBoundary, shiftDate } from "../lib/report-timezone";
 
 export type SiteAccess = "owner" | "viewer" | "public";
 export type SiteCapabilities = {
@@ -22,6 +23,13 @@ export type SafeSite = {
   timezone: string;
   access: SiteAccess;
   capabilities: SiteCapabilities;
+};
+export type SiteActivityDay = {
+  date: string;
+  pageviews: number;
+};
+export type DashboardSite = SafeSite & {
+  recentActivity: SiteActivityDay[];
 };
 
 function validSiteId(siteId: string) {
@@ -50,11 +58,10 @@ export function safeSite(site: Site, access: SiteAccess): SafeSite {
   };
 }
 
-export async function listAccessibleSites(
-  env: Env,
+async function accessibleSites(
+  db: ReturnType<typeof createDb>,
   actorUserId: string,
 ): Promise<SafeSite[]> {
-  const db = createDb(env);
   const rows = await db.all<{
     id: string;
     name: string;
@@ -79,6 +86,66 @@ export async function listAccessibleSites(
       managePeople: row.access === "owner",
       manageCredentials: row.access === "owner",
     },
+  }));
+}
+
+export async function listAccessibleSites(
+  env: Env,
+  actorUserId: string,
+): Promise<SafeSite[]> {
+  return accessibleSites(createDb(env), actorUserId);
+}
+
+/** Seven local-calendar-day pageview buckets for the website directory. */
+export async function listDashboardSites(
+  env: Env,
+  actorUserId: string,
+): Promise<DashboardSite[]> {
+  const db = createDb(env);
+  const sites = await accessibleSites(db, actorUserId);
+  if (!sites.length) return [];
+
+  const now = Date.now();
+  const buckets = sites.flatMap((site) => {
+    const today = calendarDate(now, site.timezone);
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = shiftDate(today, index - 6);
+      return {
+        siteId: site.id,
+        date,
+        start: dayBoundary(date, site.timezone),
+        end: Math.min(dayBoundary(shiftDate(date, 1), site.timezone), now + 1),
+      };
+    });
+  });
+  const encodedBuckets = JSON.stringify(buckets);
+  const rows = await db.all<SiteActivityDay & { siteId: string }>(
+    db.provider === "postgres"
+      ? sql`select b."siteId" as "siteId",b.date,count(e.id) as pageviews
+          from json_to_recordset(cast(${encodedBuckets} as json))
+            as b("siteId" text,date text,start bigint,"end" bigint)
+          left join events e on e.site_id=b."siteId" and e.name='pageview'
+            and e.received_at>=b.start and e.received_at<b."end"
+          group by b."siteId",b.date,b.start order by b."siteId",b.start`
+      : sql`select json_extract(b.value,'$.siteId') as "siteId",
+            json_extract(b.value,'$.date') as date,count(e.id) as pageviews
+          from json_each(${encodedBuckets}) b
+          left join events e
+            on e.site_id=json_extract(b.value,'$.siteId') and e.name='pageview'
+            and e.received_at>=json_extract(b.value,'$.start')
+            and e.received_at<json_extract(b.value,'$.end')
+          group by "siteId",date,json_extract(b.value,'$.start')
+          order by "siteId",json_extract(b.value,'$.start')`,
+  );
+  const activityBySite = new Map<string, SiteActivityDay[]>();
+  for (const { siteId, date, pageviews } of rows) {
+    const activity = activityBySite.get(siteId) ?? [];
+    activity.push({ date, pageviews });
+    activityBySite.set(siteId, activity);
+  }
+  return sites.map((site) => ({
+    ...site,
+    recentActivity: activityBySite.get(site.id) ?? [],
   }));
 }
 

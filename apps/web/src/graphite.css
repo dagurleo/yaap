@@ -1044,16 +1044,21 @@
   overflow: hidden;
 }
 .sites-home-site {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 24px 20px;
-  min-height: 114px;
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+  min-height: 188px;
 }
 .sites-home-site:hover {
   background: var(--accent);
 }
-.sites-home-site > div {
+.sites-home-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sites-home-card-identity,
+.sites-home-card-header > div {
   min-width: 0;
   flex: 1;
 }
@@ -1069,6 +1074,52 @@
 .sites-home-arrow {
   color: var(--muted-foreground);
   flex-shrink: 0;
+}
+.sites-home-activity {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.sites-home-activity-copy {
+  min-width: 0;
+}
+.sites-home-activity-copy > p {
+  margin: 0 0 4px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.sites-home-activity-copy strong {
+  color: var(--foreground);
+  font-size: 18px;
+  line-height: 1;
+}
+.sites-home-activity-copy > span {
+  color: var(--secondary-foreground);
+  font-size: 12px;
+}
+.sites-home-activity-copy small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.sites-home-sparkline {
+  width: 106px;
+  height: 42px;
+  overflow: visible;
+  flex-shrink: 0;
+}
+.sites-home-sparkline rect {
+  fill: var(--chart-bar);
+}
+.sites-home-sparkline rect:last-child {
+  fill: var(--chart-1);
 }
 .sites-home-card-footer {
   display: flex;
@@ -1201,7 +1252,7 @@
   .sites-home-search {
     width: 100%;
   }
-  .sites-home-site p {
+  .sites-home-card-identity > p {
     font-size: 16px;
   }
   .sites-home-card-footer {

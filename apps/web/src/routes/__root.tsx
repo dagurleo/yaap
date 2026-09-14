@@ -95,7 +95,12 @@ function RootLayout() {
   const isDashboard = useRouterState({
     select: (state) => /^\/(?:app|share)\/[^/]+/.test(state.location.pathname),
   });
-  if (isLanding) return <Outlet />;
+  if (isLanding)
+    return (
+      <ThemeProvider>
+        <Outlet />
+      </ThemeProvider>
+    );
   return (
     <ThemeProvider>
       <div className={isDashboard ? "dashboard-root" : undefined}>

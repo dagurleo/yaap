@@ -109,6 +109,7 @@ export function VisitorGlobe() {
       return;
     }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const isDarkMode = () => document.documentElement.dataset.theme === "dark";
     let globe: Globe | undefined;
     let disposed = false;
     let frame = 0;
@@ -230,6 +231,18 @@ export function VisitorGlobe() {
       positionLabels();
       resume();
     });
+    const syncColorScheme = () => {
+      const darkMode = isDarkMode();
+      globe?.update({
+        dark: darkMode ? 0.82 : 0,
+        mapBrightness: darkMode ? 6.5 : 5.5,
+        mapBaseBrightness: darkMode ? 0.08 : 0,
+        baseColor: darkMode ? [0.18, 0.24, 0.34] : [0.76, 0.82, 0.91],
+        glowColor: darkMode ? [0.08, 0.11, 0.16] : [0.975, 0.98, 0.985],
+      });
+      resume();
+    };
+    const themeObserver = new MutationObserver(syncColorScheme);
     const visibility = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
       resume();
@@ -298,6 +311,7 @@ export function VisitorGlobe() {
         if (disposed) return;
         try {
           const width = mount.clientWidth;
+          const darkMode = isDarkMode();
           globe = createGlobe(canvas, {
             width,
             height: width,
@@ -305,15 +319,15 @@ export function VisitorGlobe() {
             context,
             phi,
             theta,
-            dark: 0,
+            dark: darkMode ? 0.82 : 0,
             diffuse: 1.4,
             scale: 1,
             mapSamples: 26000,
-            mapBrightness: 5.5,
-            mapBaseBrightness: 0,
-            baseColor: [0.76, 0.82, 0.91],
+            mapBrightness: darkMode ? 6.5 : 5.5,
+            mapBaseBrightness: darkMode ? 0.08 : 0,
+            baseColor: darkMode ? [0.18, 0.24, 0.34] : [0.76, 0.82, 0.91],
             markerColor: [0.14, 0.35, 0.92],
-            glowColor: [0.975, 0.98, 0.985],
+            glowColor: darkMode ? [0.08, 0.11, 0.16] : [0.975, 0.98, 0.985],
             opacity: 1,
             markerElevation,
             markers,
@@ -330,6 +344,10 @@ export function VisitorGlobe() {
       })
       .catch(() => {});
     reduced.addEventListener("change", resume);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
     document.addEventListener("visibilitychange", resume);
     canvas.addEventListener("webglcontextlost", contextLost);
     return () => {
@@ -338,6 +356,7 @@ export function VisitorGlobe() {
       resize.disconnect();
       visibility.disconnect();
       reduced.removeEventListener("change", resume);
+      themeObserver.disconnect();
       document.removeEventListener("visibilitychange", resume);
       canvas.removeEventListener("webglcontextlost", contextLost);
       stage.removeEventListener("pointerdown", pointerDown);

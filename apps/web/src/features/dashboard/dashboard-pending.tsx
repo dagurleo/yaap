@@ -50,10 +50,20 @@ export function DashboardPending() {
             {[0, 1, 2].map((card) => (
               <div key={card} className="sites-home-card">
                 <div className="sites-home-site">
-                  <Skeleton className="size-6 shrink-0" />
-                  <div className="space-y-3">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-44 max-w-full" />
+                  <div className="sites-home-card-header">
+                    <Skeleton className="size-6 shrink-0" />
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-44 max-w-full" />
+                    </div>
+                  </div>
+                  <div className="sites-home-activity">
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-5 w-24" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                    <Skeleton className="h-10 w-28" />
                   </div>
                 </div>
                 <div className="sites-home-card-footer">

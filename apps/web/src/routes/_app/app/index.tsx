@@ -7,7 +7,12 @@ import { Input } from "@/components/ui/input";
 import { sitesQuery } from "@/features/dashboard/queries";
 import { WebsiteLayout } from "@/features/dashboard/website-layout";
 import { WebsiteFavicon } from "@/features/dashboard/website-favicon";
-import type { SafeSite } from "@/server/access";
+import type { DashboardSite } from "@/server/access";
+
+const compactNumber = new Intl.NumberFormat("en", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
 export const Route = createFileRoute("/_app/app/")({
   ...dashboardPending,
@@ -113,7 +118,16 @@ function SitesHome() {
   );
 }
 
-function SiteCard({ site }: { site: SafeSite }) {
+function SiteCard({ site }: { site: DashboardSite }) {
+  const pageviews = site.recentActivity.reduce(
+    (total, day) => total + day.pageviews,
+    0,
+  );
+  const today = site.recentActivity.at(-1)?.pageviews ?? 0;
+  const largestDay = Math.max(
+    1,
+    ...site.recentActivity.map((day) => day.pageviews),
+  );
   return (
     <li className="sites-home-card">
       <Link
@@ -121,23 +135,58 @@ function SiteCard({ site }: { site: SafeSite }) {
         to="/app/$siteId/overview"
         params={{ siteId: site.id }}
         search={{ days: 7 }}
-        aria-label={`Open ${site.name} analytics`}
+        aria-label={`Open ${site.name} analytics. ${pageviews} pageviews in the last 7 days, ${today} today.`}
       >
-        <WebsiteFavicon origin={site.origin} size="md" />
-        <div>
-          <div className="sites-home-card-title">
-            <h2>{site.name}</h2>
-            {site.access === "viewer" && (
-              <span className="website-viewer-badge">Viewer</span>
-            )}
+        <div className="sites-home-card-header">
+          <WebsiteFavicon origin={site.origin} size="md" />
+          <div className="sites-home-card-identity">
+            <div className="sites-home-card-title">
+              <h2>{site.name}</h2>
+              {site.access === "viewer" && (
+                <span className="website-viewer-badge">Viewer</span>
+              )}
+            </div>
+            <p>{site.origin.replace(/^https?:\/\//, "")}</p>
           </div>
-          <p>{site.origin.replace(/^https?:\/\//, "")}</p>
+          <ArrowUpRight
+            className="sites-home-arrow"
+            aria-hidden="true"
+            size={16}
+          />
         </div>
-        <ArrowUpRight
-          className="sites-home-arrow"
-          aria-hidden="true"
-          size={16}
-        />
+        <div className="sites-home-activity">
+          <div className="sites-home-activity-copy">
+            <p>Last 7 days</p>
+            <strong>{compactNumber.format(pageviews)}</strong>
+            <span> pageviews</span>
+            <small>
+              {compactNumber.format(today)} {today === 1 ? "view" : "views"}{" "}
+              today
+            </small>
+          </div>
+          <svg
+            className="sites-home-sparkline"
+            viewBox="0 0 106 42"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            {site.recentActivity.map((day, index) => {
+              const height = day.pageviews
+                ? Math.max(3, (day.pageviews / largestDay) * 38)
+                : 2;
+              return (
+                <rect
+                  key={day.date}
+                  x={index * 16}
+                  y={42 - height}
+                  width="10"
+                  height={height}
+                  rx="2"
+                />
+              );
+            })}
+          </svg>
+        </div>
       </Link>
       <div className="sites-home-card-footer">
         <Link
