@@ -120,6 +120,7 @@ export async function ensurePolarWorkspaceCustomer(
         owner: {
           email: input.customerEmail,
           name: input.customerName,
+          externalId: input.externalCustomerId,
         },
         metadata: {
           app: "yaap",
@@ -166,8 +167,9 @@ function checkout(
 /** The only production adapter allowed to make Polar API calls. */
 export function createBillingProvider(
   config: HostedBillingConfig,
+  injectedClient?: Polar,
 ): BillingProvider {
-  const client = createPolarClient(config);
+  const client = injectedClient ?? createPolarClient(config);
 
   async function checkoutWithCustomer(
     value: Awaited<ReturnType<Polar["checkouts"]["get"]>>,
@@ -257,6 +259,7 @@ export function createBillingProvider(
     async createPortalSession(externalCustomerId, returnUrl) {
       const session = await client.customerSessions.create({
         externalCustomerId,
+        externalMemberId: externalCustomerId,
         returnUrl,
       });
       return {

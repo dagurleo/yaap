@@ -338,6 +338,7 @@ test("Polar customer provisioning binds checkout identity to the workspace", asy
         assert.equal(type, "team");
         assert.equal(email, undefined);
         assert.equal(owner.email, "billing@example.com");
+        assert.equal(owner.externalId, "billing-workspace");
         assert.equal(metadata.workspace_id, "billing-workspace");
         // Simulate a lost response after Polar committed the customer.
         throw new Error(`response lost for ${externalId}`);
@@ -373,6 +374,40 @@ test("Polar customer provisioning binds checkout identity to the workspace", asy
     ),
     /belongs to another account/,
   );
+});
+
+test("Polar portal sessions identify the workspace owner member", async () => {
+  const calls = [];
+  const provider = polarModule.createBillingProvider(
+    configModule.billingConfig(hostedConfig),
+    {
+      customerSessions: {
+        async create(input) {
+          calls.push(input);
+          return {
+            customerPortalUrl: "https://sandbox.polar.sh/portal/session",
+            expiresAt: new Date(1_800_000_000_000),
+            customerId: "polar-customer-1",
+          };
+        },
+      },
+    },
+  );
+
+  const session = await provider.createPortalSession(
+    "billing-workspace",
+    "https://app.example/app/billing?billing=return",
+  );
+
+  assert.deepEqual(calls, [
+    {
+      externalCustomerId: "billing-workspace",
+      externalMemberId: "billing-workspace",
+      returnUrl: "https://app.example/app/billing?billing=return",
+    },
+  ]);
+  assert.equal(session.url, "https://sandbox.polar.sh/portal/session");
+  assert.equal(session.customerId, "polar-customer-1");
 });
 
 test("entitlements preserve usage across warnings and stop at the ceiling", () => {
