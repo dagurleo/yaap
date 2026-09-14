@@ -17,6 +17,7 @@
       "/oauth/*",
       "/.well-known/*",
       "/mcp/server-card",
+      "/favicon.ico",
       "/robots.txt",
       "/sitemap.xml",
       "/llms.txt",

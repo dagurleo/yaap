@@ -7,12 +7,15 @@ const sizes = {
   md: "size-7 rounded-md p-1",
 };
 
-function faviconUrl(origin: string) {
+function faviconUrls(origin: string) {
   try {
     const host = new URL(origin).hostname;
-    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+    return [
+      new URL("/favicon.ico", origin).toString(),
+      `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`,
+    ];
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -25,10 +28,11 @@ export function WebsiteFavicon({
   size?: keyof typeof sizes;
   className?: string;
 }) {
-  const src = faviconUrl(origin);
-  const [failed, setFailed] = useState(false);
+  const sources = faviconUrls(origin);
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const src = sources[sourceIndex];
 
-  useEffect(() => setFailed(false), [src]);
+  useEffect(() => setSourceIndex(0), [origin]);
 
   return (
     <span
@@ -39,7 +43,7 @@ export function WebsiteFavicon({
       )}
       aria-hidden="true"
     >
-      {src && !failed ? (
+      {src ? (
         <img
           src={src}
           alt=""
@@ -48,7 +52,7 @@ export function WebsiteFavicon({
           loading="lazy"
           referrerPolicy="no-referrer"
           className="size-full object-contain"
-          onError={() => setFailed(true)}
+          onError={() => setSourceIndex((index) => index + 1)}
         />
       ) : (
         <Globe2 className="size-4 stroke-muted-foreground" />

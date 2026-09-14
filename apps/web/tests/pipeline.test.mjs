@@ -184,6 +184,12 @@ test("fresh migrations support app and auth health; private API rejects anonymou
   assert.match(await setup.text(), /Make this your own/);
 });
 
+test("root favicon serves the published brand icon", async () => {
+  const response = await request("/favicon.ico");
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "public, max-age=86400");
+});
+
 test("registration requires setup secret and same origin; concurrent setup creates one owner", async () => {
   const body = {
     name: "Owner",

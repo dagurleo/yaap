@@ -36,47 +36,55 @@ export default {
     let origin = new URL(request.url).origin;
     try {
       origin = discoveryOrigin(request, bindings.BETTER_AUTH_URL);
-      const discovery = await agentDiscovery(request, origin);
-      if (discovery) response = discovery;
-      else {
-        billingConfig(bindings);
-        response = await withDatabase(bindings, async (env) => {
-          const url = new URL(request.url);
-          // Preserve bookmarked report URLs and their filters during the move.
-          if (
-            (request.method === "GET" || request.method === "HEAD") &&
-            /^\/sites\/[^/]+(?:\/(?:overview|visitors|funnels|revenue|events|settings))?\/?$/.test(
-              url.pathname,
-            )
-          ) {
-            url.pathname = url.pathname.replace(/^\/sites\//, "/app/");
-            return Response.redirect(url.toString(), 308);
-          }
-          const apiResponse = await route(request, env);
-          if (apiResponse) return apiResponse;
-          if (
-            ["GET", "HEAD"].includes(request.method) &&
-            wantsMarkdown(request)
-          ) {
-            const pageUrl = new URL(request.url);
-            pageUrl.pathname = publicPagePath(pageUrl.pathname)!;
-            const headers = new Headers(request.headers);
-            // TanStack's document renderer requires an HTML Accept header.
-            headers.set("Accept", "text/html");
-            const html = await handler.fetch(
-              new Request(pageUrl, { method: "GET", headers }),
-              { context: { env } },
-            );
-            const markdown = await publicMarkdown(
-              html,
-              new URL(pageUrl.pathname, origin),
-            );
-            return request.method === "HEAD"
-              ? new Response(null, markdown)
-              : markdown;
-          }
-          return handler.fetch(request, { context: { env } });
-        });
+      const url = new URL(request.url);
+      if (
+        ["GET", "HEAD"].includes(request.method) &&
+        url.pathname === "/favicon.ico"
+      ) {
+        url.pathname = "/brand/favicon.ico";
+        response = await bindings.ASSETS.fetch(new Request(url, request));
+      } else {
+        const discovery = await agentDiscovery(request, origin);
+        if (discovery) response = discovery;
+        else {
+          billingConfig(bindings);
+          response = await withDatabase(bindings, async (env) => {
+            // Preserve bookmarked report URLs and their filters during the move.
+            if (
+              (request.method === "GET" || request.method === "HEAD") &&
+              /^\/sites\/[^/]+(?:\/(?:overview|visitors|funnels|revenue|events|settings))?\/?$/.test(
+                url.pathname,
+              )
+            ) {
+              url.pathname = url.pathname.replace(/^\/sites\//, "/app/");
+              return Response.redirect(url.toString(), 308);
+            }
+            const apiResponse = await route(request, env);
+            if (apiResponse) return apiResponse;
+            if (
+              ["GET", "HEAD"].includes(request.method) &&
+              wantsMarkdown(request)
+            ) {
+              const pageUrl = new URL(request.url);
+              pageUrl.pathname = publicPagePath(pageUrl.pathname)!;
+              const headers = new Headers(request.headers);
+              // TanStack's document renderer requires an HTML Accept header.
+              headers.set("Accept", "text/html");
+              const html = await handler.fetch(
+                new Request(pageUrl, { method: "GET", headers }),
+                { context: { env } },
+              );
+              const markdown = await publicMarkdown(
+                html,
+                new URL(pageUrl.pathname, origin),
+              );
+              return request.method === "HEAD"
+                ? new Response(null, markdown)
+                : markdown;
+            }
+            return handler.fetch(request, { context: { env } });
+          });
+        }
       }
     } catch (error) {
       if (error instanceof HttpError) {
@@ -94,7 +102,12 @@ export default {
     }
     // Apply defaults to errors and redirects too, preserving endpoint privacy policies.
     const safe = new Response(response.body, response);
-    safe.headers.set("Cache-Control", "private, no-store");
+    safe.headers.set(
+      "Cache-Control",
+      new URL(request.url).pathname === "/favicon.ico"
+        ? "public, max-age=86400"
+        : "private, no-store",
+    );
     safe.headers.set("X-Content-Type-Options", "nosniff");
     if (/^\/(?:invite|share)\//.test(new URL(request.url).pathname))
       safe.headers.set("Referrer-Policy", "no-referrer");
