@@ -81,6 +81,6 @@ export function DashboardPending() {
 
 export const dashboardPending = {
   pendingComponent: DashboardPending,
-  pendingMs: 100,
+  pendingMs: 0,
   pendingMinMs: 150,
 };
