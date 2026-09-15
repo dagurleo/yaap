@@ -35,7 +35,7 @@ Acceptance criteria and dependencies are in the [implementation plan](IMPLEMENTA
 
 ## Planned ads integration
 
-[Google Ads and Meta integration](ADS_IMPLEMENTATION_PLAN.md) has a separate implementation plan: ad attribution, connected-account spend reporting, then purchase forwarding. Our Cloudflare deployment uses our developer credentials; self-hosters configure their own. No connector is implemented yet; this workstream does not change the ordered stages above.
+[Google Ads and Meta integration](ADS_IMPLEMENTATION_PLAN.md) has a separate implementation plan: ad attribution, connected-account spend reporting, then purchase forwarding. Our Cloudflare deployment uses our developer credentials; self-hosters configure their own. The first [campaign/ad attribution slice](ADS_ATTRIBUTION.md) is implemented; connections, raw click identifiers, spend and forwarding remain pending. This workstream does not change the ordered stages above.
 
 ## Before public release
 

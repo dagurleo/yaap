@@ -1,4 +1,5 @@
 import { useEffect, type MouseEvent, type KeyboardEvent } from "react";
+import { AnalyticsConsent } from "@/components/analytics-consent";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { documentationUrl, repositoryUrl } from "./policy-details";
@@ -189,6 +190,9 @@ export function LandingFooter() {
             <ul role="list">
               <li>
                 <a href="/privacy">Privacy Policy</a>
+              </li>
+              <li>
+                <AnalyticsConsent />
               </li>
               <li>
                 <a href="/terms">Terms of Service</a>

@@ -48,7 +48,7 @@ export async function mutate(
 ): Promise<Result> {
   const { env, principal: p, operation, siteId, input } = ctx,
     db = createDb(env);
-  const create = /^(create_|rotate_|set_stripe)/.test(operation);
+  const create = /^(create_|rotate_|set_stripe|set_polar)/.test(operation);
   if (create && !ctx.idempotencyKey)
     throw new ApiError(
       400,

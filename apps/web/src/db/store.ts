@@ -3,6 +3,7 @@ import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import * as schema from "./analytics-schema";
 import type { AnalyticsEvent } from "../types";
 import { expressions, type Executor } from "./executor";
+import { adAttribution, adAttributionColumns } from "../lib/ad-attribution";
 
 // Schemas supply column codecs only. SQL execution belongs to the selected driver.
 // Service methods return decoded application records, never driver result objects.
@@ -179,9 +180,12 @@ export function createStore(executor: Executor) {
       return { events: rows, total: count.total };
     },
     async insertEvent(event: AnalyticsEvent, billingReceiptId?: string) {
+      // Both raw queue messages and hosted billing receipts pass this boundary.
+      const ads = adAttribution(event.adAttribution, event);
       const inserted = await events.insert(
         {
           ...event,
+          ...adAttributionColumns(ads),
           billingReceiptId,
           trackingVersion: event.version,
           visitorId: event.version === 2 ? (event.visitorId ?? null) : null,
@@ -312,7 +316,7 @@ export function createStore(executor: Executor) {
         visitor_id=coalesce(payments.visitor_id,excluded.visitor_id),updated_at=excluded.updated_at
         where payments.currency=excluded.currency and payments.paid_at=excluded.paid_at
         and (payments.visitor_id is null or excluded.visitor_id is null or payments.visitor_id=excluded.visitor_id)
-        ${input.provider === "api" ? sql`and payments.amount=excluded.amount` : sql``}`,
+        ${input.provider !== "stripe" ? sql`and payments.amount=excluded.amount` : sql``}`,
         )
       )[0];
     },

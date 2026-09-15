@@ -23,6 +23,148 @@ const flush = async () => {
     await new Promise((resolve) => setTimeout(resolve, 1));
 };
 
+const adUrl =
+  "https://site.example/?utm_source=google&utm_medium=cpc&yaap_ad_provider=google&yaap_ad_account=123&yaap_ad_campaign=90071992547409931234&yaap_ad_group=456&yaap_ad_id=789&gclid=never-collect-this&fbclid=also-private";
+const adConsent = {
+  storage: "granted",
+  userData: "denied",
+  personalization: "unknown",
+  policyVersion: "2026-09",
+};
+function startAds(b) {
+  b.ctx.osAnalytics.setAdvertisingConsent(adConsent);
+  b.ctx.osAnalytics.resume();
+}
+
+test("advertising defaults off and the legacy identity switch never grants ad consent", async () => {
+  const b = browser({ url: adUrl });
+  b.ctx.osAnalytics.setConsent(true);
+  await b.ctx.osAnalytics.track("signup");
+  assert.ok(b.sent.every((r) => r.body.adAttribution === undefined));
+  assert.ok(!b.session.values.has("os-analytics:site-one:advertising"));
+  assert.doesNotMatch(
+    JSON.stringify(b.sent),
+    /never-collect-this|also-private/,
+  );
+  b.ctx.osAnalytics.destroy();
+});
+
+test("ad dimensions retain string IDs and touch identity through routes and a full reload", async () => {
+  const b = browser({
+    url: adUrl,
+    referrer: "https://www.google.com/",
+    tracking: "paused",
+  });
+  startAds(b);
+  await flush();
+  const ad = b.sent[0].body.adAttribution;
+  assert.equal(ad.campaignId, "90071992547409931234");
+  assert.equal(ad.adId, "789");
+  assert.equal(ad.storage, "granted");
+  b.ctx.history.pushState({}, "", "/pricing");
+  await b.ctx.osAnalytics.track("signup");
+  assert.deepEqual(b.sent.at(-1).body.adAttribution, ad);
+  const reloaded = browser({
+    url: "https://site.example/checkout",
+    local: b.local,
+    session: b.session,
+    referrer: "https://site.example/pricing",
+    tracking: "paused",
+  });
+  startAds(reloaded);
+  await flush();
+  assert.deepEqual(reloaded.sent[0].body.adAttribution, ad);
+  assert.doesNotMatch(
+    JSON.stringify([...b.session.values.values()]),
+    /never-collect-this|also-private/,
+  );
+  reloaded.ctx.history.pushState(
+    {},
+    "",
+    "/offer?yaap_ad_provider=meta&yaap_ad_campaign=55&yaap_ad_id=66",
+  );
+  await reloaded.ctx.osAnalytics.track("lead");
+  assert.equal(reloaded.sent.at(-1).body.adAttribution.provider, "meta");
+  assert.notEqual(reloaded.sent.at(-1).body.adAttribution.touchId, ad.touchId);
+  reloaded.ctx.history.pushState({}, "", "/newsletter?utm_source=email");
+  await reloaded.ctx.osAnalytics.track("lead");
+  assert.equal(reloaded.sent.at(-1).body.adAttribution, undefined);
+  b.ctx.osAnalytics.destroy();
+  reloaded.ctx.osAnalytics.destroy();
+});
+
+test("withdrawal strips pending ad retries without changing event identity or resurrecting the touch", async () => {
+  const b = browser({
+    url: adUrl,
+    tracking: "paused",
+    fetcher: (n) => ({ ok: n > 1, status: n > 1 ? 202 : 503 }),
+  });
+  startAds(b);
+  await Promise.resolve();
+  assert.ok(b.sent[0].body.adAttribution);
+  b.ctx.osAnalytics.setAdvertisingConsent({ ...adConsent, storage: "denied" });
+  b.ctx.osAnalytics.setAdvertisingConsent(adConsent);
+  await flush();
+  assert.equal(b.sent[1].body.id, b.sent[0].body.id);
+  assert.equal(b.sent[1].body.adAttribution, undefined);
+  await b.ctx.osAnalytics.track("later");
+  assert.equal(b.sent.at(-1).body.adAttribution, undefined);
+  assert.ok(b.sent.at(-1).body.visitorId);
+  b.ctx.osAnalytics.destroy();
+});
+
+test("advertising is unavailable when paused, anonymous, expired or malformed", async () => {
+  const b = browser({ url: adUrl, tracking: "paused", identifiers: false });
+  b.ctx.osAnalytics.setAdvertisingConsent(adConsent);
+  assert.equal(b.session.reads, 0);
+  b.ctx.osAnalytics.resume();
+  await flush();
+  assert.equal(b.sent[0].body.adAttribution, undefined);
+  assert.equal(b.session.reads, 0);
+  assert.throws(() =>
+    b.ctx.osAnalytics.setAdvertisingConsent({ ...adConsent, storage: true }),
+  );
+  const good = browser({ url: adUrl, tracking: "paused" });
+  startAds(good);
+  await flush();
+  good.advance(30 * 60 * 1000);
+  good.ctx.history.pushState({}, "", "/return");
+  await good.ctx.osAnalytics.track("later");
+  assert.equal(good.sent.at(-1).body.adAttribution, undefined);
+  const malformed = browser({
+    url: "https://site.example/?yaap_ad_provider=google&yaap_ad_campaign=person@example.com",
+    tracking: "paused",
+  });
+  startAds(malformed);
+  await flush();
+  assert.equal(malformed.sent[0].body.adAttribution, undefined);
+  for (const item of [b, good, malformed]) item.ctx.osAnalytics.destroy();
+});
+
+test("stored ad context is allowlisted and bound to the visitor; policy changes clear old context", async () => {
+  const b = browser({ url: adUrl, tracking: "paused" });
+  startAds(b);
+  await flush();
+  const key = "os-analytics:site-one:advertising";
+  const stored = JSON.parse(b.session.getItem(key));
+  stored.context.gclid = "do-not-forward";
+  b.session.setItem(key, JSON.stringify(stored));
+  await b.ctx.osAnalytics.track("safe");
+  assert.doesNotMatch(
+    JSON.stringify(b.sent.at(-1).body),
+    /do-not-forward|gclid/,
+  );
+  b.ctx.osAnalytics.setAdvertisingConsent({
+    ...adConsent,
+    policyVersion: "new",
+  });
+  await b.ctx.osAnalytics.track("new-policy");
+  assert.equal(b.sent.at(-1).body.adAttribution, undefined);
+  b.ctx.osAnalytics.setIdentifiers(false);
+  assert.equal(b.session.values.has(key), false);
+  b.ctx.osAnalytics.destroy();
+});
+
 test("custom properties preserve types and are captured once across retries", async () => {
   const b = browser({
     identifiers: false,

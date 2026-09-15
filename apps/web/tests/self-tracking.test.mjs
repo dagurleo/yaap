@@ -9,6 +9,9 @@ async function browser({
   path = "/",
   siteId = "self-site",
   production = true,
+  choice,
+  storedChoice,
+  storageBlocked = false,
 } = {}) {
   const { outputFiles } = await build({
     stdin: {
@@ -17,6 +20,7 @@ async function browser({
         import { SelfTracking } from "./src/components/self-tracking";
         globalThis.testRouter = { history: createBrowserHistory({ window }) };
         export const mount = SelfTracking;
+        export { setAnalyticsChoice as choose } from "./src/lib/analytics-consent";
       `,
       resolveDir: fileURLToPath(new URL("../", import.meta.url)),
     },
@@ -57,13 +61,31 @@ async function browser({
   const removeEventListener = (name, fn) => listeners.get(name)?.delete(fn);
   const sent = [];
   const storageValues = new Map();
+  const consentKey = "yaap:analytics-consent:v1";
+  if (choice)
+    storageValues.set(
+      consentKey,
+      JSON.stringify({ choice, expiresAt: Date.now() + 86400000 }),
+    );
+  if (storedChoice) storageValues.set(consentKey, storedChoice);
   const storage = {
-    getItem: (key) => storageValues.get(key) ?? null,
-    setItem: (key, value) => storageValues.set(key, value),
+    getItem: (key) => {
+      if (storageBlocked) throw new Error("blocked");
+      return storageValues.get(key) ?? null;
+    },
+    setItem: (key, value) => {
+      if (storageBlocked) throw new Error("blocked");
+      storageValues.set(key, value);
+    },
     removeItem: (key) => storageValues.delete(key),
   };
   const ctx = createContext({
     URL,
+    Event,
+    dispatchEvent: (event) => {
+      for (const listener of listeners.get(event.type) ?? []) listener(event);
+      return true;
+    },
     AbortController,
     TextEncoder,
     queueMicrotask,
@@ -112,7 +134,7 @@ async function browser({
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 test("public tracking uses this origin and excludes private SPA routes", async () => {
-  const b = await browser();
+  const b = await browser({ choice: "accepted" });
   try {
     await flush();
     assert.deepEqual(
@@ -182,7 +204,7 @@ test("missing configuration and development builds disable tracking", async () =
 });
 
 test("unmount cancels a pending homepage start and restores history hooks", async () => {
-  const b = await browser();
+  const b = await browser({ choice: "accepted" });
   b.ctx.cleanup();
   await flush();
   assert.equal(b.sent.length, 0);
@@ -194,4 +216,106 @@ test("unmount cancels a pending homepage start and restores history hooks", asyn
     ["/"],
   );
   b.close();
+});
+
+test("homepage analytics starts by default; opt-out stops and clears identifiers", async () => {
+  const b = await browser();
+  try {
+    await flush();
+    assert.equal(b.sent.length, 1);
+    assert.ok(b.sent[0].body.visitorId);
+    assert.ok(b.storageValues.has("os-analytics:self-site:visitor"));
+    b.ctx.SelfTrackingTest.choose("rejected");
+    await flush();
+    assert.equal(await b.ctx.osAnalytics.track("after_reject"), false);
+    assert.equal(b.storageValues.has("os-analytics:self-site:visitor"), false);
+    assert.equal(b.storageValues.has("os-analytics:self-site:session"), false);
+    b.navigate("/privacy");
+    b.navigate("/");
+    await flush();
+    assert.equal(b.sent.length, 1);
+  } finally {
+    b.close();
+  }
+});
+
+test("saved opt-out stops collection; expired and malformed choices use the default", async () => {
+  for (const config of [
+    { choice: "rejected" },
+    {
+      storedChoice: JSON.stringify({
+        choice: "accepted",
+        expiresAt: Date.now() - 1,
+      }),
+    },
+    { storedChoice: "broken" },
+    {
+      storedChoice: JSON.stringify({
+        choice: "accepted",
+        expiresAt: "forever",
+      }),
+    },
+  ]) {
+    const b = await browser(config);
+    try {
+      await flush();
+      assert.equal(b.sent.length, config.choice === "rejected" ? 0 : 1);
+    } finally {
+      b.close();
+    }
+  }
+});
+
+test("reject cancels a queued acceptance and changes in another tab stop tracking", async () => {
+  const b = await browser();
+  try {
+    b.ctx.SelfTrackingTest.choose("accepted");
+    b.ctx.SelfTrackingTest.choose("rejected");
+    await flush();
+    assert.equal(b.sent.length, 0);
+    b.ctx.SelfTrackingTest.choose("accepted");
+    await flush();
+    assert.equal(b.sent.length, 1);
+    b.storageValues.set(
+      "yaap:analytics-consent:v1",
+      JSON.stringify({ choice: "rejected", expiresAt: Date.now() + 86400000 }),
+    );
+    b.ctx.dispatchEvent({ type: "storage", key: "yaap:analytics-consent:v1" });
+    assert.equal(await b.ctx.osAnalytics.track("after_external_reject"), false);
+    assert.equal(b.storageValues.size, 1);
+  } finally {
+    b.close();
+  }
+});
+
+test("blocked storage supports opting out for the current page", async () => {
+  const b = await browser({ storageBlocked: true });
+  try {
+    await flush();
+    assert.equal(b.sent.length, 1);
+    b.ctx.SelfTrackingTest.choose("rejected");
+    assert.equal(
+      await b.ctx.osAnalytics.track("blocked_storage_reject"),
+      false,
+    );
+  } finally {
+    b.close();
+  }
+});
+
+test("dismissing the notice keeps tracking active without recording acceptance", async () => {
+  const b = await browser();
+  try {
+    await flush();
+    b.ctx.SelfTrackingTest.choose("dismissed");
+    await flush();
+    assert.equal(b.sent.length, 1);
+    assert.equal(
+      JSON.parse(b.storageValues.get("yaap:analytics-consent:v1")).choice,
+      "dismissed",
+    );
+    assert.equal(await b.ctx.osAnalytics.track("after_dismiss"), true);
+  } finally {
+    b.close();
+  }
 });

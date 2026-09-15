@@ -2146,6 +2146,188 @@ test("ordered funnels handle retries, sessions, windows, filters and protected e
   assert.match(await page.text(), /Signup funnel/);
 });
 
+test("Polar signed orders share attribution, isolate modes and preserve cumulative refunds", async () => {
+  const fixture = await request("/api/sites", {
+    method: "POST",
+    cookie: ownerCookie,
+    body: {
+      name: "Polar fixture",
+      origin: "https://polar-payments.example.com",
+    },
+  }).then((r) => r.json());
+  const settingsPath = `/api/sites/${fixture.id}/payment-settings`;
+  const change = (body) =>
+    request(settingsPath, { method: "POST", cookie: ownerCookie, body });
+  const secret = "polar_whs_" + "p".repeat(32);
+  const liveSecret = "polar_whs_" + "l".repeat(32);
+  for (const [mode, value] of [
+    ["test", secret],
+    ["live", liveSecret],
+  ]) {
+    const response = await change({ action: "polar", mode, secret: value });
+    assert.equal(response.status, 200, await response.clone().text());
+  }
+  const settings = await request(settingsPath, { cookie: ownerCookie }).then(
+    (r) => r.json(),
+  );
+  assert.equal(settings.providers.polar.test, true);
+  assert.equal(settings.providers.polar.live, true);
+  const stored = await db
+    .prepare("SELECT * FROM payment_integrations WHERE site_id=?")
+    .bind(fixture.id)
+    .first();
+  assert.ok(stored.polar_test_secret);
+  assert.equal(JSON.stringify(stored).includes(secret), false);
+  const now = Date.now() - 10000;
+  const visitor = "f58945c1-5b9d-43ad-99f4-21f36bf1fc55";
+  const order = {
+    id: "polar_order_1",
+    paid: true,
+    total_amount: 1200,
+    refunded_amount: 0,
+    refunded_tax_amount: 0,
+    currency: "usd",
+    created_at: new Date(now).toISOString(),
+    metadata: {
+      os_analytics_identity_enabled: true,
+      os_analytics_visitor_id: visitor,
+    },
+  };
+  async function deliver(
+    data = order,
+    {
+      type = "order.paid",
+      mode = "test",
+      signingSecret = secret,
+      timestamp = Math.floor(Date.now() / 1000),
+      signature,
+      path,
+      raw,
+    } = {},
+  ) {
+    const body =
+      raw ??
+      JSON.stringify({ type, timestamp: new Date().toISOString(), data });
+    const id = "polar_event";
+    const signed = createHmac("sha256", signingSecret)
+      .update(`${id}.${timestamp}.${body}`)
+      .digest("base64");
+    return mf.dispatchFetch(
+      origin + (path ?? `/payments/polar/${fixture.id}/${mode}`),
+      {
+        method: "POST",
+        body,
+        headers: {
+          "webhook-id": id,
+          "webhook-timestamp": String(timestamp),
+          "webhook-signature": signature ?? `v1,${signed}`,
+        },
+      },
+    );
+  }
+  assert.equal((await deliver(order, { signature: "v1,invalid" })).status, 400);
+  assert.equal(
+    (await deliver(order, { timestamp: Math.floor(Date.now() / 1000) - 600 }))
+      .status,
+    400,
+  );
+  assert.equal((await deliver(order, { mode: "live" })).status, 400);
+  assert.equal(
+    (await deliver(order, { path: `/payments/polar/${site.id}/test` })).status,
+    404,
+  );
+  assert.equal((await deliver(order, { raw: "{" })).status, 400);
+  assert.deepEqual(
+    await (await deliver(order, { type: "subscription.active" })).json(),
+    { ignored: true },
+  );
+  assert.deepEqual(await (await deliver({ ...order, paid: false })).json(), {
+    ignored: true,
+  });
+  assert.deepEqual(
+    await (await deliver({ ...order, total_amount: 0 })).json(),
+    { ignored: true },
+  );
+  assert.equal((await deliver({ ...order, refunded_amount: -1 })).status, 400);
+  assert.equal(
+    (await deliver({ ...order, refunded_amount: 1300 })).status,
+    400,
+  );
+  // Refund arrives before paid; later paid snapshots cannot undo it.
+  assert.equal(
+    (
+      await deliver(
+        { ...order, refunded_amount: 300, refunded_tax_amount: 60 },
+        { type: "order.refunded" },
+      )
+    ).status,
+    200,
+  );
+  const duplicates = await Promise.all([deliver(), deliver()]);
+  assert.deepEqual(
+    duplicates.map((r) => r.status),
+    [200, 200],
+  );
+  assert.equal((await deliver({ ...order, total_amount: 1500 })).status, 409);
+  const payment = await db
+    .prepare(
+      "SELECT * FROM payments WHERE site_id=? AND provider='polar' AND mode='test'",
+    )
+    .bind(fixture.id)
+    .first();
+  assert.equal(payment.refunded_amount, 360);
+  assert.ok(payment.visitor_id);
+  await db
+    .prepare(
+      "INSERT INTO events(id,site_id,name,path,received_at,visitor_id,tracking_version,utm_source) VALUES ('polar-landing',?,'pageview','/polar',?,?,2,'polar-campaign')",
+    )
+    .bind(fixture.id, now - 1000, payment.visitor_id)
+    .run();
+  const report = await request(`/api/sites/${fixture.id}/revenue?mode=test`, {
+    cookie: ownerCookie,
+  }).then((r) => r.json());
+  assert.equal(report.total, 1);
+  assert.equal(report.summary[0].net, 840);
+  assert.equal(report.sources[0].label, "Campaign · polar-campaign");
+  assert.equal(
+    (await deliver(order, { mode: "live", signingSecret: liveSecret })).status,
+    200,
+  );
+  assert.equal(
+    (
+      await deliver({
+        ...order,
+        id: "unattributed",
+        metadata: {
+          os_analytics_identity_enabled: false,
+          os_analytics_visitor_id: visitor,
+        },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await db
+        .prepare(
+          "SELECT visitor_id FROM payments WHERE site_id=? AND external_id='unattributed'",
+        )
+        .bind(fixture.id)
+        .first()
+    ).visitor_id,
+    null,
+  );
+  assert.equal(
+    (await change({ action: "polar", mode: "test", secret: null })).status,
+    200,
+  );
+  assert.equal((await deliver()).status, 404);
+  assert.equal(
+    (await deliver(order, { mode: "live", signingSecret: liveSecret })).status,
+    200,
+  );
+});
+
 test("payment keys, Stripe signatures, refunds and attribution are isolated and idempotent", async () => {
   const fixture = await request("/api/sites", {
     method: "POST",
@@ -5032,6 +5214,203 @@ test("configured demo uses public sharing and hourly refresh is isolated and ret
     scheduledTime: scheduledTime + 3600000,
   });
   assert.deepEqual(await counts(), first);
+});
+
+test("ad campaign dimensions survive queued ingestion, duplicate replay, payments and finalized retention", async () => {
+  const fixture = await request("/api/sites", {
+    method: "POST",
+    cookie: ownerCookie,
+    body: {
+      name: "Ad attribution fixture",
+      origin: "https://ads-fixture.example",
+    },
+  }).then((r) => r.json());
+  const visitorId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+  const payload = {
+    version: 2,
+    siteId: fixture.id,
+    id: "ad-landing",
+    name: "pageview",
+    path: "/offer",
+    visitorId,
+    sessionId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    identityEnabled: true,
+    utmMedium: "cpc",
+    adAttribution: {
+      version: 1,
+      provider: "google",
+      accountId: "123",
+      campaignId: "90071992547409931234",
+      groupId: "456",
+      adId: "789",
+      touchId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      touchedAt: Date.now(),
+      storage: "granted",
+      consentPolicy: "2026-09",
+    },
+  };
+  const send = (body) =>
+    request("/ingest", {
+      method: "POST",
+      body,
+      requestOrigin: fixture.origin,
+      headers: { "cf-connecting-ip": "192.0.2.153" },
+    });
+  assert.equal((await send(payload)).status, 202);
+  const stored = () =>
+    db
+      .prepare("select * from events where site_id=? and id='ad-landing'")
+      .bind(fixture.id)
+      .first();
+  await eventually(async () => !!(await stored()));
+  const original = await stored();
+  assert.equal(original.ad_campaign_id, payload.adAttribution.campaignId);
+  assert.notEqual(original.visitor_id, visitorId);
+  assert.equal(original.ad_consent_policy, "2026-09");
+  assert.equal(
+    (
+      await send({
+        ...payload,
+        adAttribution: { ...payload.adAttribution, campaignId: "999" },
+      })
+    ).status,
+    202,
+  );
+  const worker = await mf.getWorker();
+  await worker.queue("events", [
+    {
+      id: "ad-replay",
+      attempts: 1,
+      timestamp: new Date(),
+      body: {
+        ...payload,
+        visitorId: original.visitor_id,
+        sessionId: original.session_id,
+        receivedAt: original.received_at,
+      },
+    },
+  ]);
+  assert.equal(
+    (await stored()).ad_campaign_id,
+    payload.adAttribution.campaignId,
+  );
+  for (const adAttribution of [
+    { ...payload.adAttribution, gclid: "never-store" },
+    { ...payload.adAttribution, storage: "denied" },
+    { ...payload.adAttribution, campaignId: 123 },
+  ]) {
+    assert.equal(
+      (await send({ ...payload, id: "invalid-ad", adAttribution })).status,
+      400,
+    );
+  }
+  assert.equal(
+    (await send({ ...payload, visitorId: undefined, sessionId: undefined }))
+      .status,
+    400,
+  );
+  const bad = await worker.queue("events", [
+    {
+      id: "invalid-ad-queue",
+      attempts: 1,
+      timestamp: new Date(),
+      body: {
+        ...payload,
+        id: "invalid-ad-queue",
+        receivedAt: Date.now(),
+        adAttribution: { ...payload.adAttribution, fbclid: "private" },
+      },
+    },
+  ]);
+  assert.ok(bad.retryBatch.retry || bad.retryMessages.length);
+  assert.equal(
+    await db
+      .prepare(
+        "select id from events where site_id=? and id='invalid-ad-queue'",
+      )
+      .bind(fixture.id)
+      .first(),
+    null,
+  );
+  const direct = {
+    ...payload,
+    id: "direct-return",
+    path: "/checkout",
+    adAttribution: undefined,
+    utmMedium: undefined,
+  };
+  assert.equal((await send(direct)).status, 202);
+  await eventually(
+    async () =>
+      !!(await db
+        .prepare("select id from events where site_id=? and id='direct-return'")
+        .bind(fixture.id)
+        .first()),
+  );
+  const settings = (body) =>
+    request(`/api/sites/${fixture.id}/payment-settings`, {
+      method: "POST",
+      cookie: ownerCookie,
+      body,
+    });
+  const { key } = await settings({ action: "rotateKey" }).then((r) => r.json());
+  await settings({
+    action: "attribution",
+    model: "last_non_direct",
+    lookbackDays: 30,
+  });
+  const payment = {
+    id: "ad-sale",
+    amount: 40000,
+    currency: "USD",
+    mode: "live",
+    visitorId,
+    identityEnabled: true,
+    paidAt: Date.now(),
+  };
+  const pay = (body) =>
+    request(`/payments/${fixture.id}`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${key}` },
+      body,
+    });
+  assert.equal((await pay(payment)).status, 202);
+  const read = async () => {
+    const response = await request(`/api/sites/${fixture.id}/revenue?days=7`, {
+      cookie: ownerCookie,
+    });
+    assert.equal(response.status, 200, await response.clone().text());
+    return response.json();
+  };
+  let report = await read();
+  assert.equal(
+    report.payments[0].adCampaignId,
+    payload.adAttribution.campaignId,
+  );
+  assert.equal(report.payments[0].medium, "cpc");
+  assert.equal(report.payments[0].landingPage, "/offer");
+  assert.deepEqual(report.adCampaigns, [
+    {
+      provider: "google",
+      accountId: "123",
+      campaignId: payload.adAttribution.campaignId,
+      currency: "USD",
+      payments: 1,
+      net: 40000,
+    },
+  ]);
+  await db
+    .prepare("update payment_attributions set finalize_after=0 where site_id=?")
+    .bind(fixture.id)
+    .run();
+  await read();
+  await db.prepare("delete from events where site_id=?").bind(fixture.id).run();
+  assert.equal((await pay({ ...payment, refundedAmount: 5000 })).status, 202);
+  report = await read();
+  assert.equal(report.payments[0].attributionStatus, "finalized");
+  assert.equal(report.payments[0].adId, "789");
+  assert.equal(report.adCampaigns[0].net, 35000);
+  assert.equal((await request(`/api/sites/${fixture.id}/revenue`)).status, 401);
 });
 
 test("payload limits, sign-in, expired sessions and logout are enforced", async () => {

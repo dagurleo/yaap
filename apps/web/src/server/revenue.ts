@@ -1,3 +1,4 @@
+import type { PaymentProvider } from "../lib/payment-providers";
 import type { ReportActor } from "./access";
 import {
   attributionColumns,
@@ -21,7 +22,7 @@ export type RevenueTotal = {
 };
 export type RevenuePayment = {
   externalId: string;
-  provider: "api" | "stripe";
+  provider: PaymentProvider;
   mode: PaymentMode;
   currency: string;
   amount: number;
@@ -30,6 +31,14 @@ export type RevenuePayment = {
   visitorId: string | null;
   source: string | null;
   campaign: string | null;
+  medium: string | null;
+  adProvider: "google" | "meta" | null;
+  adAccountId: string | null;
+  adCampaignId: string | null;
+  adGroupId: string | null;
+  adId: string | null;
+  adTouchId: string | null;
+  adTouchedAt: number | null;
   landingPage: string | null;
   attributionModel: AttributionModel | null;
   attributionLookbackDays: number | null;
@@ -75,6 +84,7 @@ export async function siteRevenue(
     rows,
     count,
     attribution,
+    adCampaigns,
   ] = await Promise.all([
     totals(current),
     filters.compare
@@ -99,6 +109,16 @@ export async function siteRevenue(
         case when events.site_id is null then 'backfill_required' when events.finalized_at is null then 'pending' else 'finalized' end as status,
         case when events.id is not null then null when events.site_id is null then 'backfill_required' when events.visitor_id is null then 'missing_identity' else 'no_matching_pageview' end as reason,
         count(*) as payments,sum(p.amount-p.refunded_amount) as net ${current} group by 1,2,3,4,5 order by 1,2,3,4,5`),
+    db.all<{
+      provider: "google" | "meta";
+      accountId: string | null;
+      campaignId: string;
+      currency: string;
+      payments: number;
+      net: number;
+    }>(
+      sql`select events.ad_provider as provider,events.ad_account_id as "accountId",events.ad_campaign_id as "campaignId",p.currency,count(*) as payments,sum(p.amount-p.refunded_amount) as net ${current} and events.ad_campaign_id is not null group by 1,2,3,4 order by net desc,provider,"accountId","campaignId",p.currency limit 50`,
+    ),
   ]);
   return {
     site: safeSite,
@@ -112,6 +132,7 @@ export async function siteRevenue(
     payments: rows,
     total: count[0].total,
     attribution,
+    adCampaigns,
   };
 }
 

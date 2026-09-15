@@ -1916,3 +1916,113 @@
     display: none;
   }
 }
+
+/* Homepage analytics choice, also reachable from every public footer. */
+.yaap-landing .analytics-settings {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: 48px;
+  cursor: pointer;
+  text-align: left;
+}
+.yaap-landing .analytics-settings:hover {
+  text-decoration: underline;
+}
+.yaap-landing .analytics-consent {
+  position: fixed;
+  z-index: 100;
+  inset: auto 16px 16px;
+  max-width: 520px;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 14px 16px;
+  border: 1px solid #262c3220;
+  border-radius: 10px;
+  background: #fff;
+  color: #262c32;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+.yaap-landing .analytics-consent p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  color: inherit;
+  max-width: 70ch;
+}
+.yaap-landing .analytics-consent p a {
+  display: inline;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+}
+.yaap-landing .analytics-consent-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.yaap-landing .analytics-consent-actions button {
+  min-width: 0;
+  min-height: 48px;
+  padding: 6px 10px;
+  border: 1px solid #262c3240;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 550;
+  cursor: pointer;
+}
+.yaap-landing .analytics-consent-actions button:hover {
+  background: #262c3208;
+}
+.yaap-landing .analytics-consent button:focus-visible,
+.yaap-landing .analytics-settings:focus-visible {
+  outline: 2px solid #2458eb;
+  outline-offset: 3px;
+}
+html[data-theme="dark"] .yaap-landing .analytics-consent {
+  background: #1a1f25;
+  color: #edf0f4;
+  border-color: #ffffff26;
+}
+html[data-theme="dark"] .yaap-landing .analytics-consent-actions button {
+  border-color: #ffffff40;
+}
+html[data-theme="dark"] .yaap-landing .analytics-consent-actions button:hover {
+  background: #ffffff0d;
+}
+@media (min-width: 640px) {
+  .yaap-landing .analytics-consent {
+    inset: auto 24px 24px;
+  }
+  .yaap-landing .analytics-consent p,
+  .yaap-landing .analytics-consent-actions button {
+    font-size: 14px;
+  }
+  .yaap-landing .analytics-consent-actions button {
+    flex: initial;
+  }
+}
+
+.yaap-landing .analytics-consent-actions .analytics-notice-close {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  padding: 0;
+  border: 0;
+  flex-shrink: 0;
+}
+@media (min-width: 640px) {
+  .yaap-landing .analytics-consent {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+  }
+}

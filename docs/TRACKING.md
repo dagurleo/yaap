@@ -27,6 +27,12 @@ declare global {
       pause(): void;
       resume(): void;
       setIdentifiers(enabled: boolean): void;
+      setAdvertisingConsent(consent: {
+        storage: "granted" | "denied" | "unknown";
+        userData: "granted" | "denied" | "unknown";
+        personalization: "granted" | "denied" | "unknown";
+        policyVersion: string;
+      }): void;
       getVisitorId(): string | null;
       setConsent(granted: boolean): void; // Legacy alias for setIdentifiers
     };
@@ -68,6 +74,8 @@ The dashboard counts distinct visitor and session IDs over all events in the sel
 **Compatibility:** `setConsent(boolean)` remains an alias for `setIdentifiers(boolean)`; it does not stop collection. Explicit legacy `data-consent="granted"` enables identifiers, and other explicit `data-consent` values disable them. `data-identifiers="false"` takes precedence. A snippet with neither attribute now uses full analytics. Existing installations that need anonymous collection must add `data-identifiers="false"` before adopting this tracker. The new payload uses `identityEnabled: true`; legacy `consent: true` payloads remain accepted as an identity switch, never as proof of consent.
 
 ## Source and campaign definitions
+
+Optional campaign/ad IDs now use a separate consent-aware reporting envelope, disabled by default. See [ad campaign attribution](ADS_ATTRIBUTION.md) for the explicit `yaap_ad_*` parameters, setup and limits. Raw ad click identifiers are not collected.
 
 The tracker accepts `utm_source`, `utm_medium`, and `utm_campaign` labels up to 120 characters (letters, numbers, spaces, `_`, `-`, `.`, `~`). It does not collect `utm_term`, `utm_content`, arbitrary query parameters. Custom properties are collected only when explicitly supplied to `track`. Referrers are reduced to external hostnames on the server; credentials, referrer paths, queries, and fragments are never persisted. Do not put personal details in event names, campaign labels, or URL paths.
 

@@ -1,3 +1,4 @@
+import { paymentProviderIds } from "../lib/payment-providers";
 import { calendarDate, shiftDate } from "../lib/report-timezone";
 import { sql } from "drizzle-orm";
 import { createDb } from "../db";
@@ -124,7 +125,7 @@ export async function reports(ctx: MutationContext): Promise<Result> {
     };
   }
   if (op === "get_payment") {
-    const provider = choice(q.provider, ["api", "stripe"]),
+    const provider = choice(q.provider, paymentProviderIds),
       mode = choice(q.mode, ["test", "live"]),
       externalId = str(q, "externalId", 256);
     await reconcilePaymentAttribution(env, {
@@ -458,7 +459,7 @@ export async function reports(ctx: MutationContext): Promise<Result> {
       provider =
         q.provider === undefined
           ? undefined
-          : choice(q.provider, ["api", "stripe"]);
+          : choice(q.provider, paymentProviderIds);
     if (q.visitorId !== undefined && !canVisitors)
       throw new ApiError(
         403,

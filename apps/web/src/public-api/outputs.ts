@@ -1,3 +1,4 @@
+import { paymentProviderIds } from "../lib/payment-providers";
 import { z } from "zod";
 
 // Named output contracts are shared by OpenAPI and MCP. Passthrough permits
@@ -55,7 +56,7 @@ const event = object({
 });
 const payment = object({
   externalId: text,
-  provider: z.enum(["api", "stripe"]),
+  provider: z.enum(paymentProviderIds),
   mode: z.enum(["test", "live"]),
   currency: text,
   amount: n,
@@ -318,9 +319,13 @@ const outputs: Record<string, z.ZodType> = {
     apiKeyHint: nullableText,
     stripeTest: z.boolean(),
     stripeLive: z.boolean(),
+    providers: z.record(text, object({ test: z.boolean(), live: z.boolean() })),
+    providerWebhooks: z.record(text, object({ test: text, live: text })),
     revision: text,
     webhooks: object({ test: text, live: text }),
   }),
+  set_polar: update,
+  disconnect_polar: update,
   set_stripe: update,
   disconnect_stripe: update,
   rotate_payment_ingestion_key: update,

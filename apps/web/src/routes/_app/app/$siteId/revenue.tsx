@@ -1,3 +1,4 @@
+import { paymentProviders } from "@/lib/payment-providers";
 import { useReportQueries } from "@/features/dashboard/report-queries";
 import { dashboardPending } from "@/features/dashboard/dashboard-pending";
 import { Suspense, useRef, useState } from "react";
@@ -306,6 +307,55 @@ export function RevenueReport({
             <p className="text-xs text-muted-foreground">Top 100</p>
           )}
         </Card>
+        {data.adCampaigns.length > 0 && (
+          <Card>
+            <h3>Ad campaigns</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Top 50 campaigns by attributed net revenue, grouped by platform,
+              account and currency. IDs come from your ad links. Ad spend is not
+              connected yet.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="px-2 py-3">Platform / account</th>
+                    <th className="px-2 py-3">Campaign ID</th>
+                    <th className="px-2 py-3">Payments</th>
+                    <th className="px-2 py-3">Net revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.adCampaigns.map((row) => (
+                    <tr
+                      key={JSON.stringify([
+                        row.provider,
+                        row.accountId,
+                        row.campaignId,
+                        row.currency,
+                      ])}
+                      className="border-b border-border last:border-0"
+                    >
+                      <td className="px-2 py-3 whitespace-nowrap">
+                        {row.provider === "google" ? "Google" : "Meta"}
+                        <p className="text-muted-foreground">
+                          {row.accountId ?? "Account not recorded"}
+                        </p>
+                      </td>
+                      <td className="px-2 py-3 whitespace-nowrap">
+                        {row.campaignId}
+                      </td>
+                      <td className="px-2 py-3 tabular-nums">{row.payments}</td>
+                      <td className="px-2 py-3 whitespace-nowrap tabular-nums">
+                        {money(row.net, row.currency)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
         <Card>
           <div className="flex items-center justify-between">
             <h3>Payments</h3>
@@ -345,7 +395,9 @@ export function RevenueReport({
                         {p.externalId}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {p.provider === "stripe" ? "Stripe" : "Server API"}
+                        {p.provider === "api"
+                          ? "Server API"
+                          : paymentProviders[p.provider].label}
                       </span>
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap">
@@ -368,6 +420,13 @@ export function RevenueReport({
                     </td>
                     <td className="min-w-48 px-2 py-3">
                       <p>{p.source ?? "Unattributed"}</p>
+                      {p.adCampaignId && (
+                        <p className="text-sm text-muted-foreground">
+                          {p.adProvider === "google" ? "Google" : "Meta"}{" "}
+                          campaign {p.adCampaignId}
+                          {p.adId ? ` · Ad ${p.adId}` : ""}
+                        </p>
+                      )}
                       <p className="text-sm text-muted-foreground">
                         {p.attributionStatus === "backfill_required"
                           ? "Awaiting backfill"

@@ -1,4 +1,5 @@
 export interface AnalyticsEvent {
+  adAttribution?: import("./lib/ad-attribution").AdAttribution;
   properties?: import("./lib/event-properties").EventProperties;
   version: 1 | 2;
   id: string;

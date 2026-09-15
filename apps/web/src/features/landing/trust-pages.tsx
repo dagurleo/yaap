@@ -126,9 +126,13 @@ const privacySections: PublicSection[] = [
         </p>
         <p>
           Yaap includes optional analytics for its own homepage, using the same
-          tracker with identifiers enabled when configured. Collection is paused
-          on other pages, including account and dashboard pages. Previously
-          created browser identifiers may remain stored.
+          tracker. When configured, homepage analytics and browser identifiers
+          are enabled unless you opt out. Use “Opt out” in the notice or
+          “Analytics preferences” in the footer to stop collection and remove
+          this tracker’s stored visitor and session IDs in the current tab.
+          We remember your preference or notice dismissal in local storage for
+          180 days. Dismissing the notice does not record consent. Collection
+          is paused on other pages, including account and dashboard pages.
         </p>
         <p>
           You can clear stored data using your browser controls. To change a

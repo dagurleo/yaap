@@ -10,6 +10,7 @@ import { sql } from "drizzle-orm";
 import { HttpError, json, readJson, requiredString } from "./http";
 import type { AnalyticsEvent, Env, EventQueueMessage } from "./types";
 import { eventProperties } from "./lib/event-properties";
+import { adAttribution } from "./lib/ad-attribution";
 import { billingConfig } from "./server/billing/config";
 import {
   admitHostedEvent,
@@ -122,6 +123,7 @@ export async function ingest(request: Request, env: Env) {
         event.referrerHost = referrer.hostname;
     }
   }
+  event.adAttribution = adAttribution(body.adAttribution, event);
   if (body.presence === true && (!event.visitorId || !event.sessionId))
     throw new HttpError(400, "Presence requires consented identity");
   const hosted = billingConfig(env).mode === "hosted";

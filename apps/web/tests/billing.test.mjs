@@ -801,7 +801,21 @@ test("hosted admission survives publish failure and counts persisted events once
       .bind(trial.periodId)
       .run();
     const event = (id) => ({
-      version: 1,
+      version: 2,
+      visitorId: "already-hashed-visitor",
+      sessionId: "already-hashed-session",
+      adAttribution: {
+        version: 1,
+        provider: "meta",
+        accountId: "123",
+        campaignId: "90071992547409931234",
+        groupId: null,
+        adId: "55",
+        touchId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        touchedAt: now,
+        storage: "granted",
+        consentPolicy: "2026-09",
+      },
       id,
       siteId: "billing-site",
       name: "pageview",
@@ -846,6 +860,17 @@ test("hosted admission survives publish failure and counts persisted events once
       await usageModule.consumeHostedReceipt(env, first.receiptId),
       "stored",
     );
+    assert.equal(
+      (
+        await db
+          .prepare(
+            "select ad_campaign_id from events where site_id='billing-site' and id='event-1'",
+          )
+          .first()
+      ).ad_campaign_id,
+      "90071992547409931234",
+    );
+
     assert.equal(
       await usageModule.consumeHostedReceipt(env, first.receiptId),
       "terminal",

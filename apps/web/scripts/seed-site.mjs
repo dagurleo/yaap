@@ -46,6 +46,25 @@ const sources = [
   ["linkedin.com", "linkedin", "social", "founder-stories"],
   ["www.bing.com", null, null, null],
   ["reddit.com", null, null, null],
+  ["www.facebook.com", "meta", "paid_social", "autumn-retargeting"],
+];
+// Synthetic numeric dimensions, including IDs larger than JavaScript's safe integer.
+const adCampaigns = [
+  ["google", "1234567890", "90071992547409931234", "456001", "789001"],
+  [
+    "meta",
+    "2345678901",
+    "120123456789012345",
+    "120123456789012346",
+    "120123456789012347",
+  ],
+  [
+    "meta",
+    null,
+    "120987654321098765",
+    "120987654321098766",
+    "120987654321098767",
+  ],
 ];
 const landings = [
   "/",
@@ -231,18 +250,25 @@ export function* generateSeed({
   let hourIndex = 0;
   const liveSessions = Math.min(40, Math.floor(sessions / 20));
   for (let i = 0; i < sessions; i++) {
-    const live = i >= sessions - liveSessions;
+    // Always include recent paid journeys, even in small preview seeds.
+    const preview = i >= sessions - Math.min(3, sessions);
+    const previewIndex = i - (sessions - Math.min(3, sessions));
+    const live = preview || i >= sessions - liveSessions;
     const target = (totalWeight * i) / Math.max(1, sessions - liveSessions);
     while (hourIndex < hours.length - 1 && hours[hourIndex].cumulative < target)
       hourIndex++;
     const hour = hours[hourIndex].time;
     const at = live
-      ? Math.max(start, now - 240000 + (i - sessions + liveSessions) * 3000)
+      ? Math.max(
+          start,
+          now - 240000 + Math.max(0, i - sessions + liveSessions) * 3000,
+        )
       : Math.floor(hour + random() * (Math.min(now, hour + HOUR) - hour));
     const identified = live || random() < 0.82;
     let visitor = null;
     if (identified) {
-      if (visitors.length && random() < 0.42) visitor = pick(visitors);
+      if (!preview && visitors.length && random() < 0.42)
+        visitor = pick(visitors);
       else {
         visitor = {
           id: `${siteId}-v${i}`,
@@ -255,8 +281,29 @@ export function* generateSeed({
     const session = identified ? `${siteId}-s${i}` : null;
     const location = visitor?.location ?? pick(locations),
       technology = visitor?.technology ?? pick(technologies);
-    const source = pick(sources),
-      landing = pick(landings);
+    const source = preview
+      ? previewIndex === 0
+        ? sources[3]
+        : sources[sources.length - 1]
+      : pick(sources);
+    const ad = identified
+      ? preview
+        ? adCampaigns[previewIndex]
+        : source[2] === "cpc"
+          ? adCampaigns[0]
+          : source[2] === "paid_social"
+            ? adCampaigns[1]
+            : null
+      : null;
+    const adFields = ad
+      ? [
+          ...ad,
+          `00000000-0000-4000-8000-${i.toString(16).padStart(12, "0")}`,
+          at,
+          "seed-demo-v1",
+        ]
+      : Array(8).fill(null);
+    const landing = preview ? "/pricing" : pick(landings);
     const journey = [["pageview", landing]];
     if (random() > 0.32) {
       for (let j = 0, length = 1 + Math.floor(random() * 4); j < length; j++)
@@ -278,6 +325,13 @@ export function* generateSeed({
       }
       if (random() < 0.12) journey.push(["newsletter_subscribe", landing]);
     }
+    if (preview && !journey.some(([event]) => event === "signup"))
+      journey.push(["pageview", "/signup"], ["signup", "/signup"]);
+    if (preview && !journey.some(([event]) => event === "purchase"))
+      journey.push(
+        ["pageview", "/checkout"],
+        ["purchase", "/checkout/success"],
+      );
     let timestamp = at;
     for (const [event, path] of journey) {
       timestamp = Math.min(
@@ -296,6 +350,7 @@ export function* generateSeed({
         ...source,
         ...location,
         ...technology,
+        ...adFields,
       ]);
       const bucketHour = Math.floor(timestamp / HOUR) * HOUR;
       if (bucketHour >= Math.floor(now / HOUR) * HOUR - 23 * HOUR) {
@@ -315,11 +370,17 @@ export function* generateSeed({
         paymentRows.push([
           siteId,
           random() < 0.8 ? "stripe" : "api",
-          random() < 0.15 ? "test" : "live",
+          !preview && random() < 0.15 ? "test" : "live",
           `${siteId}-p${paymentCount++}`,
           amount,
           refund,
-          random() < 0.85 ? "USD" : "EUR",
+          preview
+            ? previewIndex === 2
+              ? "EUR"
+              : "USD"
+            : random() < 0.85
+              ? "USD"
+              : "EUR",
           timestamp,
           visitor?.id ?? null,
           timestamp,
@@ -349,6 +410,14 @@ export function* generateSeed({
           "browser",
           "os",
           "device",
+          "ad_provider",
+          "ad_account_id",
+          "ad_campaign_id",
+          "ad_group_id",
+          "ad_id",
+          "ad_touch_id",
+          "ad_touched_at",
+          "ad_consent_policy",
         ],
         eventRows,
       );
@@ -529,7 +598,7 @@ async function printResult(options, { siteId, events, payments }) {
     );
   }
   console.log(
-    `Created ${options.name}: ${events.toLocaleString()} events, ${payments.toLocaleString()} payments, 3 goals, 2 funnels.\nhttp://localhost:8790/app/${siteId}/overview?days=30\nLive activity expires after five minutes; rerun to create another fresh demo site.`,
+    `Created ${options.name}: ${events.toLocaleString()} events, ${payments.toLocaleString()} payments, 3 goals, 2 funnels.\nhttp://localhost:8790/app/${siteId}/overview?days=30\nAd campaign revenue: http://localhost:8790/app/${siteId}/revenue?days=30\nLive activity expires after five minutes; rerun to create another fresh demo site.`,
   );
 }
 

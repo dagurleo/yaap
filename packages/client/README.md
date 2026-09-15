@@ -93,3 +93,11 @@ Version this package independently in `packages/client/package.json`. When chang
 See the repository's [npm release guide](https://github.com/dagurleo/yaap/blob/main/docs/NPM_RELEASE.md) for the first publish and subsequent releases.
 
 Licensed under Elastic License 2.0; see [LICENSE.md](LICENSE.md).
+
+## Optional ad campaign attribution
+
+Use `setAdvertisingConsent({ storage, userData, personalization, policyVersion })`, or the same `advertisingConsent` option in `init`. Each status is `granted`, `denied` or `unknown`; a policy version is required. Dimensions default off. `storage: "granted"` and enabled analytics identifiers permit capture of explicit `yaap_ad_provider`, `yaap_ad_account`, `yaap_ad_campaign`, `yaap_ad_group` and `yaap_ad_id` landing parameters. Campaign ID is required; IDs are 1–32 decimal digits kept as strings.
+
+Supply choices before the first permitted pageview: initialize paused, apply identifiers/advertising choices, then resume. The setter does not emit another pageview. Context is limited to the identified tab and 30 minutes from capture; withdrawal clears it and strips pending ad retries. Restore choices on every load and propagate withdrawal to active tabs through your consent manager.
+
+This release captures reporting dimensions only. It does not collect raw click IDs or ad cookies, send data to Google/Meta, or persist a consent ledger for future exports. Requires the corresponding server migrations. See the repository's [ad attribution guide](https://github.com/dagurleo/yaap/blob/main/docs/ADS_ATTRIBUTION.md).

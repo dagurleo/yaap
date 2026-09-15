@@ -1,3 +1,4 @@
+import { paymentProviders, validWebhookSecret } from "../lib/payment-providers";
 import { validateTimezone } from "../lib/report-timezone";
 import type { Goal, Funnel } from "../db/store";
 import { records } from "../db/store";
@@ -456,6 +457,7 @@ export async function management(
   if (
     op.includes("payment_integration") ||
     op.includes("stripe") ||
+    op.includes("polar") ||
     op.includes("payment_ingestion_key")
   ) {
     const current = await db.paymentIntegration(site.id),
@@ -466,6 +468,15 @@ export async function management(
         data: {
           ...(await paymentSettings(env, p.ownerId, site.id)),
           revision,
+          providerWebhooks: Object.fromEntries(
+            Object.keys(paymentProviders).map((provider) => [
+              provider,
+              {
+                test: `${origin}/payments/${provider}/${site.id}/test`,
+                live: `${origin}/payments/${provider}/${site.id}/live`,
+              },
+            ]),
+          ),
           webhooks: {
             test: `${origin}/payments/stripe/${site.id}/test`,
             live: `${origin}/payments/stripe/${site.id}/live`,
@@ -477,17 +488,28 @@ export async function management(
       const now = Date.now(),
         values: Input = { updated_at: now };
       let token: string | undefined;
-      if (op === "set_stripe" || op === "disconnect_stripe") {
+      if (
+        [
+          "set_stripe",
+          "disconnect_stripe",
+          "set_polar",
+          "disconnect_polar",
+        ].includes(op)
+      ) {
+        const provider = op.endsWith("polar") ? "polar" : "stripe";
+        const setting = op.startsWith("set_");
         const mode = choice(q.mode, ["test", "live"]);
-        if (
-          op === "set_stripe" &&
-          !/^whsec_[a-zA-Z0-9]{16,256}$/.test(str(q, "secret", 262))
-        )
-          invalid("Invalid Stripe webhook signing secret");
-        values[`stripe_${mode}_secret`] =
-          op === "set_stripe"
-            ? await encryptSecret(env, site.id, mode, q.secret as string)
-            : null;
+        if (setting && !validWebhookSecret(provider, str(q, "secret", 262)))
+          invalid("Invalid webhook signing secret");
+        values[`${provider}_${mode}_secret`] = setting
+          ? await encryptSecret(
+              env,
+              site.id,
+              mode,
+              q.secret as string,
+              provider,
+            )
+          : null;
       } else {
         token =
           op === "rotate_payment_ingestion_key" ? secret("osa_") : undefined;

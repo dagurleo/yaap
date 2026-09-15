@@ -702,6 +702,50 @@ test("reports match retained data and typed properties; event/visitor pagination
   );
 });
 
+test("Polar configuration uses public API revisions and exposes provider-aware payment schemas", async () => {
+  await clearLimits();
+  const current = await get("/payment-integration");
+  const secret = "polar_whs_" + "p".repeat(32);
+  const path = `/api/v1/sites/${site.id}/payment-integration/polar/test`;
+  const headers = bearer({
+    "If-Match": `"${current.meta.revision}"`,
+    "Idempotency-Key": randomUUID(),
+  });
+  const set = await result(path, { method: "PUT", headers, body: { secret } });
+  const replay = await result(path, {
+    method: "PUT",
+    headers,
+    body: { secret },
+  });
+  assert.equal(replay.body.meta.revision, set.body.meta.revision);
+  const status = await get("/payment-integration");
+  assert.equal(status.data.providers.polar.test, true);
+  assert.match(
+    status.data.providerWebhooks.polar.test,
+    /payments\/polar\/.+\/test$/,
+  );
+  assert.equal(JSON.stringify(status).includes(secret), false);
+  await db
+    .prepare(
+      "insert into payments(site_id,provider,mode,external_id,amount,refunded_amount,currency,paid_at,created_at,updated_at) values(?,'polar','test','polar-api',1200,200,'USD',?,?,?)",
+    )
+    .bind(site.id, at, at, at)
+    .run();
+  const list = await get("/payments", dates + "&mode=test&provider=polar");
+  assert.equal(list.data.length, 1);
+  assert.equal(list.data[0].provider, "polar");
+  const detail = await get("/payments/polar/test/polar-api");
+  assert.equal(detail.data.refundedAmount, 200);
+  await result(path, {
+    method: "DELETE",
+    headers: bearer({ "If-Match": `"${status.meta.revision}"` }),
+  });
+  assert.equal(
+    (await get("/payment-integration")).data.providers.polar.test,
+    false,
+  );
+});
+
 test("revenue remains currency separated; integrations never leak secrets; narrow scopes redact detail", async () => {
   await clearLimits();
   for (const [id, currency, amount] of [
@@ -847,7 +891,8 @@ test("official MCP SDK connects, discovers scoped schemas, reads and mutates thr
   const client = await sdk(token);
   try {
     const list = await client.listTools();
-    assert.equal(list.tools.length, 47);
+    assert.equal(list.tools.length, 48);
+    assert.ok(list.tools.some((tool) => tool.name === "disconnect_polar"));
     const common = {
       siteId: site.id,
       from: day,

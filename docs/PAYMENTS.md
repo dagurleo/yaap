@@ -1,6 +1,6 @@
 # Payments
 
-Open **Revenue → Payment settings** for a website. Create a server API key or configure Stripe signing secrets. Test and live reports are separate. No Stripe connection is required to deploy the analytics app.
+Open **Revenue → Payment settings** for a website. Create a server API key or configure Stripe or Polar signing secrets. Test and live reports are separate. No Stripe connection is required to deploy the analytics app.
 
 ## Server API
 
@@ -25,7 +25,7 @@ Use the actual payment timestamp in milliseconds. `mode` must be `test` or `live
 
 Omit `visitorId` and `identityEnabled` for an unattributed payment. Do not invent an identity or derive one from email/IP. The API accepts timestamps from 2000 onward with at most five minutes of clock skew.
 
-A stable `id` deduplicates by website, provider and mode. Retry network failures, 429 and 5xx with the same ID. Success is 202. To record a refund, resend the same payment with its **cumulative** `refundedAmount`, bounded by the original amount. An older, smaller refund total is ignored. Conflicting currency, timestamp, amount or non-null visitor identity returns 409. A previously missing identity may be linked later when identifiers are enabled. Sending the same sale through both the server API and Stripe creates two independent records; choose one ingestion path per sale.
+A stable `id` deduplicates by website, provider and mode. Retry network failures, 429 and 5xx with the same ID. Success is 202. To record a refund, resend the same payment with its **cumulative** `refundedAmount`, bounded by the original amount. An older, smaller refund total is ignored. Conflicting currency, timestamp, amount or non-null visitor identity returns 409. A previously missing identity may be linked later when identifiers are enabled. Sending the same sale through multiple providers or both the server API and a webhook creates two independent records; choose one ingestion path per sale.
 
 ## Consent and checkout
 
@@ -53,6 +53,38 @@ const checkout = await stripe.checkout.sessions.create({
 ```
 
 Use your existing authenticated TanStack Start server function for checkout; keep Stripe and analytics API keys in its server environment. Stripe copies PaymentIntent metadata onto its charge. Checkout Session metadata alone is insufficient. For subscriptions or other payment flows, attach the same identifier metadata to each relevant PaymentIntent/charge in your server integration; customer emails and subscription metadata are not used to infer identity. [Metadata propagation](https://docs.stripe.com/metadata).
+
+## Polar webhooks
+
+In **Revenue → Payment settings**, select **Polar** and **Sandbox** or **Live**. Create a Polar webhook endpoint for that environment:
+
+`https://ANALYTICS_HOST/payments/polar/SITE_ID/test`
+
+Use `/live` for production. Subscribe to `order.paid` and `order.refunded`, then save the endpoint's signing secret exactly as Polar displays it. Secrets are encrypted at rest and never returned by settings APIs. Polar has no `livemode` payload flag: configure each environment's own endpoint secret under the matching mode. No Polar access token is needed for attribution ingestion.
+
+Pass the visitor ID from your browser checkout request to your checkout server, validate it, and attach metadata only when your tracking policy enables identifiers:
+
+```ts
+const checkout = await polar.checkouts.create({
+  products: [YOUR_PRODUCT_ID],
+  successUrl: YOUR_SUCCESS_URL,
+  metadata: visitorId && identityEnabled
+    ? { os_analytics_visitor_id: visitorId, os_analytics_identity_enabled: true }
+    : {},
+});
+```
+
+Polar copies checkout metadata to the resulting order/subscription. Attribution reads the **order's metadata**, never customer email or customer metadata. Missing or invalid identity metadata keeps the payment as unattributed. Each renewal order is a separate payment and must carry the metadata to be attributed. [Polar checkout metadata](https://polar.sh/docs/api-reference/checkouts/create-session).
+
+Verified orders use `total_amount` (after discounts, including tax), with cumulative refunds equal to `refunded_amount + refunded_tax_amount`. This is gross order value, not payout proceeds or the amount charged after customer balance adjustments. Order `created_at` is used as the stable attribution timestamp, including when collection occurs later. Unpaid and zero-value orders are ignored. Duplicate and out-of-order deliveries cannot undo refunds. [Order fields](https://polar.sh/docs/api-reference/orders/get), [Refund events](https://polar.sh/docs/api-reference/webhooks/order.refunded).
+
+This analytics endpoint is separate from Yaap's hosted billing webhook. Configure an analytics endpoint for the Yaap website and include the visitor metadata in its checkout flow to attribute Yaap sales. Saving a secret alone records revenue but does not add metadata to an existing checkout integration.
+
+Public API clients can configure `/api/v1/sites/SITE_ID/payment-integration/polar/{mode}` with `PUT`, or disconnect with `DELETE`, using the same revisions, scopes and idempotency rules as Stripe. Integration status exposes `providers` and `providerWebhooks`, while legacy Stripe fields remain available. Payment list/detail endpoints accept `provider=polar`.
+
+### Adding providers
+
+Add a provider to `src/lib/payment-providers.ts`, its verification/normalization adapter in `src/server/payment-webhooks.ts`, and encrypted credential fields with migrations for both databases. Register management endpoints if exposing configuration through the public API. All adapters return the same payment input and share validation, deduplication, retention, attribution and revenue reports; they must authenticate the original request before using its data. Other providers can already send validated payments through the server API.
 
 ## Stripe webhooks
 

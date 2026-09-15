@@ -1,3 +1,4 @@
+import { paymentProviderIds } from "../lib/payment-providers";
 import { outputFor } from "./outputs";
 import { z } from "zod";
 import { dimensionKeys } from "../lib/report-filters";
@@ -505,7 +506,7 @@ add(
     ...period,
     ...pagination,
     mode: z.enum(["test", "live"]),
-    provider: z.enum(["api", "stripe"]).optional(),
+    provider: z.enum(paymentProviderIds).optional(),
     visitorId: text.optional(),
   },
   "Inspect recorded analytics payments; this does not charge or refund customers.",
@@ -517,7 +518,7 @@ add(
   S + "/payments/{provider}/{mode}/{externalId}",
   "payments:read",
   {
-    provider: z.enum(["api", "stripe"]),
+    provider: z.enum(paymentProviderIds),
     mode: z.enum(["test", "live"]),
     externalId: z.string().min(1).max(256),
   },
@@ -548,6 +549,23 @@ add(
   "integrations:write",
   { mode: z.enum(["test", "live"]) },
   "Disconnect Stripe ingestion for one mode; future deliveries cannot be verified.",
+);
+add(
+  "set_polar",
+  "PUT",
+  S + "/payment-integration/polar/{mode}",
+  "integrations:write",
+  { mode: z.enum(["test", "live"]), secret: z.string().min(1).max(262) },
+  "Configure a Polar webhook signing secret.",
+  { tool: false },
+);
+add(
+  "disconnect_polar",
+  "DELETE",
+  S + "/payment-integration/polar/{mode}",
+  "integrations:write",
+  { mode: z.enum(["test", "live"]) },
+  "Disconnect Polar ingestion for one mode; future deliveries cannot be verified.",
 );
 add(
   "rotate_payment_ingestion_key",
@@ -583,7 +601,7 @@ export function toolSchema(op: Operation, alias?: string) {
       op.name === "rotate_payment_ingestion_key"
         ? { revision: text }
         : {}),
-      ...(/^(create_|rotate_|set_stripe)/.test(op.name)
+      ...(/^(create_|rotate_|set_stripe|set_polar)/.test(op.name)
         ? { idempotencyKey: text }
         : {}),
     })
@@ -615,7 +633,7 @@ export function openapi(origin: string) {
       parameters.push({
         name: "Idempotency-Key",
         in: "header",
-        required: /^(create_|rotate_|set_stripe)/.test(op.name),
+        required: /^(create_|rotate_|set_stripe|set_polar)/.test(op.name),
         schema: { type: "string", maxLength: 128 },
       });
       if (

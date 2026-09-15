@@ -102,6 +102,40 @@ test("seed imports against real migrations with coherent dashboard data", () => 
       scalar("SELECT count(*) FROM events WHERE site_id='demo'"),
       before,
     );
+    for (const sql of generateSeed({
+      ...options,
+      siteId: "ads-preview",
+      sessions: 3,
+      days: 1,
+    }))
+      db.exec(sql);
+    const campaigns = db
+      .prepare(
+        `SELECT DISTINCT e.ad_provider, e.ad_account_id, e.ad_campaign_id, p.currency
+      FROM payments p JOIN events e ON e.site_id=p.site_id AND e.visitor_id=p.visitor_id
+      WHERE p.site_id='ads-preview' AND p.mode='live' AND e.name='pageview'
+      AND e.received_at<=p.paid_at AND p.paid_at>=? ORDER BY e.ad_campaign_id`,
+      )
+      .all(now - 300000);
+    assert.equal(campaigns.length, 3);
+    assert.deepEqual(
+      new Set(campaigns.map((r) => r.ad_provider)),
+      new Set(["google", "meta"]),
+    );
+    assert.deepEqual(
+      new Set(campaigns.map((r) => r.currency)),
+      new Set(["USD", "EUR"]),
+    );
+    assert.ok(campaigns.some((r) => r.ad_account_id === null));
+    assert.ok(
+      campaigns.some((r) => r.ad_campaign_id === "90071992547409931234"),
+    );
+    assert.equal(
+      scalar(
+        "SELECT count(*) FROM events WHERE visitor_id IS NULL AND ad_campaign_id IS NOT NULL",
+      ),
+      0,
+    );
     assert.deepEqual(db.prepare("PRAGMA foreign_key_check").all(), []);
     assert.deepEqual(
       [...generateSeed({ ...options, sessions: 10 })],

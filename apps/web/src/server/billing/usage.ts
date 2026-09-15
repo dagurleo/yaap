@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { createDb } from "../../db";
 import { isBillingPlanKey } from "../../lib/billing-plans";
 import { eventProperties } from "../../lib/event-properties";
+import { adAttribution } from "../../lib/ad-attribution";
 import type { AnalyticsEvent, BillingReceiptMessage, Env } from "../../types";
 import { billingConfig } from "./config";
 import { TRIAL_GRACE_MS } from "./trial";
@@ -274,6 +275,7 @@ function parseReceiptEvent(receipt: ReceiptRow): AnalyticsEvent | null {
     )
       return null;
     value.properties = eventProperties(value.properties);
+    value.adAttribution = adAttribution(value.adAttribution, value);
     return value;
   } catch {
     return null;

@@ -22,6 +22,7 @@
 | [Conversion performance](CONVERSION_PERFORMANCE.md) | Session acquisition, landing pages, comparisons and conversion rates                  |
 | [Goals and funnels](CONVERSIONS.md)                 | Exact matching, property conditions, denominators, editing and runtime bounds         |
 | [Payments](PAYMENTS.md)                             | Server API, Stripe metadata/webhooks, refunds and attribution                         |
+| [Ad campaign attribution](ADS_ATTRIBUTION.md) | Opt-in campaign/ad dimensions, consent controls and payment linkage |
 | [Public API and MCP](API.md)                        | Scoped tokens, reporting/management endpoints, MCP connections and OAuth              |
 | [Website settings](settings.md)                     | Installation, origins, exclusions, retention and tracking defaults                    |
 | [Performance](PERFORMANCE.md)                       | Rollups, query design, measured fixtures and their limits                             |

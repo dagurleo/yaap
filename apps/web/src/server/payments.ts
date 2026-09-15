@@ -1,3 +1,10 @@
+import { paymentWebhookAdapters } from "./payment-webhooks";
+import {
+  paymentProviders,
+  validWebhookSecret,
+  type WebhookProvider,
+  type PaymentProvider,
+} from "../lib/payment-providers";
 import { ownedSite } from "./access";
 import {
   attributionPolicy,
@@ -5,14 +12,9 @@ import {
   type AttributionModel,
 } from "./payment-attribution";
 import type { Integration } from "../db/store";
-import {
-  createHash,
-  createHmac,
-  randomBytes,
-  timingSafeEqual,
-} from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { createDb } from "../db";
-import { HttpError, isRecord, json, readBody, readJson } from "../http";
+import { HttpError, json, readBody, readJson } from "../http";
 import { hashIdentity, visitorUuid } from "./identity";
 import type { Env } from "../types";
 
@@ -33,7 +35,7 @@ export type IntegrationChange =
   | { action: "rotateKey" | "revokeKey" }
   | { action: "attribution"; model: AttributionModel; lookbackDays: number }
   | { action: "reconcileAttribution" }
-  | { action: "stripe"; mode: PaymentMode; secret: string | null };
+  | { action: WebhookProvider; mode: PaymentMode; secret: string | null };
 const digest = (value: string) =>
   Buffer.from(createHash("sha256").update(value).digest());
 
@@ -51,13 +53,18 @@ export async function encryptSecret(
   siteId: string,
   mode: PaymentMode,
   secret: string,
+  provider: WebhookProvider = "stripe",
 ) {
   const iv = Buffer.from(randomBytes(12));
   const encrypted = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
       iv,
-      additionalData: new TextEncoder().encode(`${siteId}:${mode}`),
+      additionalData: new TextEncoder().encode(
+        provider === "stripe"
+          ? `${siteId}:${mode}`
+          : `${siteId}:${provider}:${mode}`,
+      ),
     },
     await secretKey(env),
     new TextEncoder().encode(secret),
@@ -69,6 +76,7 @@ async function decryptSecret(
   siteId: string,
   mode: PaymentMode,
   value: string,
+  provider: WebhookProvider = "stripe",
 ) {
   const [iv, body] = value.split(".");
   return new TextDecoder().decode(
@@ -76,7 +84,11 @@ async function decryptSecret(
       {
         name: "AES-GCM",
         iv: Buffer.from(iv, "base64url"),
-        additionalData: new TextEncoder().encode(`${siteId}:${mode}`),
+        additionalData: new TextEncoder().encode(
+          provider === "stripe"
+            ? `${siteId}:${mode}`
+            : `${siteId}:${provider}:${mode}`,
+        ),
       },
       await secretKey(env),
       Buffer.from(body, "base64url"),
@@ -96,6 +108,15 @@ export async function paymentSettings(
     apiKeyHint: row?.apiKeyHint ?? null,
     stripeTest: !!row?.stripeTestSecret,
     stripeLive: !!row?.stripeLiveSecret,
+    providers: Object.fromEntries(
+      Object.entries(paymentProviders).map(([id, provider]) => [
+        id,
+        {
+          test: !!row?.[provider.secretFields.test],
+          live: !!row?.[provider.secretFields.live],
+        },
+      ]),
+    ),
   };
 }
 export async function changePaymentSettings(
@@ -111,6 +132,7 @@ export async function changePaymentSettings(
       "rotateKey",
       "revokeKey",
       "stripe",
+      "polar",
       "attribution",
       "reconcileAttribution",
     ].includes(input.action)
@@ -128,19 +150,23 @@ export async function changePaymentSettings(
   }
   if (input.action === "attribution") {
     change = attributionPolicy(input);
-  } else if (input.action === "stripe") {
+  } else if (input.action === "stripe" || input.action === "polar") {
     if (
       !["test", "live"].includes(input.mode) ||
-      (input.secret !== null &&
-        (typeof input.secret !== "string" ||
-          !/^whsec_[a-zA-Z0-9]{16,256}$/.test(input.secret)))
+      (input.secret !== null && !validWebhookSecret(input.action, input.secret))
     )
-      throw new HttpError(400, "Invalid Stripe signing secret");
+      throw new HttpError(400, "Invalid webhook signing secret or mode");
     change = {
-      [input.mode === "test" ? "stripeTestSecret" : "stripeLiveSecret"]:
+      [paymentProviders[input.action].secretFields[input.mode]]:
         input.secret === null
           ? null
-          : await encryptSecret(env, siteId, input.mode, input.secret),
+          : await encryptSecret(
+              env,
+              siteId,
+              input.mode,
+              input.secret,
+              input.action,
+            ),
     };
   } else {
     key =
@@ -209,7 +235,7 @@ function validatePayment(
 export async function recordPayment(
   env: Env,
   siteId: string,
-  provider: "api" | "stripe",
+  provider: PaymentProvider,
   input: unknown,
 ) {
   const p = validatePayment(input);
@@ -267,98 +293,28 @@ export async function ingestPayment(
     202,
   );
 }
-export async function stripeWebhook(
+export async function paymentWebhook(
   request: Request,
   env: Env,
   siteId: string,
+  provider: WebhookProvider,
   mode: string,
 ) {
   if (mode !== "test" && mode !== "live")
     throw new HttpError(404, "Webhook not found");
   const settings = await createDb(env).paymentIntegration(siteId);
-  const encrypted =
-    mode === "test" ? settings?.stripeTestSecret : settings?.stripeLiveSecret;
+  const encrypted = settings?.[paymentProviders[provider].secretFields[mode]];
   if (!encrypted) throw new HttpError(404, "Webhook not configured");
   const raw = Buffer.from(await readBody(request, 65536));
-  const parts = (request.headers.get("stripe-signature") ?? "").split(",");
-  const times = parts.filter((p) => p.startsWith("t="));
-  const timestamp = times.length === 1 ? times[0].slice(2) : "";
-  if (
-    !/^\d+$/.test(timestamp) ||
-    Math.abs(Date.now() / 1000 - Number(timestamp)) > 300
-  )
-    throw new HttpError(400, "Invalid webhook signature");
-  const expected = createHmac(
-    "sha256",
-    await decryptSecret(env, siteId, mode, encrypted),
-  )
-    .update(timestamp + ".")
-    .update(raw)
-    .digest();
-  if (
-    !parts.some(
-      (p) =>
-        /^v1=[a-f0-9]{64}$/.test(p) &&
-        timingSafeEqual(expected, Buffer.from(p.slice(3), "hex")),
-    )
-  )
-    throw new HttpError(400, "Invalid webhook signature");
-  let event: unknown;
+  const input = paymentWebhookAdapters[provider](
+    request,
+    raw,
+    await decryptSecret(env, siteId, mode, encrypted, provider),
+    mode,
+  );
+  if (!input) return json({ ignored: true });
   try {
-    event = JSON.parse(raw.toString("utf8"));
-  } catch {
-    throw new HttpError(400, "Invalid webhook JSON");
-  }
-  if (
-    !isRecord(event) ||
-    event.object !== "event" ||
-    typeof event.id !== "string" ||
-    typeof event.type !== "string" ||
-    event.livemode !== (mode === "live")
-  )
-    throw new HttpError(400, "Invalid webhook event or mode");
-  if (
-    !["charge.succeeded", "charge.captured", "charge.refunded"].includes(
-      event.type,
-    )
-  )
-    return json({ ignored: true });
-  const charge = isRecord(event.data) ? event.data.object : undefined;
-  if (
-    !isRecord(charge) ||
-    charge.object !== "charge" ||
-    charge.livemode !== event.livemode
-  )
-    throw new HttpError(400, "Invalid charge");
-  if (
-    charge.paid !== true ||
-    charge.captured !== true ||
-    charge.status !== "succeeded" ||
-    charge.amount_captured === 0
-  )
-    return json({ ignored: true });
-  const metadata = isRecord(charge.metadata) ? charge.metadata : {};
-  // Missing/invalid metadata never loses a legitimate payment; it remains unattributed.
-  const identityEnabled =
-    (metadata.os_analytics_identity_enabled === undefined
-      ? metadata.os_analytics_consent === "true"
-      : metadata.os_analytics_identity_enabled === "true") &&
-    typeof metadata.os_analytics_visitor_id === "string" &&
-    visitorUuid.test(metadata.os_analytics_visitor_id);
-  try {
-    return json(
-      await recordPayment(env, siteId, "stripe", {
-        id: charge.id,
-        mode,
-        amount: charge.amount_captured,
-        refundedAmount: charge.amount_refunded,
-        currency: charge.currency,
-        paidAt:
-          typeof charge.created === "number" ? charge.created * 1000 : NaN,
-        visitorId: identityEnabled ? metadata.os_analytics_visitor_id : null,
-        identityEnabled,
-      }),
-    );
+    return json(await recordPayment(env, siteId, provider, input));
   } catch (error) {
     if (error instanceof HttpError && error.status === 410)
       return json({ ignored: "retention" });

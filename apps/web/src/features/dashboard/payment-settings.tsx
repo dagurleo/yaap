@@ -1,3 +1,7 @@
+import {
+  paymentProviders,
+  type WebhookProvider,
+} from "@/lib/payment-providers";
 import { AttributionSettings } from "./attribution-settings";
 import { useState, type FormEvent } from "react";
 import {
@@ -30,6 +34,7 @@ export function PaymentSettings({
   const { data } = useSuspenseQuery(paymentSettingsQuery(siteId));
   const client = useQueryClient();
   const [key, setKey] = useState<string | null>(null),
+    [provider, setProvider] = useState<WebhookProvider>("stripe"),
     [mode, setMode] = useState<PaymentMode>("test"),
     [secret, setSecret] = useState(""),
     [copied, setCopied] = useState(false);
@@ -48,9 +53,10 @@ export function PaymentSettings({
   const endpoint = typeof window === "undefined" ? "" : window.location.origin;
   function submit(event: FormEvent) {
     event.preventDefault();
-    change.mutate({ action: "stripe", mode, secret });
+    change.mutate({ action: provider, mode, secret });
   }
-  const connected = mode === "test" ? data.stripeTest : data.stripeLive;
+  const connected = data.providers[provider]?.[mode];
+  const config = paymentProviders[provider];
   return (
     <Dialog
       open
@@ -67,7 +73,7 @@ export function PaymentSettings({
       >
         <DialogTitle>Payment settings</DialogTitle>
         <DialogDescription className="sr-only">
-          Revenue attribution, server API keys and Stripe webhooks.
+          Revenue attribution, server API keys and payment provider webhooks.
         </DialogDescription>
         <AttributionSettings
           siteId={siteId}
@@ -120,33 +126,53 @@ export function PaymentSettings({
         </section>
         <form className="space-y-3" onSubmit={submit}>
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm">Stripe</h3>
+            <Label>
+              Payment provider
+              <FunnelSelect
+                aria-label="Payment provider"
+                value={provider}
+                onChange={(event) => {
+                  setProvider(event.target.value as WebhookProvider);
+                  setSecret("");
+                }}
+              >
+                {Object.entries(paymentProviders).map(([id, value]) => (
+                  <option key={id} value={id}>
+                    {value.label}
+                  </option>
+                ))}
+              </FunnelSelect>
+            </Label>
             <FunnelSelect
-              aria-label="Stripe mode"
+              aria-label={`${config.label} mode`}
               value={mode}
               onChange={(event) => {
                 setMode(event.target.value as PaymentMode);
                 setSecret("");
               }}
             >
-              <option value="test">Test</option>
+              <option value="test">
+                {provider === "polar" ? "Sandbox" : "Test"}
+              </option>
               <option value="live">Live</option>
             </FunnelSelect>
           </div>
           <code className="block break-all text-xs">
-            {endpoint}/payments/stripe/{siteId}/{mode}
+            {endpoint}/payments/{provider}/{siteId}/{mode}
           </code>
           <p className="text-xs text-muted-foreground">
-            charge.succeeded · charge.captured · charge.refunded
+            {config.events.join(" · ")}
           </p>
           <Label>
             Signing secret
             <Input
-              name="stripeWebhookSecret"
+              name={`${provider}WebhookSecret`}
               type="password"
               autoComplete="off"
               data-1p-ignore
-              placeholder={connected ? "•••••••• (configured)" : "whsec_…"}
+              placeholder={
+                connected ? "•••••••• (configured)" : config.secretPlaceholder
+              }
               value={secret}
               onChange={(event) => setSecret(event.target.value)}
               maxLength={262}
@@ -156,9 +182,10 @@ export function PaymentSettings({
           <div className="flex justify-end gap-2">
             {connected && (
               <Button
+                type="button"
                 disabled={change.isPending}
                 onClick={() =>
-                  change.mutate({ action: "stripe", mode, secret: null })
+                  change.mutate({ action: provider, mode, secret: null })
                 }
               >
                 Disconnect

@@ -1,6 +1,6 @@
 # Google Ads and Meta implementation plan
 
-Created 2026-09-11. Status: planned; no connector implemented. Based on [integration research](ADS_INTEGRATION_RESEARCH.md) and the current tracker, payment attribution, database and Worker code.
+Created 2026-09-11. Updated 2026-09-15: the first reporting-dimension slice is implemented; provider connectors remain pending. Based on [integration research](ADS_INTEGRATION_RESEARCH.md). See [current setup and limitations](ADS_ATTRIBUTION.md).
 
 ## Agreed deployment model
 
@@ -156,4 +156,9 @@ Suggested reviewable checkpoints, in dependency order:
 9. Meta purchase forwarding and diagnostics.
 10. Self-hosted setup, restore/rotation guide and release verification.
 
-All checkpoints are currently pending. No migrations, application changes, provider connections or deployments were performed when preparing this plan.
+## Implementation progress
+
+- 2026-09-15: Implemented the first subset of checkpoints 2–3: shared npm/script client consent controls, allowlisted numeric ad dimensions, tab-scoped context, validation on both ingestion paths, matching D1/PostgreSQL migrations, durable payment dimensions and an Ad campaigns revenue table. The repository now uses `packages/client` and `apps/web`; hosted billing receipts and current workspace access controls are preserved. The older root `src/` paths above need that prefix when implementing follow-up stages.
+- Raw click/browser identifiers, a durable consent/withdrawal ledger, credential verification, spend, forwarding and general ad filters remain pending. Capture policy metadata cannot authorize exports. This slice has no advertising API calls or new credentials.
+- Migrations: D1 `0028_ad_attribution_dimensions.sql`; PostgreSQL `0016_ad_attribution_dimensions.sql`. Apply before running the changed app. No deployment or existing database migration was performed.
+- Verification: `npm run check` passed (web: 114 passed, 3 PostgreSQL-only skips; client: 23 script/package and 24 module tests passed). `npm run test:postgres` passed 68/68; `npm run test:hyperdrive` passed 67/67. Browser QA used an isolated in-memory fixture and verified desktop/mobile revenue tables, long IDs, missing accounts, multiple currencies, horizontal scrolling and light/dark appearance.

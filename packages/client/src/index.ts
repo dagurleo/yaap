@@ -1,4 +1,6 @@
 import type { Analytics, AnalyticsOptions, EventProperties } from "./types.js";
+import { advertisingConsent, createAdvertisingContext } from "./advertising.js";
+import type { AdvertisingConsent } from "./types.js";
 
 // Keep this endpoint reachable for clients installed from older package versions.
 export const DEFAULT_HOST = "https://yaap.sh";
@@ -26,6 +28,16 @@ export function init(options: AnalyticsOptions): Analytics | undefined {
     analytics?: unknown;
   };
   if (browser.osAnalytics) return browser.osAnalytics;
+  let adConsent: AdvertisingConsent = options.advertisingConsent
+    ? advertisingConsent(options.advertisingConsent)
+    : {
+        storage: "unknown",
+        userData: "unknown",
+        personalization: "unknown",
+        policyVersion: "unconfigured",
+      };
+  const advertising = createAdvertisingContext(siteId);
+  let advertisingGeneration = 0;
   const namePattern = /^[a-zA-Z0-9_.-]{1,64}$/;
   let lastPath: string | undefined;
   let destroyed = false;
@@ -165,6 +177,8 @@ export function init(options: AnalyticsOptions): Analytics | undefined {
     identifiers = enabled === true;
     identityGeneration++;
     if (!identifiers) {
+      advertising.clear();
+      advertisingGeneration++;
       try {
         localStorage.removeItem(visitorKey);
       } catch {}
@@ -173,6 +187,19 @@ export function init(options: AnalyticsOptions): Analytics | undefined {
       } catch {}
       attribution = { referrer, ...currentCampaign() };
     }
+  }
+  function setAdvertisingConsent(value: AdvertisingConsent) {
+    if (destroyed) return;
+    const next = advertisingConsent(value);
+    if (JSON.stringify(next) === JSON.stringify(adConsent)) return;
+    if (
+      next.storage !== "granted" ||
+      (next.policyVersion !== adConsent.policyVersion &&
+        adConsent.storage === "granted")
+    )
+      advertising.clear();
+    adConsent = next;
+    advertisingGeneration++;
   }
   function pause() {
     if (!collecting) return;
@@ -215,11 +242,15 @@ export function init(options: AnalyticsOptions): Analytics | undefined {
         ...(presence ? { presence: true } : {}),
         ...attribution,
         ...ids,
+        ...(!presence && ids.visitorId && adConsent.storage === "granted"
+          ? { adAttribution: advertising.capture(ids.visitorId, adConsent) }
+          : {}),
       };
     } catch {
       return false;
     }
     const generation = identityGeneration;
+    const adGeneration = advertisingGeneration;
     const collection = collectionGeneration;
     const controller = new AbortController();
     requests.add(controller);
@@ -239,7 +270,16 @@ export function init(options: AnalyticsOptions): Analytics | undefined {
             delete event.visitorId;
             delete event.sessionId;
             delete event.identityEnabled;
+            delete event.adAttribution;
           }
+          if (
+            adGeneration !== advertisingGeneration ||
+            adConsent.storage !== "granted"
+          )
+            delete event.adAttribution;
+          // Retain the existing request limit even with optional attribution.
+          if (new TextEncoder().encode(JSON.stringify(event)).length > 4096)
+            delete event.adAttribution;
           const response = await fetch(endpoint, {
             signal: controller.signal,
             method: "POST",
@@ -300,6 +340,7 @@ export function init(options: AnalyticsOptions): Analytics | undefined {
     pause,
     resume,
     setIdentifiers,
+    setAdvertisingConsent,
     // Backwards-compatible alias: only controls identifiers, not collection.
     setConsent: setIdentifiers,
     getVisitorId() {
@@ -401,4 +442,10 @@ export function init(options: AnalyticsOptions): Analytics | undefined {
   return api;
 }
 
-export type { Analytics, AnalyticsOptions, EventProperties } from "./types.js";
+export type {
+  Analytics,
+  AnalyticsOptions,
+  EventProperties,
+  AdvertisingConsent,
+  ConsentState,
+} from "./types.js";

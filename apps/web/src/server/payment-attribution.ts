@@ -31,6 +31,15 @@ const snapshotFields = [
   "path",
   "utm_source",
   "utm_campaign",
+  "utm_medium",
+  "ad_provider",
+  "ad_account_id",
+  "ad_campaign_id",
+  "ad_group_id",
+  "ad_id",
+  "ad_touch_id",
+  "ad_touched_at",
+  "ad_consent_policy",
   "referrer_host",
   "country",
   "region",
@@ -102,7 +111,7 @@ export async function reconcilePaymentAttribution(
     from work w left join events e on e.site_id=w.site_id and e.id=(
       select v.id from events v where v.site_id=w.site_id and v.visitor_id=w.payment_visitor_id and v.name='pageview'
         and v.received_at>=w.paid_at-w.lookback_days*86400000 and v.received_at<=w.paid_at
-      order by case when w.model='last_non_direct' and (v.utm_source is not null or v.referrer_host is not null) then 1 else 0 end desc,
+      order by case when w.model='last_non_direct' and (v.utm_source is not null or v.referrer_host is not null or v.ad_campaign_id is not null) then 1 else 0 end desc,
         case when w.model='first_touch' then v.received_at end asc,case when w.model='first_touch' then v.id end asc,
         v.received_at desc,v.id desc limit 1
     )`);
@@ -111,8 +120,12 @@ export async function reconcilePaymentAttribution(
     for (const row of candidates.slice(start, start + 25)) {
       if (row.id !== null) {
         const rank =
-          row.utm_source !== null || row.referrer_host !== null ? 1 : 0;
-        const oldRank = sql`case when utm_source is not null or referrer_host is not null then 1 else 0 end`;
+          row.utm_source !== null ||
+          row.referrer_host !== null ||
+          row.ad_campaign_id !== null
+            ? 1
+            : 0;
+        const oldRank = sql`case when utm_source is not null or referrer_host is not null or ad_campaign_id is not null then 1 else 0 end`;
         const earlier = sql`(received_at>${row.received_at} or (received_at=${row.received_at} and id>${row.id}))`;
         const later = sql`(received_at<${row.received_at} or (received_at=${row.received_at} and id<${row.id}))`;
         const better =
@@ -136,6 +149,6 @@ export async function reconcilePaymentAttribution(
 }
 
 /** Used with the attribution snapshot aliased as events, preserving report dimension semantics. */
-export const attributionColumns = sql`events.model as "attributionModel",events.lookback_days as "attributionLookbackDays",events.finalized_at as "attributionFinalizedAt",
+export const attributionColumns = sql`events.utm_medium as "medium",events.ad_provider as "adProvider",events.ad_account_id as "adAccountId",events.ad_campaign_id as "adCampaignId",events.ad_group_id as "adGroupId",events.ad_id as "adId",events.ad_touch_id as "adTouchId",events.ad_touched_at as "adTouchedAt",events.model as "attributionModel",events.lookback_days as "attributionLookbackDays",events.finalized_at as "attributionFinalizedAt",
   case when events.site_id is null then 'backfill_required' when events.finalized_at is null then 'pending' else 'finalized' end as "attributionStatus",
   case when events.id is not null then null when events.site_id is null then 'backfill_required' when events.visitor_id is null then 'missing_identity' else 'no_matching_pageview' end as "attributionReason"`;

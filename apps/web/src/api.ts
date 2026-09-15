@@ -1,3 +1,4 @@
+import { isWebhookProvider } from "./lib/payment-providers";
 import { conversionFilters } from "./lib/conversion-filters";
 import { siteConversions } from "./server/conversion-report";
 import { oauth } from "./public-api/oauth";
@@ -11,7 +12,7 @@ import { siteRevenue } from "./server/revenue";
 import { revenueFilters } from "./lib/revenue-filters";
 import {
   ingestPayment,
-  stripeWebhook,
+  paymentWebhook,
   paymentSettings,
   changePaymentSettings,
   type IntegrationChange,
@@ -298,14 +299,22 @@ export async function route(
   }
 
   const paymentIngestMatch = url.pathname.match(/^\/payments\/([^/]+)$/);
-  const stripeMatch = url.pathname.match(
-    /^\/payments\/stripe\/([^/]+)\/(test|live)$/,
+  const webhookMatch = url.pathname.match(
+    /^\/payments\/([^/]+)\/([^/]+)\/(test|live)$/,
   );
-  if (paymentIngestMatch || stripeMatch) {
+  if (paymentIngestMatch || webhookMatch) {
     if (method !== "POST") throw new HttpError(405, "Method not allowed");
     await limitRequest(request, env, "payments", 120);
-    return stripeMatch
-      ? stripeWebhook(request, env, stripeMatch[1], stripeMatch[2])
+    if (webhookMatch && !isWebhookProvider(webhookMatch[1]))
+      throw new HttpError(404, "Webhook not found");
+    return webhookMatch && isWebhookProvider(webhookMatch[1])
+      ? paymentWebhook(
+          request,
+          env,
+          webhookMatch[2],
+          webhookMatch[1],
+          webhookMatch[3],
+        )
       : ingestPayment(request, env, paymentIngestMatch![1]);
   }
 

@@ -1,3 +1,4 @@
+import { paymentProviders } from "@/lib/payment-providers";
 import { formatTimestamp } from "@/lib/report-timezone";
 import { useReportingTimezone } from "./report-timezone";
 import { ReportLink as Link } from "./public-context";
@@ -93,7 +94,9 @@ export function JourneyDrawer({
                   <div>
                     <p>
                       {timestamp(p.paidAt, timezone)} ·{" "}
-                      {p.provider === "stripe" ? "Stripe" : "API"}
+                      {p.provider === "api"
+                        ? "API"
+                        : paymentProviders[p.provider].label}
                       {p.mode === "test" ? " · Test" : ""}
                     </p>
                     <p className="pt-1 text-muted-foreground">
