@@ -1,10 +1,12 @@
+import { docsPaths } from "../lib/docs-paths";
 import apiGuide from "../../../../docs/API.md?raw";
 import skill from "../agent-skills/yaap-analytics/SKILL.md?raw";
 import {
   policyDetails,
   repositoryUrl,
 } from "../features/landing/policy-details";
-import { publicPagePath } from "./public-markdown";
+import { absoluteMarkdown, renderDoc, type PublicDoc } from "./docs-markdown";
+import { publicPagePath, wantsMarkdown } from "./public-markdown";
 
 export const contentSignal = "search=yes, ai-input=yes, ai-train=no";
 const skillPath = "/.well-known/agent-skills/yaap-analytics/SKILL.md";
@@ -22,6 +24,8 @@ export function discoveryLinks(origin: string, page?: string): string {
     `<${origin}/.well-known/ai-catalog.json>; rel="ai-catalog"; type="application/ai-catalog+json"`,
     `<${origin}/api/v1/openapi.json>; rel="service-desc"; type="application/json"`,
     `<${origin}/docs/api.md>; rel="service-doc"; type="text/markdown"`,
+    `<${origin}/llms.txt>; rel="describedby"; type="text/plain"`,
+    `<${origin}/llms-full.txt>; rel="describedby"; type="text/plain"`,
     `<${origin}/sitemap.xml>; rel="sitemap"; type="application/xml"`,
     ...(page
       ? [
@@ -34,6 +38,7 @@ export function discoveryLinks(origin: string, page?: string): string {
 export async function agentDiscovery(
   request: Request,
   origin: string,
+  loadDocs: () => Promise<PublicDoc[]>,
 ): Promise<Response | null> {
   const path = new URL(request.url).pathname;
   let body: string;
@@ -42,10 +47,26 @@ export async function agentDiscovery(
     type = `${media}; charset=utf-8`;
     return JSON.stringify(value, null, 2) + "\n";
   };
-  switch (path) {
-    case "/robots.txt":
-      type = "text/plain; charset=utf-8";
-      body = `# Public pages may be used for search and AI answers, not model training.
+  const docsRequest =
+    path === "/docs.md" ||
+    path === "/docs/index.md" ||
+    (path.startsWith("/docs/") &&
+      path.endsWith(".md") &&
+      path !== "/docs/api.md") ||
+    (docsPaths.includes(publicPagePath(path) ?? "") && wantsMarkdown(request));
+  let status = 200;
+  let contentLocation: string | undefined;
+  if (docsRequest) {
+    const htmlPath = publicPagePath(path);
+    const page = (await loadDocs()).find((page) => page.url === htmlPath);
+    status = page ? 200 : 404;
+    body = page ? await renderDoc(page, origin) : "# Guide not found\n";
+    if (page) contentLocation = `${origin}${page.url}.md`;
+  } else
+    switch (path) {
+      case "/robots.txt":
+        type = "text/plain; charset=utf-8";
+        body = `# Public pages may be used for search and AI answers, not model training.
 # Crawl preferences are not access controls. Customer data requires credentials.
 User-agent: *
 Content-Signal: ${contentSignal}
@@ -68,27 +89,43 @@ Disallow: /forgot-password
 
 Sitemap: ${origin}/sitemap.xml
 `;
-      break;
-    case "/sitemap.xml": {
-      type = "application/xml; charset=utf-8";
-      const paths = [
-        "/",
-        "/pricing",
-        "/security",
-        "/contact",
-        ...(!policyDetails.legalDraft ? ["/privacy", "/terms"] : []),
-      ];
-      const escape = (value: string) =>
-        value
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/"/g, "&quot;");
-      body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map((page) => `  <url><loc>${escape(origin + page)}</loc></url>`).join("\n")}\n</urlset>\n`;
-      break;
-    }
-    case "/llms.txt":
-      type = "text/plain; charset=utf-8";
-      body = `# Yaap
+        break;
+      case "/sitemap.xml": {
+        type = "application/xml; charset=utf-8";
+        const paths = [
+          "/",
+          "/pricing",
+          "/security",
+          "/contact",
+          ...docsPaths,
+          ...(!policyDetails.legalDraft ? ["/privacy", "/terms"] : []),
+        ];
+        const escape = (value: string) =>
+          value
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/"/g, "&quot;");
+        body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map((page) => `  <url><loc>${escape(origin + page)}</loc></url>`).join("\n")}\n</urlset>\n`;
+        break;
+      }
+      case "/llms-full.txt": {
+        type = "text/plain; charset=utf-8";
+        const guides = await Promise.all(
+          (await loadDocs()).map((page) => renderDoc(page, origin)),
+        );
+        const api = absoluteMarkdown(
+          apiGuide.replace(
+            /\]\((([A-Z_]+)\.md)(#[^)]*)?\)/g,
+            `](${repositoryUrl}/blob/main/docs/$1$4)`,
+          ),
+          `${origin}/docs/api.md`,
+        );
+        body = `# Yaap documentation\n\nPublic guides for ${origin}. Customer analytics requires scoped credentials.\n\n${guides.join("\n\n---\n\n")}\n\n---\n\nSource: ${origin}/docs/api.md\n\n${api}`;
+        break;
+      }
+      case "/llms.txt":
+        type = "text/plain; charset=utf-8";
+        body = `# Yaap
 
 > Source-available web analytics, from first visit to revenue. Hosted service and self-hosting on your own infrastructure.
 
@@ -101,6 +138,11 @@ Public pages accept \`Accept: text/markdown\` and have explicit Markdown URLs be
 - [Security](${origin}/security.md): Security practices and reporting.
 - [Contact](${origin}/contact.md): Support and public inquiries.
 - [Source and deployment guide](${repositoryUrl}): Elastic License 2.0.
+
+## Documentation
+
+${(await loadDocs()).map((page) => `- [${page.title}](${origin}${page.url}.md): ${page.description}`).join("\n")}
+- [Complete documentation](${origin}/llms-full.txt): All public guides and the API reference in one file.
 
 ## Integrations
 
@@ -116,9 +158,9 @@ Public pages accept \`Accept: text/markdown\` and have explicit Markdown URLs be
 - [Privacy policy${policyDetails.legalDraft ? " — draft, not effective" : ""}](${origin}/privacy.md)
 - [Terms of service${policyDetails.legalDraft ? " — draft, not effective" : ""}](${origin}/terms.md)
 `;
-      break;
-    case "/auth.md":
-      body = `# Authentication for Yaap
+        break;
+      case "/auth.md":
+        body = `# Authentication for Yaap
 
 Installation: ${origin}
 
@@ -144,113 +186,123 @@ For clients that cannot configure a preregistered OAuth client, use a personal b
 
 On 401, connect or renew credentials. On 403, ask the owner for the required scope/site grant; do not bypass it. Discovery does not grant access or create an account. Read the [integration guide](${origin}/docs/api.md) before making changes.
 `;
-      break;
-    case "/docs/api.md":
-      // Keep the repository guide canonical, including its linked companion docs.
-      body = apiGuide.replace(
-        /\]\((([A-Z_]+)\.md)(#[^)]*)?\)/g,
-        `](${repositoryUrl}/blob/main/docs/$1$4)`,
-      );
-      break;
-    case "/.well-known/api-catalog":
-      body = json(
-        {
-          linkset: [
-            {
-              anchor: `${origin}/api/v1`,
-              "service-desc": [
-                {
-                  href: `${origin}/api/v1/openapi.json`,
-                  type: "application/json",
-                },
-              ],
-              "service-doc": [
-                { href: `${origin}/docs/api.md`, type: "text/markdown" },
-              ],
-            },
-          ],
-        },
-        "application/linkset+json",
-      );
-      break;
-    case "/.well-known/ai-catalog.json":
-      body = json(
-        {
-          specVersion: "1.0",
-          entries: [
-            {
-              identifier: `urn:air:${new URL(origin).hostname}:mcp:yaap`,
-              type: "application/mcp-server-card+json",
-              url: `${origin}/mcp/server-card`,
-            },
-          ],
-        },
-        "application/ai-catalog+json",
-      );
-      break;
-    case "/mcp/server-card":
-    case "/.well-known/mcp/server-card.json":
-      body = json(
-        {
-          $schema:
-            "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
-          name: `${new URL(origin).hostname.split(".").reverse().join(".")}/yaap`,
-          title: "Yaap analytics",
-          version: "1.0.0",
-          description:
-            "Scoped website analytics and management. Requires a personal token or owner-approved OAuth.",
-          websiteUrl: origin,
-          repository: { url: repositoryUrl, source: "github" },
-          remotes: [
-            {
-              type: "streamable-http",
-              url: `${origin}/mcp`,
-              supportedProtocolVersions: ["2025-11-25"],
-            },
-          ],
-        },
-        "application/mcp-server-card+json",
-      );
-      break;
-    case "/.well-known/agent-skills/index.json": {
-      const digest = await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(skill),
-      );
-      body = json({
-        $schema: "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
-        skills: [
+        break;
+      case "/docs/api.md":
+        // Keep the repository guide canonical, including its linked companion docs.
+        body = apiGuide.replace(
+          /\]\((([A-Z_]+)\.md)(#[^)]*)?\)/g,
+          `](${repositoryUrl}/blob/main/docs/$1$4)`,
+        );
+        break;
+      case "/.well-known/api-catalog":
+        body = json(
           {
-            name: "yaap-analytics",
-            type: "skill-md",
-            description: skill.match(/^description: (.+)$/m)![1],
-            url: skillPath,
-            digest: `sha256:${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")}`,
+            linkset: [
+              {
+                anchor: `${origin}/api/v1`,
+                "service-desc": [
+                  {
+                    href: `${origin}/api/v1/openapi.json`,
+                    type: "application/json",
+                  },
+                ],
+                "service-doc": [
+                  { href: `${origin}/docs/api.md`, type: "text/markdown" },
+                ],
+              },
+            ],
           },
-        ],
-      });
-      break;
+          "application/linkset+json",
+        );
+        break;
+      case "/.well-known/ai-catalog.json":
+        body = json(
+          {
+            specVersion: "1.0",
+            entries: [
+              {
+                identifier: `urn:air:${new URL(origin).hostname}:mcp:yaap`,
+                type: "application/mcp-server-card+json",
+                url: `${origin}/mcp/server-card`,
+              },
+            ],
+          },
+          "application/ai-catalog+json",
+        );
+        break;
+      case "/mcp/server-card":
+      case "/.well-known/mcp/server-card.json":
+        body = json(
+          {
+            $schema:
+              "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
+            name: `${new URL(origin).hostname.split(".").reverse().join(".")}/yaap`,
+            title: "Yaap analytics",
+            version: "1.0.0",
+            description:
+              "Scoped website analytics and management. Requires a personal token or owner-approved OAuth.",
+            websiteUrl: origin,
+            repository: { url: repositoryUrl, source: "github" },
+            remotes: [
+              {
+                type: "streamable-http",
+                url: `${origin}/mcp`,
+                supportedProtocolVersions: ["2025-11-25"],
+              },
+            ],
+          },
+          "application/mcp-server-card+json",
+        );
+        break;
+      case "/.well-known/agent-skills/index.json": {
+        const digest = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(skill),
+        );
+        body = json({
+          $schema: "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+          skills: [
+            {
+              name: "yaap-analytics",
+              type: "skill-md",
+              description: skill.match(/^description: (.+)$/m)![1],
+              url: skillPath,
+              digest: `sha256:${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")}`,
+            },
+          ],
+        });
+        break;
+      }
+      case skillPath:
+        body = skill;
+        break;
+      default:
+        return null;
     }
-    case skillPath:
-      body = skill;
-      break;
-    default:
-      return null;
-  }
   const headers = new Headers({
     "Content-Type": type,
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+    "Access-Control-Expose-Headers": "Link, Content-Location, Content-Signal",
     "Content-Signal": contentSignal,
     Link: discoveryLinks(origin),
   });
+  if (contentLocation) headers.set("Content-Location", contentLocation);
+  const publicPage = publicPagePath(path);
+  if (publicPage) {
+    headers.set("Vary", "Accept");
+    headers.set("Link", discoveryLinks(origin, publicPage));
+  }
   if (request.method === "OPTIONS")
     return new Response(null, { status: 204, headers });
   if (!["GET", "HEAD"].includes(request.method)) {
     headers.set("Allow", "GET, HEAD, OPTIONS");
     return new Response(null, { status: 405, headers });
   }
-  return new Response(request.method === "HEAD" ? null : body, { headers });
+  return new Response(request.method === "HEAD" ? null : body, {
+    status,
+    headers,
+  });
 }
 
 export function publicResponseHeaders(

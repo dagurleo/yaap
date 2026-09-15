@@ -44,7 +44,10 @@ export default {
         url.pathname = "/brand/favicon.ico";
         response = await bindings.ASSETS.fetch(new Request(url, request));
       } else {
-        const discovery = await agentDiscovery(request, origin);
+        const discovery = await agentDiscovery(request, origin, async () => {
+          const { getPublicDocs } = await import("./server/docs-export");
+          return getPublicDocs();
+        });
         if (discovery) response = discovery;
         else {
           billingConfig(bindings);

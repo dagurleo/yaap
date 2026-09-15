@@ -1,0 +1,68 @@
+---
+title: "Collection controls"
+description: "Choose identified, anonymous or paused collection."
+---
+
+## Choose an installation mode
+
+**Settings → Installation** offers three snippet choices. Changing the selector changes the example code; publish the new snippet on your website to apply it.
+
+| Mode                | Behavior                                                                    |
+| ------------------- | --------------------------------------------------------------------------- |
+| Full analytics      | Collects events with browser and session identifiers.                       |
+| Anonymous analytics | Collects events without stored visitor/session identifiers.                 |
+| Wait for consent    | Starts paused, with identifiers disabled. Your site decides when to resume. |
+
+Enabling tracking does not record visitor consent. Connect these controls to your site's consent manager and restore the selected behavior on every page load.
+
+## Start paused
+
+```html
+<script
+  defer
+  src="https://analytics.example.com/script.js"
+  data-site-id="YOUR_SITE_ID"
+  data-identifiers="false"
+  data-tracking="paused"
+></script>
+```
+
+For npm, use the equivalent initialization options:
+
+```ts
+const analytics = init({
+  siteId: "YOUR_SITE_ID",
+  host: "https://analytics.example.com",
+  identifiers: false,
+  tracking: "paused",
+});
+```
+
+Import `init` from `@yaap/client` as shown in the [npm guide](/docs/npm).
+
+## Apply a visitor's choice
+
+After the tracker has loaded, use these calls from your consent manager's callback. For npm, you can use the returned tracker instance instead of `window.osAnalytics`.
+
+```js title="Allow identified analytics"
+window.osAnalytics?.setIdentifiers(true);
+window.osAnalytics?.resume();
+```
+
+```js title="Allow anonymous analytics"
+window.osAnalytics?.setIdentifiers(false);
+window.osAnalytics?.resume();
+```
+
+```js title="Stop collection and remove stored identifiers"
+window.osAnalytics?.pause();
+window.osAnalytics?.setIdentifiers(false);
+```
+
+`pause()` aborts pending requests and stops collection. `resume()` records the current page without replaying activity that happened while paused. Disabling identifiers removes stored identifiers while allowing anonymous collection if tracking is running.
+
+If the visitor makes a choice before the script loads, retain that choice in your consent manager and apply it once the tracker is available. Optional chaining alone does not queue a choice.
+
+## What anonymous data can show
+
+Anonymous events contribute to event counts and goal completions. Reports that require identified visitors or sessions, including ordered funnels, cannot reconstruct those identities from anonymous events.

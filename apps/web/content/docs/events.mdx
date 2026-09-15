@@ -1,0 +1,47 @@
+---
+title: "Custom events"
+description: "Record meaningful actions with typed properties."
+---
+
+## Send an event
+
+After the tracker loads, record an action when it actually happens:
+
+```js
+window.osAnalytics?.track("signup", {
+  plan: "pro",
+  seats: 3,
+  trial: false,
+});
+```
+
+With npm, call `track()` on the instance returned by `init()`:
+
+```ts
+const accepted = await analytics?.track("download", {
+  asset: "getting-started.pdf",
+});
+```
+
+The promise resolves to whether the server accepted the event. Acceptance does not mean a queued event is already visible in reports. Invalid events resolve to `false`.
+
+## Name events consistently
+
+Event names are case-sensitive and contain 1–64 letters, digits, underscores, dots or hyphens. `pageview` is reserved for automatic page tracking.
+
+Use a stable name such as `signup` and put variations in properties. This keeps filtering and goal definitions consistent as your product changes.
+
+## Property limits
+
+- Up to 20 properties per event, within a 2 KiB JSON payload.
+- Values are strings, finite numbers or booleans; nested objects and arrays are not supported.
+- Keys begin with a letter and contain up to 64 letters, digits or underscores.
+- Strings are limited to 256 characters and cannot contain control characters.
+
+Keep property types consistent: `3`, `"3"` and `true` are different values. Send the product context you need for reports without including passwords, credentials or payment-card details.
+
+## Find the event
+
+Open **Events** on the same website, choose a date range that includes your test, and filter by the event name or its properties. Confirm your website's reporting timezone under **Settings → General**.
+
+Then [create a goal](/docs/goals-and-funnels) matching the event to measure conversion.

@@ -1,0 +1,38 @@
+---
+title: "Install the tracking script"
+description: "Add Yaap to a website without a package manager."
+---
+
+## Copy your website's snippet
+
+Open your website in Yaap and go to **Settings → Installation → Script**. Copy the generated snippet into the shared HTML layout, usually inside `<head>`. Publish the change to your website.
+
+```html
+<script
+  defer
+  src="https://analytics.example.com/script.js"
+  data-site-id="YOUR_SITE_ID"
+></script>
+```
+
+The script sends events to the server it was loaded from. Use your own Yaap server URL for self-hosted installations. Do not move the script to a different CDN without configuring how events reach Yaap; use the [npm client](/docs/npm) with an explicit `host` for that setup.
+
+## Choose where tracking runs
+
+Place the snippet once in the layout shared by the pages you want to measure. The tracker records the initial pageview and observes pathname changes in single-page applications. Query-string and fragment changes do not produce extra pageviews.
+
+Install either the script or the npm client. Repeated initialization reuses the first tracker and keeps its original options.
+
+## WordPress and Shopify
+
+**Settings → Installation** includes WordPress and Shopify instructions. Use the generated snippet for your site and place it in the platform's shared theme or supported custom-code area. Confirm it appears on the published pages you intend to track; theme previews can use a different origin.
+
+## Allow your domains
+
+In **Settings → Domains & exclusions**, add each origin you use, including `www` or other subdomains. Origins match exactly. Production origins use HTTPS; local development addresses can use HTTP.
+
+Use hostname or path exclusions for areas you do not want to collect. `/admin/*` matches `/admin/users` but not `/admin`; add both if needed. Exclusions affect new collection and leave existing history intact.
+
+## Verify installation
+
+Visit a published page in a regular browser and check **Overview**. If collection is paused, apply the visitor's choice before expecting events. See [Collection controls](/docs/collection-controls) and [Troubleshooting](/docs/troubleshooting).

@@ -1,0 +1,32 @@
+---
+title: "Goals and funnels"
+description: "Measure completed actions and the steps leading to them."
+---
+
+## Create a goal
+
+Open **Overview → Manage goals**. Match either a custom event name, such as `signup`, or an exact page path, such as `/thanks`.
+
+Add up to three property conditions to narrow the goal. A signup goal with `plan = "pro"` only matches events containing that exact value. Every condition must match the same event.
+
+Matching is exact and case-sensitive. `/thanks` differs from `/thanks/`. Missing properties do not match, and a number differs from the same value sent as text.
+
+## Read conversion counts
+
+**Goal completions** count every matching event, including repeats and anonymous events. **Converted sessions** count distinct identified sessions containing a matching event.
+
+Session conversion divides converted sessions by identified sessions with activity matching the report range and dimensions. Anonymous completions do not add identified sessions; without identified sessions, the rate is unavailable.
+
+## Build a funnel
+
+Open **Funnels** and define the ordered page or event steps your visitors should take. Choose the identity scope and completion window to match the journey you want to measure.
+
+Each step needs a later event. A single event cannot satisfy two repeated steps. Funnel conversion divides completions by entrants, and depends on identified activity.
+
+For example, track a product journey from a pricing pageview, to a `signup` event, to an `activation` event. Instrument and verify those events before relying on the funnel.
+
+## Understand historical changes
+
+Editing a definition recalculates retained history against the new conditions. Page- and property-based goals and funnels depend on retained raw events; they cannot recover matching activity after that history is deleted.
+
+Review **Settings → Data retention** before choosing how much history to keep.

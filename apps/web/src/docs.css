@@ -1,0 +1,88 @@
+/* Fumadocs uses the same theme preference and palette as the application. */
+:root {
+  --color-fd-background: var(--card);
+  --color-fd-foreground: var(--foreground);
+  --color-fd-muted: var(--muted);
+  --color-fd-muted-foreground: var(--muted-foreground);
+  --color-fd-popover: var(--popover);
+  --color-fd-popover-foreground: var(--popover-foreground);
+  --color-fd-card: var(--card);
+  --color-fd-card-foreground: var(--card-foreground);
+  --color-fd-border: var(--border);
+  --color-fd-primary: var(--primary);
+  --color-fd-primary-foreground: #fff;
+  --color-fd-secondary: var(--secondary);
+  --color-fd-secondary-foreground: var(--secondary-foreground);
+  --color-fd-accent: var(--accent);
+  --color-fd-accent-foreground: var(--accent-foreground);
+  --color-fd-ring: var(--ring);
+}
+.yaap-docs {
+  background: var(--card);
+  color: var(--foreground);
+}
+.yaap-docs h1,
+.yaap-docs h2,
+.yaap-docs h3 {
+  font-weight: 600;
+  text-wrap: pretty;
+}
+.yaap-docs .prose {
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.yaap-docs .prose p {
+  text-wrap: pretty;
+}
+.docs-wordmark-label {
+  border-left: 1px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+.docs-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.docs-theme-toggle:hover {
+  background: var(--accent);
+}
+.docs-theme-toggle:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .docs-theme-toggle {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+/* App-wide paragraph and pre defaults are intentionally compact for dashboards. */
+.yaap-docs .prose p,
+.yaap-docs .prose li {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--foreground);
+}
+.yaap-docs .prose pre {
+  margin: 0;
+  padding: 1rem 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.875rem;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+[data-theme="dark"] .yaap-docs .shiki code span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style);
+}
+.yaap-docs [data-active="true"] {
+  color: var(--foreground);
+}

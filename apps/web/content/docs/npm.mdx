@@ -1,0 +1,60 @@
+---
+title: "npm and React"
+description: "Initialize the typed browser client in your application."
+---
+
+## Install the package
+
+```sh
+npm install @yaap/client
+```
+
+Copy the initialization code from **Settings → Installation → npm** to get your site ID and server URL.
+
+```ts
+import { init } from "@yaap/client";
+
+const analytics = init({
+  siteId: "YOUR_SITE_ID",
+  host: "https://analytics.example.com",
+});
+
+await analytics?.track("signup", { plan: "pro" });
+```
+
+`host` is your Yaap server, not the website being tracked. Without it, the client sends events to `https://yaap.sh/ingest`. Use an explicit host for self-hosting and local development.
+
+## React
+
+Initialize in a top-level browser lifecycle and release the tracker on teardown. Mount this component once in your shared application layout.
+
+```tsx title="Analytics.tsx"
+import { useEffect } from "react";
+import { init } from "@yaap/client";
+
+export function Analytics() {
+  useEffect(() => {
+    const analytics = init({
+      siteId: "YOUR_SITE_ID",
+      host: "https://analytics.example.com",
+    });
+    return () => analytics?.destroy();
+  }, []);
+
+  return null;
+}
+```
+
+For frameworks with server and client component boundaries, put this component in a client module. Imports are safe during server rendering, but `init()` returns `undefined` outside a browser. Optional chaining handles that case.
+
+## Automatic pageviews
+
+Initialization sends a pageview and tracks pathname changes automatically. You do not need a separate pageview call on each router navigation. Changes to query strings or fragments do not create additional pageviews.
+
+One tracker is supported per page. Repeated calls return the existing instance, including an instance installed by the script tag, and keep the first initialization's options.
+
+## Cleanup and collection choices
+
+`destroy()` stops collection and removes timers, listeners and owned history hooks. Stored identifiers remain for later initialization.
+
+To wait for a visitor's choice, initialize with `tracking: "paused"` and `identifiers: false`. Follow [Collection controls](/docs/collection-controls) before resuming.

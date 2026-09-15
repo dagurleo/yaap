@@ -2,6 +2,8 @@
 
 [← Project overview](../README.md)
 
+Public setup guides live at [`/docs`](https://yaap.sh/docs). Edit them in `apps/web/content/docs/` as MDX. Navigation order is in `meta.json`; add new guide URLs to `apps/web/src/lib/docs-paths.ts` for sitemap discovery. `npm run dev` previews changes, and `npm run build` compiles content into the existing Worker. Internal plans and engineering references remain in this directory.
+
 ## Install and run
 
 | Guide                                     | What it covers                                                                       |
@@ -44,3 +46,9 @@
 - [Website sharing feature](WEBSITE_SHARING_FEATURE.md): implementation handoff for lightweight accounts, site-specific Viewer invitations, access rules and provider-parity tests.
 
 The guides describe the current implementation. Test counts and dated verification notes live in the implementation plan; local verification does not establish live deployment readiness.
+
+## LLM access to public guides
+
+Every public guide has a `.md` URL (`/docs.md`, `/docs/npm.md`, etc.) and supports `Accept: text/markdown` on its HTML URL. `/llms.txt` indexes all published guides, and `/llms-full.txt` contains the guides plus the API reference. These exports use Fumadocs processed Markdown compiled from the same MDX content as the site; headings, code fences and tables are retained, and links resolve against the installation origin. No runtime filesystem or database is needed for Markdown requests. Internal files in this directory are not automatically published.
+
+Keep instructions and examples in semantic Markdown. If adding a custom MDX component, provide an equivalent Markdown representation through the Fumadocs processed-Markdown configuration and verify its output. Run the discovery tests and check the built Worker exports before publishing.

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { after, before, test } from "node:test";
 import { build } from "esbuild";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
@@ -8,6 +8,23 @@ import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 let mf, publicAgentTools, registerPublicAgentTools;
 const origin = "https://analytics.example.com";
 before(async () => {
+  const docs = await Promise.all(
+    (await readdir("content/docs"))
+      .filter((file) => file.endsWith(".mdx"))
+      .map(async (file) => {
+        const raw = await readFile(`content/docs/${file}`, "utf8");
+        const field = (name) => {
+          const value = raw.match(new RegExp(`^${name}: (.+)$`, "m"))[1];
+          return value.startsWith('"') ? JSON.parse(value) : value;
+        };
+        return {
+          url: file === "index.mdx" ? "/docs" : `/docs/${file.slice(0, -4)}`,
+          title: field("title"),
+          description: field("description"),
+          content: raw.replace(/^---[\s\S]*?---\s*/, ""),
+        };
+      }),
+  );
   const result = await build({
     stdin: {
       contents: `
@@ -15,7 +32,8 @@ before(async () => {
         import { publicMarkdown, wantsMarkdown, publicPagePath } from './src/server/public-markdown';
         export default { async fetch(request) {
           const origin = new URL(request.url).origin;
-          const discovered = await agentDiscovery(request, origin);
+          const docs = ${JSON.stringify(docs)};
+          const discovered = await agentDiscovery(request, origin, async () => docs.map(doc => ({ ...doc, getMarkdown: async () => doc.content })));
           if (discovered) return discovered;
           const html = new Response('<html><head><title>Ignore head</title></head><body><nav>Ignore navigation</nav><main><h1>Yaap &amp; analytics</h1><aside>Ignore sidebar</aside><p>First <a href="/pricing?x=1&amp;y=2">pricing</a> &amp; details.</p><script>Ignore script</script><svg><text>Ignore icon</text></svg><div data-markdown-skip><h2>Ignore example data</h2></div><section><h2>Reports</h2><ul><li>Views</li><li>Events &#8212; live</li></ul><p hidden>Ignore hidden</p><p>End of main.</p></section></main><footer>Ignore footer</footer></body></html>', { headers: { 'Content-Type': 'text/html', 'Vary': 'Origin', 'ETag': 'old', 'Content-Length': '1' } });
           let response = wantsMarkdown(request) ? await publicMarkdown(html, new URL(publicPagePath(new URL(request.url).pathname), origin)) : html;
@@ -28,7 +46,9 @@ before(async () => {
     bundle: true,
     write: false,
     format: "esm",
-    platform: "browser",
+    platform: "node",
+    mainFields: ["module", "main"],
+    conditions: ["workerd", "worker", "node"],
     plugins: [
       {
         name: "raw-markdown",
@@ -46,6 +66,7 @@ before(async () => {
       modules: true,
       script: result.outputFiles[0].text,
       compatibilityDate: "2026-09-09",
+      compatibilityFlags: ["nodejs_compat"],
     }),
   );
   const tools = await build({
@@ -214,4 +235,87 @@ test("public browser tools quote actual tiers and make no account changes", asyn
   assert.equal(registrations.length, 2);
   cleanup();
   assert.ok(registrations.every(({ options }) => options.signal.aborted));
+});
+
+test("every public guide appears in the sitemap and local docs links resolve", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const files = (await readdir("content/docs")).filter((file) =>
+    file.endsWith(".mdx"),
+  );
+  const paths = new Set(
+    files.map((file) =>
+      file === "index.mdx" ? "/docs" : `/docs/${file.slice(0, -4)}`,
+    ),
+  );
+  const sitemap = await (await get("/sitemap.xml")).text();
+  for (const path of paths)
+    assert.ok(
+      sitemap.includes(`<loc>${origin}${path}</loc>`),
+      `Missing sitemap guide: ${path}`,
+    );
+  for (const file of files) {
+    const content = await readFile(`content/docs/${file}`, "utf8");
+    for (const match of content.matchAll(
+      /\]\((\/docs(?:\/[^)#]+)?)(?:#[^)]*)?\)/g,
+    )) {
+      assert.ok(
+        match[1] === "/docs/api.md" || paths.has(match[1]),
+        `Broken link in ${file}: ${match[1]}`,
+      );
+    }
+  }
+});
+
+test("all public docs are discoverable as standalone Markdown and in the full export", async () => {
+  const index = await (await get("/llms.txt")).text();
+  const full = await (await get("/llms-full.txt")).text();
+  for (const file of (await readdir("content/docs")).filter((file) =>
+    file.endsWith(".mdx"),
+  )) {
+    const path = file === "index.mdx" ? "/docs" : `/docs/${file.slice(0, -4)}`;
+    assert.ok(index.includes(`${origin}${path}.md`));
+    const direct = await get(`${path}.md`);
+    const text = await direct.text();
+    assert.equal(direct.status, 200);
+    assert.match(direct.headers.get("Content-Type"), /text\/markdown/);
+    assert.equal(direct.headers.get("Content-Location"), `${origin}${path}.md`);
+    assert.match(text, /^# /);
+    assert.doesNotMatch(text, /<script type=|^title:|^description:/m);
+    assert.ok(full.includes(text.trim()), `Full export omits ${path}`);
+    const negotiated = await get(path, {
+      headers: { Accept: "text/markdown" },
+    });
+    assert.equal(await negotiated.text(), text);
+    assert.equal(negotiated.headers.get("Vary"), "Accept");
+    const html = await get(path, { headers: { Accept: "text/html" } });
+    assert.match(html.headers.get("Content-Type"), /text\/html/);
+    assert.ok(html.headers.get("Link").includes(`${origin}${path}.md`));
+    assert.equal(
+      await (await get(`${path}.md`, { method: "HEAD" })).text(),
+      "",
+    );
+  }
+  assert.ok(full.includes(`Source: ${origin}/docs/api.md`));
+  assert.match(full, /```tsx[\s\S]*useEffect/);
+  assert.match(full, /\| Mode/);
+  assert.match(full, /https:\/\/analytics.example.com\/docs\/npm/);
+  assert.equal(
+    await (await get("/docs/index.md")).text(),
+    await (await get("/docs.md")).text(),
+  );
+  assert.equal((await get("/docs/internal-plan.md")).status, 404);
+  assert.equal((await get("/docs/npm.md", { method: "POST" })).status, 405);
+  assert.equal((await get("/docs/npm.md", { method: "OPTIONS" })).status, 204);
+  for (const accept of [
+    "*/*",
+    "text/markdown;q=0",
+    "text/html;q=1,text/markdown;q=0.5",
+  ]) {
+    assert.match(
+      (await get("/docs", { headers: { Accept: accept } })).headers.get(
+        "Content-Type",
+      ),
+      /text\/html/,
+    );
+  }
 });

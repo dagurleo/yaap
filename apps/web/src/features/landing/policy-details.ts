@@ -11,4 +11,4 @@ export const policyDetails: {
 };
 
 export const repositoryUrl = "https://github.com/dagurleo/yaap";
-export const documentationUrl = `${repositoryUrl}/blob/main/docs/README.md`;
+export const documentationUrl = "/docs";

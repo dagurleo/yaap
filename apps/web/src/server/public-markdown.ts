@@ -1,4 +1,7 @@
+import { docsPaths } from "../lib/docs-paths";
+
 const publicPages = new Set([
+  ...docsPaths,
   "/",
   "/pricing",
   "/privacy",
@@ -9,6 +12,7 @@ const publicPages = new Set([
 
 export function publicPagePath(path: string): string | null {
   const normalized = path.length > 1 ? path.replace(/\/$/, "") : path;
+  if (normalized === "/docs/index.md") return "/docs";
   if (publicPages.has(normalized)) return normalized;
   if (normalized === "/index.md") return "/";
   const htmlPath = normalized.replace(/\.md$/, "");

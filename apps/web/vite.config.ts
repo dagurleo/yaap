@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
+import { fumadocsMdx } from "fumadocs-mdx/vite";
 import {
   configureDeploymentDatabase,
   configureDeploymentPlacement,
@@ -11,6 +12,7 @@ import {
 export default defineConfig(({ command, isPreview }) => ({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   plugins: [
+    fumadocsMdx(),
     tailwindcss(),
     cloudflare({
       // Cloudflare provisions the root template. Local development keeps its

@@ -1,0 +1,36 @@
+---
+title: "Troubleshooting"
+description: "Find out why a pageview or event is missing."
+---
+
+## No pageviews appear
+
+Work through these checks in order:
+
+1. **Published code:** confirm the tracker is present on the live website, not just in a local editor or theme preview.
+2. **Script and destination:** in the browser's Network panel, confirm `/script.js` loads and requests to `/ingest` use the correct Yaap server.
+3. **Site ID:** copy it again from the same Yaap installation receiving your events.
+4. **Allowed origin:** compare the website's exact scheme, hostname and port with **Settings → Domains & exclusions**. Add `www` and other origins explicitly.
+5. **Collection mode:** if initialized paused, apply the visitor's choice and resume. Check hostname and path exclusions too.
+6. **Browser:** try a regular browser session. The tracker does not initialize under browser automation, and browser extensions can block requests.
+7. **Report range:** check the selected website, date range, timezone and filters. Allow a short delay for queued events.
+
+## The script loads but events are rejected
+
+Inspect the `/ingest` response in the browser's Network panel. Check the site ID, allowed origin and event payload. A successful script download only verifies that the asset is reachable.
+
+For custom events, compare the name and properties with the [event limits](/docs/events). If using npm, await `track()` to inspect the acceptance result.
+
+## Self-hosted events are accepted but reports stay empty
+
+Open **Settings → Ingestion** to inspect counters and activity. Check `/health` and verify the event queue producer, consumer and dead-letter queue refer to the intended resources.
+
+Confirm all database migrations for your chosen backend have been applied. Follow the [operations guide](https://github.com/dagurleo/yaap/blob/main/docs/OPERATIONS.md) for queue failures, retention and release verification.
+
+## A funnel has fewer visitors than event counts
+
+Events count occurrences; funnels depend on identified visitors or sessions completing ordered steps within the selected time window. Anonymous events, repeated actions and incomplete journeys can produce a higher event count. See [Goals and funnels](/docs/goals-and-funnels).
+
+## Get help
+
+Use the [contact page](/contact) or [GitHub issues](https://github.com/dagurleo/yaap/issues). Include the affected guide, installation method, app version and a redacted error response. Remove credentials and private analytics before sharing logs.

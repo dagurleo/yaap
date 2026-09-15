@@ -430,11 +430,12 @@ function WebsiteLayoutContent({
 function AuthenticatedWebsiteLayout(props: WebsiteLayoutProps) {
   const { access } = useRouteContext({ from: "/_app" });
   const { data: sites = [] } = useQuery(sitesQuery());
+  // The pending shell renders before the auth guard supplies access.
   return (
     <WebsiteLayoutContent
       {...props}
       sites={sites}
-      canAddSite={access.user?.ownsAccount ?? false}
+      canAddSite={access?.user?.ownsAccount ?? false}
     />
   );
 }

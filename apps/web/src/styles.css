@@ -1,7 +1,10 @@
 @import "@fontsource-variable/inter/standard.css";
 @import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 @import "tw-animate-css";
 @import "./graphite.css";
+@import "./docs.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 

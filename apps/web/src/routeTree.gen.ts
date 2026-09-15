@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as CheckEmailRouteImport } from './routes/check-email'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as DocsSearchRouteImport } from './routes/docs-search'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -23,6 +24,7 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as DocsSplatRouteImport } from './routes/docs/$'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AppAppIndexRouteImport } from './routes/_app/app/index'
 import { Route as AppAppAccessRouteImport } from './routes/_app/app/access'
@@ -60,6 +62,11 @@ const ContactRoute = ContactRouteImport.update({
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsSearchRoute = DocsSearchRouteImport.update({
+  id: '/docs-search',
+  path: '/docs-search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -105,6 +112,11 @@ const SignupRoute = SignupRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsSplatRoute = DocsSplatRouteImport.update({
+  id: '/docs/$',
+  path: '/docs/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -183,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
+  '/docs-search': typeof DocsSearchRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -192,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/docs/$': typeof DocsSplatRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/access': typeof AppAppAccessRoute
   '/app/billing': typeof AppAppBillingRoute
@@ -212,6 +226,7 @@ export interface FileRoutesByTo {
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
+  '/docs-search': typeof DocsSearchRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -221,6 +236,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/docs/$': typeof DocsSplatRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/access': typeof AppAppAccessRoute
   '/app/billing': typeof AppAppBillingRoute
@@ -243,6 +259,7 @@ export interface FileRoutesById {
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
   '/demo': typeof DemoRoute
+  '/docs-search': typeof DocsSearchRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
@@ -252,6 +269,7 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/docs/$': typeof DocsSplatRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_app/app/access': typeof AppAppAccessRoute
   '/_app/app/billing': typeof AppAppBillingRoute
@@ -274,6 +292,7 @@ export interface FileRouteTypes {
     | '/check-email'
     | '/contact'
     | '/demo'
+    | '/docs-search'
     | '/forgot-password'
     | '/login'
     | '/pricing'
@@ -283,6 +302,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/signup'
     | '/terms'
+    | '/docs/$'
     | '/invite/$token'
     | '/app/access'
     | '/app/billing'
@@ -303,6 +323,7 @@ export interface FileRouteTypes {
     | '/check-email'
     | '/contact'
     | '/demo'
+    | '/docs-search'
     | '/forgot-password'
     | '/login'
     | '/pricing'
@@ -312,6 +333,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/signup'
     | '/terms'
+    | '/docs/$'
     | '/invite/$token'
     | '/app/access'
     | '/app/billing'
@@ -333,6 +355,7 @@ export interface FileRouteTypes {
     | '/check-email'
     | '/contact'
     | '/demo'
+    | '/docs-search'
     | '/forgot-password'
     | '/login'
     | '/pricing'
@@ -342,6 +365,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/signup'
     | '/terms'
+    | '/docs/$'
     | '/invite/$token'
     | '/_app/app/access'
     | '/_app/app/billing'
@@ -364,6 +388,7 @@ export interface RootRouteChildren {
   CheckEmailRoute: typeof CheckEmailRoute
   ContactRoute: typeof ContactRoute
   DemoRoute: typeof DemoRoute
+  DocsSearchRoute: typeof DocsSearchRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
@@ -373,6 +398,7 @@ export interface RootRouteChildren {
   SetupRoute: typeof SetupRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  DocsSplatRoute: typeof DocsSplatRoute
   InviteTokenRoute: typeof InviteTokenRoute
   SharePublicIdReportRoute: typeof SharePublicIdReportRoute
   SharePublicIdIndexRoute: typeof SharePublicIdIndexRoute
@@ -413,6 +439,13 @@ declare module '@tanstack/react-router' {
       path: '/demo'
       fullPath: '/demo'
       preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs-search': {
+      id: '/docs-search'
+      path: '/docs-search'
+      fullPath: '/docs-search'
+      preLoaderRoute: typeof DocsSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -476,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/$': {
+      id: '/docs/$'
+      path: '/docs/$'
+      fullPath: '/docs/$'
+      preLoaderRoute: typeof DocsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -615,6 +655,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckEmailRoute: CheckEmailRoute,
   ContactRoute: ContactRoute,
   DemoRoute: DemoRoute,
+  DocsSearchRoute: DocsSearchRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
@@ -624,6 +665,7 @@ const rootRouteChildren: RootRouteChildren = {
   SetupRoute: SetupRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  DocsSplatRoute: DocsSplatRoute,
   InviteTokenRoute: InviteTokenRoute,
   SharePublicIdReportRoute: SharePublicIdReportRoute,
   SharePublicIdIndexRoute: SharePublicIdIndexRoute,

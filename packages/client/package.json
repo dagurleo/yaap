@@ -1,6 +1,6 @@
 {
   "name": "@yaap/client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed browser analytics client for YAAP",
   "homepage": "https://github.com/dagurleo/yaap/tree/main/packages/client#readme",
   "bugs": {

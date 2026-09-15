@@ -95,7 +95,12 @@ function RootLayout() {
   const isDashboard = useRouterState({
     select: (state) => /^\/(?:app|share)\/[^/]+/.test(state.location.pathname),
   });
-  if (isLanding)
+  const isDocs = useRouterState({
+    select: (state) =>
+      state.location.pathname === "/docs" ||
+      state.location.pathname.startsWith("/docs/"),
+  });
+  if (isLanding || isDocs)
     return (
       <ThemeProvider>
         <Outlet />

@@ -1,0 +1,44 @@
+---
+title: "Get started"
+description: "Connect your website to Yaap and see your first pageview."
+---
+
+Yaap brings traffic, custom events, goals, funnels and revenue into one workspace. Start by connecting a website, then add the events that matter to your product.
+
+## 1. Open your workspace
+
+Open the [dashboard](/app) and sign in. If you are using Yaap hosted, use the account you registered with the service. For your own installation, follow [Self-hosting](/docs/self-hosting) and create the owner account at `/setup` first.
+
+## 2. Add a website
+
+Add your website with its exact origin, such as `https://example.com`. The scheme, hostname and port must match the website your visitors use. `https://www.example.com` is a different origin; add it under **Settings → Domains & exclusions** if you use both.
+
+Your website gets a public site ID. This identifies the destination for analytics; it is not an API secret.
+
+## 3. Install the tracker
+
+Open **Settings → Installation** and copy the snippet generated for your website. It includes your site ID and the correct Yaap server URL. Add it to the shared HTML layout so it loads on every page you want to measure.
+
+```html title="Your website's HTML"
+<script
+  defer
+  src="https://analytics.example.com/script.js"
+  data-site-id="YOUR_SITE_ID"
+></script>
+```
+
+Replace the example server and site ID with your own values. If you prefer a package, follow the [npm and React guide](/docs/npm).
+
+Choose **Full analytics**, **Anonymous analytics**, or **Wait for consent** before copying the snippet. See [Collection controls](/docs/collection-controls) for what each option collects.
+
+## 4. Verify your first pageview
+
+Visit your website in a regular browser, then open its **Overview** in Yaap. Collection is processed through a queue, so allow a short delay before refreshing the report.
+
+If nothing appears, check that `/script.js` loads and `/ingest` requests reach your Yaap server in the browser's Network panel. Follow the [troubleshooting checklist](/docs/troubleshooting) if the pageview is still missing.
+
+## Next steps
+
+- [Track custom events](/docs/events) such as signups and downloads.
+- [Create goals and funnels](/docs/goals-and-funnels) to measure conversion.
+- [Connect integrations](/docs/integrations) for revenue, API access and MCP.

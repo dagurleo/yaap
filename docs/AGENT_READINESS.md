@@ -49,3 +49,7 @@ Remaining external or optional items:
 - [AI Catalog](https://ai-catalog.io/)
 - [Agent Skills discovery](https://github.com/agentskills/agentskills)
 - [WebMCP specification](https://webmachinelearning.github.io/webmcp/)
+
+## Public documentation exports
+
+The `/docs` guides expose `.md` alternatives and support `Accept: text/markdown`. `/docs.md` is the quick-start export; `/docs/index.md` is an alias. The HTML head and HTTP `Link` headers advertise Markdown and `/llms.txt`. `/llms.txt` includes each public guide, and `/llms-full.txt` combines all guides and the API reference. Fumadocs generates processed Markdown at build time; the Worker serves it without login, database access or runtime filesystem reads. Code blocks, tables and absolute links are preserved. Unknown Markdown guide paths return 404; HEAD and OPTIONS are supported and write methods return 405. Existing private routes and crawl preferences retain their access rules.

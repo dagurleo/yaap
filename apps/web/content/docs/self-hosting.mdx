@@ -1,0 +1,48 @@
+---
+title: "Self-hosting"
+description: "Run Yaap in your own Cloudflare account."
+---
+
+## What you deploy
+
+The default installation uses one Cloudflare Worker, D1, an event queue and a dead-letter queue. PostgreSQL through Hyperdrive is an optional database backend.
+
+The app, dashboard, tracking script and these docs ship together. Start from the complete repository, including `apps/web`, `packages/client` and the root lockfile.
+
+## Try it locally
+
+Use Node.js 22.12 or newer. From the repository root:
+
+```sh
+npm ci
+npm run db:setup:local
+npm run db:migrate:local
+npm run dev
+```
+
+Open `http://localhost:8790/app`. On a fresh installation, use the `BOOTSTRAP_SECRET` from `apps/web/.dev.vars` to create the owner account. Add a website and install its tracker with `host: "http://localhost:8790"` for npm, or copy the generated script snippet.
+
+## Deploy to Cloudflare
+
+Follow the [deployment guide](https://github.com/dagurleo/yaap/blob/main/docs/DEPLOYMENT.md) for resource provisioning and deployment configuration.
+
+1. Import the full repository into Workers Builds with root directory `/`.
+2. Provision D1 and both queues, and configure their identifiers in the root `wrangler.jsonc`.
+3. Generate separate `BETTER_AUTH_SECRET` and `BOOTSTRAP_SECRET` values with `openssl rand -hex 32`. Set them as Worker runtime secrets.
+4. Use `npm run build` as the build command and `npm run deploy` as the deploy command.
+5. Open `/setup` at your deployed URL, create the owner and add a website.
+6. Verify `/health`, sign-in and a real pageview from the tracked website.
+
+Keep the authentication secret stable across upgrades. The deployment guide records remaining live acceptance checks and the deploy-button prerequisites.
+
+## Database and email options
+
+The default D1 installation does not require an external database. For PostgreSQL or production Hyperdrive, follow the [database guide](https://github.com/dagurleo/yaap/blob/main/docs/DATABASES.md).
+
+Outbound email is optional and is not included in the default production template. Configure it before relying on invitation or other email flows; follow the email setup linked from the deployment guide.
+
+## Upgrade an installation
+
+Back up your database and record your resource IDs, configuration and deployed commit. Keep the same database, queues and secrets, merge the new code, then rebuild and deploy using the normal commands.
+
+The deployment script applies migrations for the configured provider. Rolling back Worker code does not undo database migrations; verify your database restore process separately.

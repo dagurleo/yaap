@@ -1,0 +1,24 @@
+---
+title: "API, MCP and revenue"
+description: "Connect Yaap to your tools and payment workflow."
+---
+
+## API access
+
+Yaap exposes a scoped public API for reporting and management. Create a credential with access only to the websites and operations the integration needs. Keep secret credentials on your server.
+
+Use the [API and MCP reference](/docs/api.md) for authentication, scopes, endpoints, pagination, retries and error handling. The live [OpenAPI document](/api/v1/openapi.json) describes this installation's API.
+
+The public site ID used in the browser tracker is separate from an API credential.
+
+## MCP connections
+
+The MCP endpoint is `/mcp` on your Yaap installation. Follow the authentication and connection instructions in the [MCP reference](/docs/api.md). Access depends on the credential's scopes and website grants; connecting a client does not grant it access to every website.
+
+## Revenue
+
+Open **Settings → Revenue** for your website to inspect connection status and configure payment ingestion. Payment provider webhooks and the server payment API support revenue reporting and refunds.
+
+Use the [payment integration guide](https://github.com/dagurleo/yaap/blob/main/docs/PAYMENTS.md) for the current provider setup, signature verification, identifiers and attribution fields. Payment ingestion belongs in your server or provider webhook workflow.
+
+When validating a connection, keep test and live payments separate and inspect currencies separately in reports. Browser custom events alone do not create a verified payment record.
