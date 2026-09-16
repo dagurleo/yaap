@@ -8,7 +8,7 @@ The scan found missing crawl directives, sitemap, discovery links, Markdown deli
 
 | Resource | Purpose |
 | --- | --- |
-| `/robots.txt` | Allows public crawling, excludes app/auth/collection paths and points to the sitemap. Content signals permit search and AI input and decline model training. These are preferences, not access controls. |
+| `/robots.txt` | Allows public crawling, excludes API/collection paths and points to the sitemap. Account and shared-report pages remain crawlable so crawlers can read their noindex headers. Content signals permit search and AI input and decline model training. These are preferences, not access controls. |
 | `/sitemap.xml` | Lists the homepage, pricing, security and contact. Privacy and terms join it when `policyDetails.legalDraft` becomes false. |
 | `/llms.txt` | Product and integration entry point, with explicit draft labels for unfinished legal pages. |
 | Public pages with `Accept: text/markdown` | Converts the same server-rendered main content into Markdown. Scripts, navigation, hidden elements and the illustrative dashboard are excluded. Supports content negotiation and `Vary: Accept`. |

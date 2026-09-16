@@ -1,4 +1,5 @@
 import { docsPaths } from "../lib/docs-paths";
+import { productPages } from "../lib/seo";
 import apiGuide from "../../../../docs/API.md?raw";
 import skill from "../agent-skills/yaap-analytics/SKILL.md?raw";
 import {
@@ -30,6 +31,7 @@ export function discoveryLinks(origin: string, page?: string): string {
     ...(page
       ? [
           `<${origin}${page === "/" ? "/index" : page}.md>; rel="alternate"; type="text/markdown"`,
+          `<${origin}${page}>; rel="canonical"`,
         ]
       : []),
   ].join(", ");
@@ -71,8 +73,7 @@ export async function agentDiscovery(
 User-agent: *
 Content-Signal: ${contentSignal}
 Allow: /
-Disallow: /app
-Disallow: /sites/
+# Account and shared-report pages are crawlable so their noindex can be read.
 Disallow: /api/
 Allow: /api/v1/openapi.json
 Disallow: /_serverFn/
@@ -80,12 +81,6 @@ Disallow: /oauth/
 Disallow: /mcp$
 Disallow: /ingest
 Disallow: /payments/
-Disallow: /login
-Disallow: /signup
-Disallow: /setup
-Disallow: /invite/
-Disallow: /reset-password
-Disallow: /forgot-password
 
 Sitemap: ${origin}/sitemap.xml
 `;
@@ -97,6 +92,7 @@ Sitemap: ${origin}/sitemap.xml
           "/pricing",
           "/security",
           "/contact",
+          ...productPages,
           ...docsPaths,
           ...(!policyDetails.legalDraft ? ["/privacy", "/terms"] : []),
         ];
@@ -135,6 +131,9 @@ Public pages accept \`Accept: text/markdown\` and have explicit Markdown URLs be
 
 - [Overview](${origin}/index.md): Features and self-hosting.
 - [Pricing](${origin}/pricing.md): Hosted tiers and billing information.
+- [Self-hosted web analytics](${origin}/self-hosted-web-analytics.md): Cloudflare deployment, ownership and operating costs.
+- [Conversion tracking](${origin}/conversion-tracking.md): Goals, sessions and ordered funnels.
+- [Revenue attribution](${origin}/revenue-attribution.md): Connect payments to traffic sources.
 - [Security](${origin}/security.md): Security practices and reporting.
 - [Contact](${origin}/contact.md): Support and public inquiries.
 - [Source and deployment guide](${repositoryUrl}): Elastic License 2.0.
@@ -310,7 +309,15 @@ export function publicResponseHeaders(
   request: Request,
   origin: string,
 ): void {
-  const page = publicPagePath(new URL(request.url).pathname);
+  const pathname = new URL(request.url).pathname;
+  if (
+    response.status >= 400 ||
+    /^\/(?:app|sites|share|login|signup|setup|invite|reset-password|forgot-password|check-email|demo|docs-search)(?:\/|$)/.test(
+      pathname,
+    )
+  )
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  const page = publicPagePath(pathname);
   if (!page) return;
   response.headers.append("Link", discoveryLinks(origin, page));
   response.headers.set("Content-Signal", contentSignal);

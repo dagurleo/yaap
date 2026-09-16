@@ -1,7 +1,9 @@
 import { docsPaths } from "../lib/docs-paths";
+import { productPages } from "../lib/seo";
 
 const publicPages = new Set([
   ...docsPaths,
+  ...productPages,
   "/",
   "/pricing",
   "/privacy",

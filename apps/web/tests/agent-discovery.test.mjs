@@ -87,7 +87,7 @@ test("discovery works without a database, links to this installation and preserv
   const robots = await (await get("/robots.txt")).text();
   assert.match(robots, /User-agent: \*/);
   assert.match(robots, /Content-Signal: search=yes, ai-input=yes, ai-train=no/);
-  assert.match(robots, /Disallow: \/app/);
+  assert.doesNotMatch(robots, /Disallow: \/(?:app|login|signup|share|invite)/);
   assert.match(robots, /Allow: \/api\/v1\/openapi.json/);
   const sitemap = await (await get("/sitemap.xml")).text();
   assert.ok(sitemap.includes(`${origin}/pricing`));
@@ -104,6 +104,56 @@ test("discovery works without a database, links to this installation and preserv
     /https:\/\/github.com\/dagurleo\/yaap\/blob\/main\/docs\/REPORTING.md/,
   );
   assert.doesNotMatch(guide, /\]\(REPORTING.md\)/);
+});
+
+test("public variants share one canonical and non-content routes carry noindex", async () => {
+  for (const path of [
+    "/",
+    "/pricing",
+    "/self-hosted-web-analytics",
+    "/conversion-tracking",
+    "/revenue-attribution",
+    "/docs",
+    "/docs/npm",
+  ]) {
+    const markdown = path === "/" ? "/index.md" : `${path}.md`;
+    for (const variant of [path, `${path}?utm_source=test`, markdown]) {
+      const response = await get(variant);
+      assert.ok(
+        response.headers
+          .get("Link")
+          .includes(`<${origin}${path}>; rel="canonical"`),
+      );
+      assert.equal(response.headers.get("X-Robots-Tag"), null);
+    }
+  }
+  const sitemap = await (await get("/sitemap.xml")).text();
+  for (const path of [
+    "/self-hosted-web-analytics",
+    "/conversion-tracking",
+    "/revenue-attribution",
+  ])
+    assert.ok(sitemap.includes(`<loc>${origin}${path}</loc>`));
+  for (const path of [
+    "/app",
+    "/app/a/overview",
+    "/sites/a",
+    "/share/a",
+    "/demo",
+    "/login",
+    "/signup",
+    "/check-email",
+    "/forgot-password",
+    "/reset-password",
+    "/setup",
+    "/invite/token",
+    "/docs-search",
+  ])
+    assert.equal(
+      (await get(path)).headers.get("X-Robots-Tag"),
+      "noindex, nofollow",
+      path,
+    );
 });
 
 test("catalogs and skill digest describe retrievable native resources", async () => {

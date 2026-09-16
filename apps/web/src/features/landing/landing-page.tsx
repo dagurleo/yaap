@@ -42,16 +42,16 @@ function Hero({
       <div className="wrap hero-layout">
         <div className="hero-copy">
           <h1 id="hero-heading">
-            See what brings people in.
+            Web analytics, from first visit
             <br />
-            And what makes them <em>customers.</em>
+            to <em>paying customers.</em>
           </h1>
           <p>
-            Source-available web analytics.
+            Connect traffic sources, conversion funnels and revenue.
             <span className="hosting-choice">
               {hosted
-                ? "Start hosted, or run it in your own Cloudflare account."
-                : "Run it in your own Cloudflare account."}
+                ? "Source-available. Start hosted, or self-host on Cloudflare."
+                : "Source-available. Run it in your own Cloudflare account."}
             </span>
           </p>
           <div className="actions">
@@ -89,9 +89,22 @@ function ProductPreview() {
           <picture className="product-capture product-capture-light">
             <source
               media="(max-width: 700px)"
+              type="image/webp"
+              srcSet="/landing/traffic-mobile.webp"
+              width="380"
+              height="720"
+            />
+            <source
+              media="(max-width: 700px)"
               srcSet="/landing/traffic-mobile.png"
               width="380"
               height="720"
+            />
+            <source
+              type="image/webp"
+              srcSet="/landing/traffic-desktop.webp"
+              width="1708"
+              height="974"
             />
             <img
               src="/landing/traffic-desktop.png"
@@ -99,14 +112,28 @@ function ProductPreview() {
               height="974"
               alt="Yaap traffic overview with 77,565 pageviews, 16,887 visitors, 18,437 sessions and 5.3% purchase conversion; a daily chart and source and page rankings."
               decoding="async"
+              loading="lazy"
             />
           </picture>
           <picture className="product-capture product-capture-dark">
             <source
               media="(max-width: 700px)"
+              type="image/webp"
+              srcSet="/landing/traffic-mobile-dark.webp"
+              width="380"
+              height="720"
+            />
+            <source
+              media="(max-width: 700px)"
               srcSet="/landing/traffic-mobile-dark.png"
               width="380"
               height="720"
+            />
+            <source
+              type="image/webp"
+              srcSet="/landing/traffic-desktop-dark.webp"
+              width="1708"
+              height="974"
             />
             <img
               src="/landing/traffic-desktop-dark.png"
@@ -114,6 +141,7 @@ function ProductPreview() {
               height="974"
               alt="Yaap traffic overview with 77,565 pageviews, 16,887 visitors, 18,437 sessions and 5.3% purchase conversion; a daily chart and source and page rankings."
               decoding="async"
+              loading="lazy"
             />
           </picture>
           <figcaption className="product-caption">
@@ -201,6 +229,9 @@ function Features() {
                 Follow visitor journeys and see where people drop out of your
                 funnels.
               </p>
+              <a className="text-link" href="/conversion-tracking">
+                Explore conversion tracking
+              </a>
               <ReportRows
                 funnel
                 rows={[
@@ -221,6 +252,9 @@ function Features() {
                 Attribute payments to traffic sources, with refunds and
                 currencies accounted for.
               </p>
+              <a className="text-link" href="/revenue-attribution">
+                Explore revenue attribution
+              </a>
               <div className="feature-revenue" data-markdown-skip>
                 <p>Sample net revenue · USD</p>
                 <div className="feature-revenue-total">$66,388.50</div>
@@ -251,8 +285,8 @@ function Ownership() {
             Run Yaap on infrastructure you control. Keep the dashboard, event
             collection and storage together in your own account.
           </p>
-          <a className="text-link" href="#setup">
-            See how it fits together
+          <a className="text-link" href="/self-hosted-web-analytics">
+            Explore self-hosted web analytics
           </a>
         </div>
         <div className="architecture">
@@ -360,8 +394,20 @@ function Questions({ hosted }: { hosted: boolean }) {
           <details>
             <summary>Can I connect payments?</summary>
             <p>
-              Yes. Optional payment attribution connects transactions to traffic
-              sources, including refunds and separate currency reporting.
+              Yes. Connect Stripe, Polar or the server payment API to attribute
+              payments to traffic sources, with refunds and currencies reported
+              separately. See the{" "}
+              <a href="/revenue-attribution">revenue attribution guide</a>.
+            </p>
+          </details>
+          <details>
+            <summary>Does Yaap use browser identifiers?</summary>
+            <p>
+              Full analytics uses visitor and session identifiers. You can also
+              collect anonymous events or start paused and connect your consent
+              manager. Funnels and visitor journeys require identified activity.
+              Read about{" "}
+              <a href="/docs/collection-controls">collection controls</a>.
             </p>
           </details>
           <details>

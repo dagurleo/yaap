@@ -38,7 +38,16 @@ export default {
     try {
       origin = discoveryOrigin(request, bindings.BETTER_AUTH_URL);
       const url = new URL(request.url);
+      // Keep a single public HTML URL while preserving campaign query parameters.
       if (
+        ["GET", "HEAD"].includes(request.method) &&
+        url.pathname.endsWith("/") &&
+        url.pathname !== "/" &&
+        publicPagePath(url.pathname)
+      ) {
+        url.pathname = url.pathname.slice(0, -1);
+        response = Response.redirect(url.toString(), 308);
+      } else if (
         ["GET", "HEAD"].includes(request.method) &&
         url.pathname === "/favicon.ico"
       ) {

@@ -51,7 +51,8 @@
     "check:format:backend": "cd apps/web && npm run check:format:backend --",
     "db:setup:local": "cd apps/web && npm run db:setup:local --",
     "build:client": "cd packages/client && npm run build --",
-    "check:client": "cd packages/client && npm run check --"
+    "check:client": "cd packages/client && npm run check --",
+    "check:seo": "npm run check:seo --workspace @yaap/web --"
   },
   "cloudflare": {
     "bindings": {

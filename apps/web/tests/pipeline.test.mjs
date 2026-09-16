@@ -169,7 +169,7 @@ test("fresh migrations support app and auth health; private API rejects anonymou
   assert.equal(billingTableCount.count, 8);
   const landing = await request("/");
   assert.equal(landing.status, 200);
-  assert.match(await landing.text(), /See what brings people in/);
+  assert.match(await landing.text(), /Web analytics, from first visit/);
   const pricing = await request("/pricing");
   assert.equal(pricing.status, 200);
   const pricingHtml = await pricing.text();
@@ -183,6 +183,50 @@ test("fresh migrations support app and auth health; private API rejects anonymou
   const setup = await request("/setup");
   assert.equal(setup.status, 200);
   assert.match(await setup.text(), /Make this your own/);
+});
+
+test("production public pages render SEO metadata and preserve canonical variants", async () => {
+  for (const path of [
+    "/",
+    "/pricing",
+    "/self-hosted-web-analytics",
+    "/conversion-tracking",
+    "/revenue-attribution",
+    "/docs/npm",
+  ]) {
+    const response = await request(path);
+    assert.equal(response.status, 200, path);
+    const html = await response.text();
+    const head = html.match(/<head>([\s\S]*?)<\/head>/)[1];
+    assert.ok(head.includes(`rel="canonical" href="${origin}${path}"`), path);
+    assert.match(
+      head,
+      /name="robots" content="index, follow, max-image-preview:large"/,
+    );
+    assert.doesNotMatch(head, /noindex/);
+    assert.match(head, /type="application\/ld\+json"/);
+    assert.ok(head.includes(`property="og:url" content="${origin}${path}"`));
+    assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1, path);
+  }
+  const redirect = await request("/pricing/?utm_source=test");
+  assert.equal(redirect.status, 308);
+  assert.equal(
+    redirect.headers.get("location"),
+    `${origin}/pricing?utm_source=test`,
+  );
+  for (const path of ["/pricing?utm_source=test", "/pricing.md"]) {
+    const response = await request(path);
+    assert.ok(
+      response.headers
+        .get("Link")
+        .includes(`<${origin}/pricing>; rel="canonical"`),
+    );
+  }
+  for (const path of ["/seo-page-missing", "/docs/seo-guide-missing"]) {
+    const response = await request(path);
+    assert.equal(response.status, 404);
+    assert.match(response.headers.get("X-Robots-Tag"), /noindex/);
+  }
 });
 
 test("root favicon serves the published brand icon", async () => {
@@ -765,7 +809,7 @@ test("Start renders private pages on the server and guards every server function
     const landing = await request("/", { cookie });
     assert.equal(landing.status, 200);
     const markup = await landing.text();
-    assert.match(markup, /See what brings people in/);
+    assert.match(markup, /Web analytics, from first visit/);
     assert.doesNotMatch(markup, /owner@example.com|test-bootstrap-/);
   }
   const workspace = await request("/app");

@@ -13,13 +13,17 @@ import {
 } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import styles from "../styles.css?url";
+import { publicOriginFn } from "@/features/landing/seo-functions";
+import { productPages } from "@/lib/seo";
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
+    beforeLoad: async () => ({ seoOrigin: await publicOriginFn() }),
     head: () => ({
       meta: [
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         { title: "Yaap" },
+        { name: "robots", content: "noindex, nofollow" },
       ],
       links: [
         { rel: "stylesheet", href: styles },
@@ -89,6 +93,7 @@ function RootLayout() {
           "/terms",
           "/security",
           "/contact",
+          ...productPages,
         ].includes(match.routeId),
       ),
   });

@@ -31,6 +31,8 @@ Public setup guides live at [`/docs`](https://yaap.sh/docs). Edit them in `apps/
 
 ## Project direction
 
+- [SEO launch and growth plan](SEO.md): metadata, search intent map, verification, Search Console launch steps and content priorities.
+
 - [Agent readiness](AGENT_READINESS.md): crawl policy, Markdown pages, API/MCP discovery, public browser tools and deployment verification.
 - [Public information pages](PUBLIC_PAGES.md): landing legal/support pages, draft status and details needed for final publication.
 - [Roadmap](ROADMAP.md): what is built, what comes next and public-release gates.

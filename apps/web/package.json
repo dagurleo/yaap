@@ -32,7 +32,8 @@
     "check:format:backend": "prettier --check \"src/{api,http,ingest,rate-limit,server,types,visitor-metadata}.ts\" \"src/{auth,db,lib,public-api,server}/**/*.ts\" \"src/emails/**/*.tsx\" src/features/dashboard/functions.ts \"scripts/**/*.mjs\" \"tests/**/*.mjs\"",
     "prebuild": "node ../../packages/client/scripts/build.mjs && node scripts/sync-client.mjs",
     "predev": "node ../../packages/client/scripts/build.mjs && node scripts/sync-client.mjs",
-    "db:setup:local": "node scripts/setup-local.mjs"
+    "db:setup:local": "node scripts/setup-local.mjs",
+    "check:seo": "node scripts/check-seo.mjs"
   },
   "cloudflare": {
     "bindings": {

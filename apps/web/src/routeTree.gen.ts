@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as CheckEmailRouteImport } from './routes/check-email'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ConversionTrackingRouteImport } from './routes/conversion-tracking'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DocsSearchRouteImport } from './routes/docs-search'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -20,7 +21,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RevenueAttributionRouteImport } from './routes/revenue-attribution'
 import { Route as SecurityRouteImport } from './routes/security'
+import { Route as SelfHostedWebAnalyticsRouteImport } from './routes/self-hosted-web-analytics'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -60,6 +63,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConversionTrackingRoute = ConversionTrackingRouteImport.update({
+  id: '/conversion-tracking',
+  path: '/conversion-tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
@@ -95,9 +103,19 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RevenueAttributionRoute = RevenueAttributionRouteImport.update({
+  id: '/revenue-attribution',
+  path: '/revenue-attribution',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SecurityRoute = SecurityRouteImport.update({
   id: '/security',
   path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SelfHostedWebAnalyticsRoute = SelfHostedWebAnalyticsRouteImport.update({
+  id: '/self-hosted-web-analytics',
+  path: '/self-hosted-web-analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetupRoute = SetupRouteImport.update({
@@ -200,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
+  '/conversion-tracking': typeof ConversionTrackingRoute
   '/demo': typeof DemoRoute
   '/docs-search': typeof DocsSearchRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -207,7 +226,9 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/revenue-attribution': typeof RevenueAttributionRoute
   '/security': typeof SecurityRoute
+  '/self-hosted-web-analytics': typeof SelfHostedWebAnalyticsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
@@ -232,6 +253,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
+  '/conversion-tracking': typeof ConversionTrackingRoute
   '/demo': typeof DemoRoute
   '/docs-search': typeof DocsSearchRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -239,7 +261,9 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/revenue-attribution': typeof RevenueAttributionRoute
   '/security': typeof SecurityRoute
+  '/self-hosted-web-analytics': typeof SelfHostedWebAnalyticsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
@@ -266,6 +290,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/check-email': typeof CheckEmailRoute
   '/contact': typeof ContactRoute
+  '/conversion-tracking': typeof ConversionTrackingRoute
   '/demo': typeof DemoRoute
   '/docs-search': typeof DocsSearchRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -273,7 +298,9 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/revenue-attribution': typeof RevenueAttributionRoute
   '/security': typeof SecurityRoute
+  '/self-hosted-web-analytics': typeof SelfHostedWebAnalyticsRoute
   '/setup': typeof SetupRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
@@ -300,6 +327,7 @@ export interface FileRouteTypes {
     | '/'
     | '/check-email'
     | '/contact'
+    | '/conversion-tracking'
     | '/demo'
     | '/docs-search'
     | '/forgot-password'
@@ -307,7 +335,9 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/revenue-attribution'
     | '/security'
+    | '/self-hosted-web-analytics'
     | '/setup'
     | '/signup'
     | '/terms'
@@ -332,6 +362,7 @@ export interface FileRouteTypes {
     | '/'
     | '/check-email'
     | '/contact'
+    | '/conversion-tracking'
     | '/demo'
     | '/docs-search'
     | '/forgot-password'
@@ -339,7 +370,9 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/revenue-attribution'
     | '/security'
+    | '/self-hosted-web-analytics'
     | '/setup'
     | '/signup'
     | '/terms'
@@ -365,6 +398,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/check-email'
     | '/contact'
+    | '/conversion-tracking'
     | '/demo'
     | '/docs-search'
     | '/forgot-password'
@@ -372,7 +406,9 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/revenue-attribution'
     | '/security'
+    | '/self-hosted-web-analytics'
     | '/setup'
     | '/signup'
     | '/terms'
@@ -399,6 +435,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   CheckEmailRoute: typeof CheckEmailRoute
   ContactRoute: typeof ContactRoute
+  ConversionTrackingRoute: typeof ConversionTrackingRoute
   DemoRoute: typeof DemoRoute
   DocsSearchRoute: typeof DocsSearchRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -406,7 +443,9 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  RevenueAttributionRoute: typeof RevenueAttributionRoute
   SecurityRoute: typeof SecurityRoute
+  SelfHostedWebAnalyticsRoute: typeof SelfHostedWebAnalyticsRoute
   SetupRoute: typeof SetupRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
@@ -444,6 +483,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conversion-tracking': {
+      id: '/conversion-tracking'
+      path: '/conversion-tracking'
+      fullPath: '/conversion-tracking'
+      preLoaderRoute: typeof ConversionTrackingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -495,11 +541,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/revenue-attribution': {
+      id: '/revenue-attribution'
+      path: '/revenue-attribution'
+      fullPath: '/revenue-attribution'
+      preLoaderRoute: typeof RevenueAttributionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/security': {
       id: '/security'
       path: '/security'
       fullPath: '/security'
       preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/self-hosted-web-analytics': {
+      id: '/self-hosted-web-analytics'
+      path: '/self-hosted-web-analytics'
+      fullPath: '/self-hosted-web-analytics'
+      preLoaderRoute: typeof SelfHostedWebAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/setup': {
@@ -675,6 +735,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   CheckEmailRoute: CheckEmailRoute,
   ContactRoute: ContactRoute,
+  ConversionTrackingRoute: ConversionTrackingRoute,
   DemoRoute: DemoRoute,
   DocsSearchRoute: DocsSearchRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
@@ -682,7 +743,9 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  RevenueAttributionRoute: RevenueAttributionRoute,
   SecurityRoute: SecurityRoute,
+  SelfHostedWebAnalyticsRoute: SelfHostedWebAnalyticsRoute,
   SetupRoute: SetupRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,

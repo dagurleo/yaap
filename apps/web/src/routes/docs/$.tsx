@@ -1,3 +1,4 @@
+import { publicSeo } from "@/lib/seo";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { RootProvider } from "fumadocs-ui/provider/tanstack";
@@ -37,25 +38,42 @@ export const Route = createFileRoute("/docs/$")({
     await docs.getPage(data.path)?.preload();
     return data;
   },
-  head: ({ loaderData }) => ({
-    links: [
-      {
-        rel: "alternate",
-        type: "text/markdown",
-        href: `${loaderData?.url ?? "/docs"}.md`,
-      },
-      { rel: "describedby", type: "text/plain", href: "/llms.txt" },
-    ],
-    meta: [
-      { title: loaderData ? `${loaderData.title} · Yaap Docs` : "Yaap Docs" },
-      {
-        name: "description",
-        content:
-          loaderData?.description ??
-          "Set up Yaap and understand your website analytics.",
-      },
-    ],
-  }),
+  head: ({ loaderData, match }) => {
+    if (!loaderData)
+      return {
+        meta: [
+          { title: "Guide not found — Yaap" },
+          { name: "robots", content: "noindex, follow" },
+        ],
+      };
+    const seo = publicSeo({
+      origin: match.context.seoOrigin,
+      path: loaderData.url,
+      title: `${loaderData.title} — Yaap Docs`,
+      description:
+        loaderData.description ??
+        "Set up Yaap and understand your website analytics.",
+      breadcrumbs: [
+        { name: "Home", path: "/" },
+        { name: "Documentation", path: "/docs" },
+        ...(loaderData.url === "/docs"
+          ? []
+          : [{ name: loaderData.title, path: loaderData.url }]),
+      ],
+    });
+    return {
+      ...seo,
+      links: [
+        ...seo.links,
+        {
+          rel: "alternate",
+          type: "text/markdown",
+          href: `${loaderData.url}.md`,
+        },
+        { rel: "describedby", type: "text/plain", href: "/llms.txt" },
+      ],
+    };
+  },
   component: Documentation,
   notFoundComponent: () => (
     <main className="mx-auto max-w-3xl px-6 py-24">

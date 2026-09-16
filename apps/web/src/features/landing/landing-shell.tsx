@@ -62,7 +62,7 @@ export function LandingHeader({
         </div>
         <nav aria-label="Main">
           <a href="/#product">Product</a>
-          <a href="/#ownership">Self-hosting</a>
+          <a href="/self-hosted-web-analytics">Self-hosting</a>
           <a href="/pricing" aria-current={pricing ? "page" : undefined}>
             Pricing
           </a>
@@ -111,7 +111,7 @@ export function LandingHeader({
                 {hosted ? "Sign up" : "Sign in"}
               </a>
               <a href="/#product">Product</a>
-              <a href="/#ownership">Self-hosting</a>
+              <a href="/self-hosted-web-analytics">Self-hosting</a>
               <a href="/pricing" aria-current={pricing ? "page" : undefined}>
                 Pricing
               </a>
@@ -161,10 +161,16 @@ export function LandingFooter() {
                 <a href="/#product">Overview</a>
               </li>
               <li>
+                <a href="/conversion-tracking">Conversion tracking</a>
+              </li>
+              <li>
+                <a href="/revenue-attribution">Revenue attribution</a>
+              </li>
+              <li>
                 <a href="/pricing">Pricing</a>
               </li>
               <li>
-                <a href="/#ownership">Self-hosting</a>
+                <a href="/self-hosted-web-analytics">Self-hosting</a>
               </li>
             </ul>
           </nav>

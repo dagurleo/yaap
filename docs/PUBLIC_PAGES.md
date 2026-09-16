@@ -2,7 +2,7 @@
 
 The landing site includes `/privacy`, `/terms`, `/security` and `/contact`, sharing the existing header, footer, typography and a responsive contents navigation. The footer also links to the repository documentation and software license. Signup links to Privacy and Terms without claiming acceptance of an unfinished agreement.
 
-Privacy and Terms are **drafts, not effective policies**. They have a visible draft notice and `noindex, nofollow` metadata. Security describes implemented controls; Contact links to documentation, public issues and authenticated Billing. The confirmed public address is `hello@yaap.sh`, used for support, privacy requests and private security reports. The production operator, data locations and outstanding commercial policies remain unconfirmed.
+Privacy and Terms are **drafts, not effective policies**. They have a visible draft notice and `noindex, follow` metadata. Security describes implemented controls; Contact links to documentation, public issues and authenticated Billing. The confirmed public address is `hello@yaap.sh`, used for support, privacy requests and private security reports. The production operator, data locations and outstanding commercial policies remain unconfirmed.
 
 ## Finalizing the content
 

@@ -26,6 +26,8 @@ export function PublicPage({
   category,
   sections,
   draft = false,
+  updated = "September 12, 2026",
+  related,
 }: {
   hosted: boolean;
   title: string;
@@ -33,6 +35,8 @@ export function PublicPage({
   category: string;
   sections: PublicSection[];
   draft?: boolean;
+  updated?: string;
+  related?: { href: string; label: string }[];
 }) {
   return (
     <div className="yaap-landing">
@@ -47,7 +51,7 @@ export function PublicPage({
             <h1>{title}</h1>
             <p className="public-description">{description}</p>
             <p className="public-date">
-              {draft ? "Draft prepared" : "Last updated"} September 12, 2026
+              {draft ? "Draft prepared" : "Last updated"} {updated}
             </p>
           </div>
         </div>
@@ -66,9 +70,7 @@ export function PublicPage({
             <p className="public-sidebar-help">
               Have a question?
               <br />
-              <a href="/contact">
-                Get in touch
-              </a>
+              <a href="/contact">Get in touch</a>
             </p>
           </aside>
           <div className="public-article">
@@ -103,10 +105,20 @@ export function PublicPage({
             <div className="public-related">
               <p>More about Yaap</p>
               <nav aria-label="Related pages">
-                <a href="/privacy">Privacy</a>
-                <a href="/terms">Terms</a>
-                <a href="/security">Security</a>
-                <a href="/contact">Contact</a>
+                {related ? (
+                  related.map((link) => (
+                    <a key={link.href} href={link.href}>
+                      {link.label}
+                    </a>
+                  ))
+                ) : (
+                  <>
+                    <a href="/privacy">Privacy</a>
+                    <a href="/terms">Terms</a>
+                    <a href="/security">Security</a>
+                    <a href="/contact">Contact</a>
+                  </>
+                )}
               </nav>
             </div>
           </div>
