@@ -39,3 +39,11 @@ export function configureDeploymentDatabase(config, value) {
     { binding: "HYPERDRIVE", id },
   ];
 }
+
+export function configureHomepageBotTracking(config, value) {
+  const siteId = value?.trim();
+  if (!siteId) return;
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(siteId))
+    throw new Error("YAAP_SELF_TRACKING_SITE_ID must be a valid site ID.");
+  config.vars = { ...config.vars, YAAP_SELF_TRACKING_SITE_ID: siteId };
+}

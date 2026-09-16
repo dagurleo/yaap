@@ -113,3 +113,41 @@ test("provider failures propagate without retrying", async () => {
     assert.equal(attempts, 1);
   }
 });
+
+test("logs actionable failures without recipient addresses or auth tokens", async (t) => {
+  const log = t.mock.method(console, "error", () => {});
+  const failure = Object.assign(
+    new Error(
+      "reader@example.com https://example.com/reset?token=private-token",
+    ),
+    { code: "E_RECIPIENT_SUPPRESSED" },
+  );
+  const { env } = fixture({
+    EMAIL: {
+      async send() {
+        throw failure;
+      },
+    },
+  });
+  await assert.rejects(sendEmail(env, message), (error) => error === failure);
+  assert.deepEqual(log.mock.calls[0].arguments, [
+    "Outbound email failed",
+    {
+      code: "E_RECIPIENT_SUPPRESSED",
+      bindingConfigured: true,
+      senderConfigured: true,
+    },
+  ]);
+  await assert.rejects(sendEmail({ ...env, EMAIL_FROM: undefined }, message));
+  assert.deepEqual(log.mock.calls[1].arguments, [
+    "Outbound email failed",
+    {
+      code: "E_EMAIL_SEND_FAILED",
+      bindingConfigured: true,
+      senderConfigured: false,
+    },
+  ]);
+  failure.code = "reader@example.com/private-token";
+  await assert.rejects(sendEmail(env, message));
+  assert.equal(log.mock.calls[2].arguments[1].code, "E_EMAIL_SEND_FAILED");
+});

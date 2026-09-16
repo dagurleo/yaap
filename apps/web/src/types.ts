@@ -29,6 +29,8 @@ export interface BillingReceiptMessage {
 export type EventQueueMessage = AnalyticsEvent | BillingReceiptMessage;
 
 export interface Env {
+  /** Optional site for server-side bot tracking on this installation’s homepage. */
+  YAAP_SELF_TRACKING_SITE_ID?: string;
   /** Synthetic site used by /demo; never configure a customer site here. */
   YAAP_DEMO_SITE_ID?: string;
   DB?: D1Database;

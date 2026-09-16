@@ -1,3 +1,5 @@
+import { siteBotTraffic, changeBotToken } from "../../server/bot-traffic";
+import { botFilters, type BotFilters } from "../../lib/bot-traffic";
 import {
   conversionFilters,
   type ConversionFilters,
@@ -529,3 +531,24 @@ export const acceptInvitationFn = createServerFn({ method: "POST" })
     if (!access.user) throw redirect({ to: "/login" });
     return acceptSiteInvitation(context.env, access.user, data.token);
   });
+
+export const botTrafficFn = createServerFn({ method: "GET" })
+  .validator(siteInput<{ siteId: string } & BotFilters>)
+  .handler(async ({ data, context }) =>
+    siteBotTraffic(
+      context.env,
+      await actor(context.env),
+      data.siteId,
+      botFilters(data),
+    ),
+  );
+export const botTokenFn = createServerFn({ method: "POST" })
+  .validator(siteInput<{ siteId: string; action: "rotate" | "revoke" }>)
+  .handler(async ({ data, context }) =>
+    changeBotToken(
+      context.env,
+      await actor(context.env),
+      data.siteId,
+      data.action,
+    ),
+  );

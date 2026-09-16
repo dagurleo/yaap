@@ -12,19 +12,24 @@ export const Route = createFileRoute("/forgot-password")({
 function ForgotPasswordPage() {
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
+    setError("");
     const email = String(new FormData(event.currentTarget).get("email") ?? "");
     try {
-      await fetch("/api/auth/request-password-reset", {
+      const response = await fetch("/api/auth/request-password-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, redirectTo: "/reset-password" }),
       });
-    } finally {
-      // The result is deliberately neutral for registered and unknown emails.
+      if (!response.ok) throw new Error("Reset request failed");
+      // Keep successful responses neutral for registered and unknown emails.
       setSent(true);
+    } catch {
+      setError("Could not request a reset link. Please try again shortly.");
+    } finally {
       setPending(false);
     }
   }
@@ -53,6 +58,7 @@ function ForgotPasswordPage() {
           </Button>
         </form>
       )}
+      {error && <p role="alert">{error}</p>}
       <Link to="/login" className="text-sm underline">
         Back to sign in
       </Link>

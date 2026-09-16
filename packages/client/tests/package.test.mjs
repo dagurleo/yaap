@@ -19,6 +19,8 @@ test("packed package installs independently, imports without a browser, and expo
     const files = packed.files.map((file) => file.path);
     for (const file of [
       "dist/index.js",
+      "dist/server.js",
+      "dist/server.d.ts",
       "dist/index.d.ts",
       "dist/types.d.ts",
       "dist/script.js",
@@ -56,6 +58,8 @@ test("packed package installs independently, imports without a browser, and expo
         `
       import assert from "node:assert/strict";
       import { init } from "@yaap/client";
+      import { trackBotRequest } from "@yaap/client/server";
+      assert.equal(typeof trackBotRequest, "function");
       assert.equal(typeof globalThis.window, "undefined");
       assert.equal(init({ siteId: "test", host: "https://analytics.example" }), undefined);
       assert.equal(init({ siteId: "test" }), undefined);

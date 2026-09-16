@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   configureDeploymentDatabase,
+  configureHomepageBotTracking,
   configureDeploymentPlacement,
 } from "../scripts/deployment-config.mjs";
 
@@ -204,4 +205,18 @@ test("deploy rejects a stale provider or Hyperdrive ID before contacting a datab
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("homepage bot tracking is opt-in and preserves other runtime variables", () => {
+  const config = { vars: { DATABASE_PROVIDER: "postgres" } };
+  configureHomepageBotTracking(config, undefined);
+  assert.deepEqual(config.vars, { DATABASE_PROVIDER: "postgres" });
+  configureHomepageBotTracking(config, " site-123 ");
+  assert.equal(config.vars.YAAP_SELF_TRACKING_SITE_ID, "site-123");
+  assert.equal(config.vars.DATABASE_PROVIDER, "postgres");
+  assert.throws(
+    () => configureHomepageBotTracking(config, "https://yaap.sh"),
+    /valid site ID/,
+  );
+  assert.equal(config.vars.YAAP_SELF_TRACKING_SITE_ID, "site-123");
 });

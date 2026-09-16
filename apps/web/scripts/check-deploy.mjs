@@ -5,12 +5,14 @@ import { parseEnv } from "node:util";
 import { unstable_readConfig } from "wrangler";
 import {
   configureDeploymentDatabase,
+  configureHomepageBotTracking,
   configureDeploymentPlacement,
 } from "./deployment-config.mjs";
 
 const read = async (path) => JSON.parse(await readFile(path, "utf8"));
 const source = unstable_readConfig({ config: "../../wrangler.jsonc" });
 configureDeploymentDatabase(source, process.env.YAAP_HYPERDRIVE_ID);
+configureHomepageBotTracking(source, process.env.YAAP_SELF_TRACKING_SITE_ID);
 configureDeploymentPlacement(source, process.env.YAAP_PLACEMENT_REGION);
 const built = await read("dist/server/wrangler.json");
 const pkg = await read("../../package.json");
@@ -106,6 +108,7 @@ function validate(config, label) {
     "/api/*",
     "/payments/*",
     "/ingest",
+    "/bot-traffic",
     "/health",
     "/mcp",
     "/oauth/*",

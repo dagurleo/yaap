@@ -10,3 +10,8 @@ export function configureDeploymentDatabase(
   config: Pick<Unstable_Config, "vars" | "d1_databases" | "hyperdrive">,
   value?: string,
 ): void;
+
+export function configureHomepageBotTracking(
+  config: Pick<Unstable_Config, "vars">,
+  value?: string,
+): void;

@@ -1,3 +1,4 @@
+import { trackHomepageBot } from "./server/homepage-bot-tracking";
 import { refreshDemo } from "./server/demo";
 import { withDatabase } from "./db";
 import handler from "@tanstack/react-start/server-entry";
@@ -31,7 +32,7 @@ declare module "@tanstack/react-start" {
   }
 }
 export default {
-  async fetch(request, bindings) {
+  async fetch(request, bindings, context) {
     let response: Response;
     let origin = new URL(request.url).origin;
     try {
@@ -120,6 +121,7 @@ export default {
     publicResponseHeaders(safe, request, origin);
     if (/^\/share(?:\/|$)/.test(new URL(request.url).pathname))
       safe.headers.set("X-Robots-Tag", "noindex, nofollow");
+    trackHomepageBot(request, safe, bindings, context);
     return safe;
   },
   queue: (batch, env) => {

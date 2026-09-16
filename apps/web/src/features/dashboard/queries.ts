@@ -1,3 +1,5 @@
+import { botTrafficFn } from "./functions";
+import type { BotFilters } from "../../lib/bot-traffic";
 import type { ConversionFilters } from "../../lib/conversion-filters";
 import { conversionsFn } from "./functions";
 import type { RevenueFilters } from "../../lib/revenue-filters";
@@ -131,4 +133,12 @@ export const conversionsQuery = (siteId: string, filters: ConversionFilters) =>
     staleTime: 60000,
     retry: false,
     refetchOnWindowFocus: false,
+  });
+
+export const botTrafficQuery = (siteId: string, filters: BotFilters) =>
+  queryOptions({
+    queryKey: ["sites", siteId, "bot-traffic", filters],
+    queryFn: () => botTrafficFn({ data: { siteId, ...filters } }),
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   });

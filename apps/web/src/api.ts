@@ -1,3 +1,9 @@
+import {
+  ingestBotRequest,
+  siteBotTraffic,
+  changeBotToken,
+} from "./server/bot-traffic";
+import { botFilters } from "./lib/bot-traffic";
 import { isWebhookProvider } from "./lib/payment-providers";
 import { conversionFilters } from "./lib/conversion-filters";
 import { siteConversions } from "./server/conversion-report";
@@ -280,6 +286,12 @@ export async function route(
     return createAuth(env, origin).handler(request);
   }
 
+  if (url.pathname === "/bot-traffic") {
+    if (method !== "POST") throw new HttpError(405, "Method not allowed");
+    await limitRequest(request, env, "bot-traffic", 600);
+    return ingestBotRequest(request, env);
+  }
+
   if (url.pathname === "/ingest") {
     if (method === "OPTIONS") {
       // No credentials. POST independently validates the site's allowed origin.
@@ -415,6 +427,33 @@ export async function route(
           memberMatch[2],
         ),
       );
+    const botMatch = url.pathname.match(/^\/api\/sites\/([^/]+)\/bot-traffic$/);
+    if (botMatch && method === "GET")
+      return json(
+        await siteBotTraffic(
+          env,
+          session.user.id,
+          botMatch[1],
+          botFilters(Object.fromEntries(url.searchParams)),
+        ),
+      );
+    const botTokenMatch = url.pathname.match(
+      /^\/api\/sites\/([^/]+)\/bot-token$/,
+    );
+    if (botTokenMatch && method === "POST") {
+      sameOrigin(request, origin);
+      const body = await readJson(request);
+      if (body.action !== "rotate" && body.action !== "revoke")
+        throw new HttpError(400, "Invalid token action");
+      return json(
+        await changeBotToken(
+          env,
+          session.user.id,
+          botTokenMatch[1],
+          body.action,
+        ),
+      );
+    }
     const operationsMatch = url.pathname.match(
       /^\/api\/sites\/([^/]+)\/operations$/,
     );

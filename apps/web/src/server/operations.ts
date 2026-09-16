@@ -1,3 +1,4 @@
+import { detectRequestBot } from "./bot-traffic";
 import { ownedSite } from "./access";
 import { reconcilePaymentAttribution } from "./payment-attribution";
 import { sql } from "drizzle-orm";
@@ -32,12 +33,7 @@ export async function recordIngestion(
   }
 }
 export function isKnownBot(request: Request) {
-  const cf = request.cf as
-    { botManagement?: { verifiedBot?: boolean } } | undefined;
-  if (cf?.botManagement?.verifiedBot === true) return true;
-  return /bot\b|crawler|spider|slurp|headlesschrome|phantomjs|lighthouse|facebookexternalhit|preview|curl\/|wget\/|python-requests|python-urllib|go-http-client/i.test(
-    request.headers.get("user-agent") ?? "",
-  );
+  return detectRequestBot(request) !== null;
 }
 
 export async function siteOperations(
@@ -110,6 +106,12 @@ export async function cleanup(env: Env, now = Date.now()) {
       );
     await db.updateSite(site.id, { lastCleanupAt: now });
   }
+  // Bot reports retain at most 90 days, or the site's shorter event retention.
+  await db.run(sql`delete from bot_requests where (site_id,id) in (
+    select b.site_id,b.id from bot_requests b join sites s on s.id=b.site_id
+    where b.received_at<${now}-(case when s.event_retention_days>0 and s.event_retention_days<90 then s.event_retention_days else 90 end)*86400000
+    order by b.received_at limit 5000
+  )`);
   await db.run(sql`delete from ingestion_buckets where hour<${now - 30 * DAY}`);
   await db.run(
     sql`delete from visitor_presence where received_at<${now - 60_000}`,

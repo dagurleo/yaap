@@ -7,6 +7,7 @@ import {
   Filter,
   CircleDollarSign,
   Zap,
+  Bot,
   Settings2,
   LayoutGrid,
 } from "lucide-react";
@@ -90,6 +91,17 @@ export function SiteTabs({
         >
           <Zap aria-hidden="true" /> Events
         </ReportLink>
+      )}
+      {!shared && (
+        <Link
+          className={style}
+          to="/app/$siteId/bots"
+          params={{ siteId }}
+          search={{ days: 7, category: "all", botSource: "all" }}
+          activeOptions={{ includeSearch: false }}
+        >
+          <Bot aria-hidden="true" /> Bot traffic
+        </Link>
       )}
       {!shared && (
         <>

@@ -26,6 +26,28 @@ export async function sendEmail(
   env: EmailEnv,
   message: OutboundEmail,
 ): Promise<EmailSendResult> {
+  try {
+    return await deliverEmail(env, message);
+  } catch (error) {
+    // Better Auth catches some email failures. Log here without recipients,
+    // message bodies, or reset/verification tokens.
+    const code =
+      error && typeof error === "object" && "code" in error
+        ? String(error.code)
+        : "E_EMAIL_SEND_FAILED";
+    console.error("Outbound email failed", {
+      code: /^E_[A-Z0-9_]+$/.test(code) ? code : "E_EMAIL_SEND_FAILED",
+      bindingConfigured: !!env.EMAIL,
+      senderConfigured: !!env.EMAIL_FROM?.trim(),
+    });
+    throw error;
+  }
+}
+
+async function deliverEmail(
+  env: EmailEnv,
+  message: OutboundEmail,
+): Promise<EmailSendResult> {
   if (!env.EMAIL || !env.EMAIL_FROM?.trim()) {
     throw new Error("Email sending requires the EMAIL binding and EMAIL_FROM.");
   }

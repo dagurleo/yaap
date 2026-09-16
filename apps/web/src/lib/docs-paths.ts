@@ -5,6 +5,7 @@ export const docsPaths = [
   "/docs/npm",
   "/docs/collection-controls",
   "/docs/events",
+  "/docs/bot-traffic",
   "/docs/goals-and-funnels",
   "/docs/integrations",
   "/docs/self-hosting",

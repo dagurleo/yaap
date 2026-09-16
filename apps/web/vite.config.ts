@@ -7,6 +7,7 @@ import react from "@vitejs/plugin-react";
 import { fumadocsMdx } from "fumadocs-mdx/vite";
 import {
   configureDeploymentDatabase,
+  configureHomepageBotTracking,
   configureDeploymentPlacement,
 } from "./scripts/deployment-config.mjs";
 export default defineConfig(({ command, isPreview }) => ({
@@ -24,6 +25,10 @@ export default defineConfig(({ command, isPreview }) => ({
       config: (config) => {
         if (command === "build") {
           configureDeploymentDatabase(config, process.env.YAAP_HYPERDRIVE_ID);
+          configureHomepageBotTracking(
+            config,
+            process.env.YAAP_SELF_TRACKING_SITE_ID,
+          );
           configureDeploymentPlacement(
             config,
             process.env.YAAP_PLACEMENT_REGION,

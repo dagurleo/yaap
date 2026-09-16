@@ -101,3 +101,21 @@ Use `setAdvertisingConsent({ storage, userData, personalization, policyVersion }
 Supply choices before the first permitted pageview: initialize paused, apply identifiers/advertising choices, then resume. The setter does not emit another pageview. Context is limited to the identified tab and 30 minutes from capture; withdrawal clears it and strips pending ad retries. Restore choices on every load and propagate withdrawal to active tabs through your consent manager.
 
 This release captures reporting dimensions only. It does not collect raw click IDs or ad cookies, send data to Google/Meta, or persist a consent ledger for future exports. Requires the corresponding server migrations. See the repository's [ad attribution guide](https://github.com/dagurleo/yaap/blob/main/docs/ADS_ATTRIBUTION.md).
+
+## Server-side bot tracking
+
+Import `trackBotRequest` from `@yaap/client/server` on the server. This entry point has no browser tracker side effects.
+
+```ts
+import { trackBotRequest } from "@yaap/client/server";
+
+trackBotRequest(request, {
+  siteId: "YOUR_SITE_ID",
+  endpoint: "https://YOUR_ANALYTICS_HOST/bot-traffic",
+  token: process.env.YAAP_BOT_TOKEN!,
+}, context, response);
+```
+
+Create a site-specific token in **Bot traffic → Install server tracking**. Keep it server-side. `context` is optional and supplies `waitUntil`; `response` is optional and adds the HTTP status. Without `waitUntil`, await the returned promise when your runtime requires completion before returning. Requests time out after three seconds, resolve on failure, and optionally notify `onError`. Only detected bots on GET/HEAD requests are sent; API paths and static assets are skipped, while discovery files and Markdown are kept. User-agent matches are unverified claims. The helper omits query strings, IPs, cookies, and identifiers.
+
+See [the full bot traffic guide](../../apps/web/content/docs/bot-traffic.mdx) for framework examples, the HTTP API, retention, and detection limitations.

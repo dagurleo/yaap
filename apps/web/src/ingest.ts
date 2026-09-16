@@ -1,8 +1,9 @@
+import { detectRequestBot, recordBotRequest } from "./server/bot-traffic";
 import {
   allowedTrackingOrigin,
   excludedByTrackingRules,
 } from "./lib/site-settings";
-import { isKnownBot, recordIngestion } from "./server/operations";
+import { recordIngestion } from "./server/operations";
 import { visitorMetadata } from "./visitor-metadata";
 import { hashIdentity, visitorUuid } from "./server/identity";
 import { createDb } from "./db";
@@ -47,7 +48,23 @@ export async function ingest(request: Request, env: Env) {
       Vary: "Origin",
     });
   }
-  if (site.excludeBots && isKnownBot(request)) {
+  const detectedBot = detectRequestBot(request);
+  if (detectedBot && name === "pageview" && body.presence !== true) {
+    // Preserve bot detail without putting excluded requests into visitor rollups.
+    if (
+      billingConfig(env).mode !== "hosted" ||
+      (await canHostedWorkspaceCollect(env, site.workspaceId, Date.now()))
+    ) {
+      await recordBotRequest(env, {
+        siteId,
+        id: `b:${id}`,
+        path: path.split(/[?#]/)[0],
+        ...detectedBot,
+        source: "browser",
+      });
+    }
+  }
+  if (site.excludeBots && detectedBot) {
     await recordIngestion(env, siteId, "bots");
     return json({ ignored: "bot" }, 202, {
       "Access-Control-Allow-Origin": requestOrigin,

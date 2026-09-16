@@ -923,3 +923,41 @@ export const sitePublicShares = sqliteTable("site_public_shares", {
     .notNull()
     .default(false),
 });
+
+export const botTrackingTokens = sqliteTable("bot_tracking_tokens", {
+  siteId: text("site_id")
+    .primaryKey()
+    .references(() => sites.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull(),
+});
+export const botRequests = sqliteTable(
+  "bot_requests",
+  {
+    siteId: text("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    id: text("id").notNull(),
+    receivedAt: integer("received_at").notNull(),
+    path: text("path").notNull(),
+    name: text("name").notNull(),
+    provider: text("provider").notNull(),
+    category: text("category").notNull(),
+    source: text("source").notNull(),
+    detection: text("detection").notNull(),
+    statusCode: integer("status_code"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.siteId, t.id] }),
+    index("bot_requests_site_time").on(t.siteId, t.receivedAt),
+    index("bot_requests_time").on(t.receivedAt),
+    check(
+      "bot_requests_category",
+      sql`${t.category} in ('ai_answers','indexing','training','other')`,
+    ),
+    check("bot_requests_source", sql`${t.source} in ('server','browser')`),
+    check(
+      "bot_requests_detection",
+      sql`${t.detection} in ('user_agent','cloudflare')`,
+    ),
+  ],
+);

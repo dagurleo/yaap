@@ -32,6 +32,7 @@ import { Route as AppAppBillingRouteImport } from './routes/_app/app/billing'
 import { Route as SharePublicIdIndexRouteImport } from './routes/share/$publicId/index'
 import { Route as SharePublicIdReportRouteImport } from './routes/share/$publicId/$report'
 import { Route as AppAppSiteIdIndexRouteImport } from './routes/_app/app/$siteId/index'
+import { Route as AppAppSiteIdBotsRouteImport } from './routes/_app/app/$siteId/bots'
 import { Route as AppAppSiteIdEventsRouteImport } from './routes/_app/app/$siteId/events'
 import { Route as AppAppSiteIdFunnelsRouteImport } from './routes/_app/app/$siteId/funnels'
 import { Route as AppAppSiteIdOverviewRouteImport } from './routes/_app/app/$siteId/overview'
@@ -154,6 +155,11 @@ const AppAppSiteIdIndexRoute = AppAppSiteIdIndexRouteImport.update({
   path: '/app/$siteId/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppSiteIdBotsRoute = AppAppSiteIdBotsRouteImport.update({
+  id: '/app/$siteId/bots',
+  path: '/app/$siteId/bots',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppSiteIdEventsRoute = AppAppSiteIdEventsRouteImport.update({
   id: '/app/$siteId/events',
   path: '/app/$siteId/events',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/share/$publicId/$report': typeof SharePublicIdReportRoute
   '/app/': typeof AppAppIndexRoute
   '/share/$publicId/': typeof SharePublicIdIndexRoute
+  '/app/$siteId/bots': typeof AppAppSiteIdBotsRoute
   '/app/$siteId/events': typeof AppAppSiteIdEventsRoute
   '/app/$siteId/funnels': typeof AppAppSiteIdFunnelsRoute
   '/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/share/$publicId/$report': typeof SharePublicIdReportRoute
   '/app': typeof AppAppIndexRoute
   '/share/$publicId': typeof SharePublicIdIndexRoute
+  '/app/$siteId/bots': typeof AppAppSiteIdBotsRoute
   '/app/$siteId/events': typeof AppAppSiteIdEventsRoute
   '/app/$siteId/funnels': typeof AppAppSiteIdFunnelsRoute
   '/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/share/$publicId/$report': typeof SharePublicIdReportRoute
   '/_app/app/': typeof AppAppIndexRoute
   '/share/$publicId/': typeof SharePublicIdIndexRoute
+  '/_app/app/$siteId/bots': typeof AppAppSiteIdBotsRoute
   '/_app/app/$siteId/events': typeof AppAppSiteIdEventsRoute
   '/_app/app/$siteId/funnels': typeof AppAppSiteIdFunnelsRoute
   '/_app/app/$siteId/overview': typeof AppAppSiteIdOverviewRoute
@@ -309,6 +318,7 @@ export interface FileRouteTypes {
     | '/share/$publicId/$report'
     | '/app/'
     | '/share/$publicId/'
+    | '/app/$siteId/bots'
     | '/app/$siteId/events'
     | '/app/$siteId/funnels'
     | '/app/$siteId/overview'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/share/$publicId/$report'
     | '/app'
     | '/share/$publicId'
+    | '/app/$siteId/bots'
     | '/app/$siteId/events'
     | '/app/$siteId/funnels'
     | '/app/$siteId/overview'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/share/$publicId/$report'
     | '/_app/app/'
     | '/share/$publicId/'
+    | '/_app/app/$siteId/bots'
     | '/_app/app/$siteId/events'
     | '/_app/app/$siteId/funnels'
     | '/_app/app/$siteId/overview'
@@ -567,6 +579,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppSiteIdIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/$siteId/bots': {
+      id: '/_app/app/$siteId/bots'
+      path: '/app/$siteId/bots'
+      fullPath: '/app/$siteId/bots'
+      preLoaderRoute: typeof AppAppSiteIdBotsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/app/$siteId/events': {
       id: '/_app/app/$siteId/events'
       path: '/app/$siteId/events'
@@ -623,6 +642,7 @@ interface AppRouteChildren {
   AppAppAccessRoute: typeof AppAppAccessRoute
   AppAppBillingRoute: typeof AppAppBillingRoute
   AppAppIndexRoute: typeof AppAppIndexRoute
+  AppAppSiteIdBotsRoute: typeof AppAppSiteIdBotsRoute
   AppAppSiteIdEventsRoute: typeof AppAppSiteIdEventsRoute
   AppAppSiteIdFunnelsRoute: typeof AppAppSiteIdFunnelsRoute
   AppAppSiteIdOverviewRoute: typeof AppAppSiteIdOverviewRoute
@@ -637,6 +657,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAppAccessRoute: AppAppAccessRoute,
   AppAppBillingRoute: AppAppBillingRoute,
   AppAppIndexRoute: AppAppIndexRoute,
+  AppAppSiteIdBotsRoute: AppAppSiteIdBotsRoute,
   AppAppSiteIdEventsRoute: AppAppSiteIdEventsRoute,
   AppAppSiteIdFunnelsRoute: AppAppSiteIdFunnelsRoute,
   AppAppSiteIdOverviewRoute: AppAppSiteIdOverviewRoute,

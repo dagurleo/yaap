@@ -7,6 +7,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 await rm(new URL("../dist", import.meta.url), { recursive: true, force: true });
 for (const [entry, format] of [
   ["index", "esm"],
+  ["server", "esm"],
   ["script", "iife"],
 ]) {
   await build({

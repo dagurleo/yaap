@@ -98,6 +98,7 @@ before(async () => {
         BETTER_AUTH_SECRET: "test-auth-" + "a".repeat(40),
         BOOTSTRAP_SECRET: setupSecret,
         YAAP_DEMO_SITE_ID: "demo-refresh-fixture",
+        YAAP_SELF_TRACKING_SITE_ID: "homepage-bot-fixture",
         ...(postgres
           ? {
               DATABASE_PROVIDER: "postgres",
@@ -634,6 +635,21 @@ test("website viewers register through an invitation, read only that site, and l
     (await request(`/api/sites/${site.id}/events`, { cookie: viewerCookie }))
       .status,
     200,
+  );
+  const viewerBotReport = await request(`/api/sites/${site.id}/bot-traffic`, {
+    cookie: viewerCookie,
+  });
+  assert.equal(viewerBotReport.status, 200);
+  assert.equal((await viewerBotReport.json()).canManage, false);
+  assert.equal(
+    (
+      await request(`/api/sites/${site.id}/bot-token`, {
+        method: "POST",
+        cookie: viewerCookie,
+        body: { action: "rotate" },
+      })
+    ).status,
+    404,
   );
   assert.equal(
     (
@@ -3089,6 +3105,230 @@ test("attribution backfills are bounded, resumable and use each record's capture
     .bind(fixture.id)
     .first();
   assert.equal(snapshot.finalize_after - snapshot.created_at, 72 * 3600000);
+});
+
+test("bot traffic authenticates senders, isolates visitor events, deduplicates retries, and rotates tokens", async () => {
+  const created = await request("/api/sites", {
+    method: "POST",
+    cookie: ownerCookie,
+    body: { name: "Bots", origin: "https://bots.example" },
+  });
+  const target = await created.json();
+  const tokenUrl = `/api/sites/${target.id}/bot-token`;
+  const reportUrl = `/api/sites/${target.id}/bot-traffic`;
+  assert.equal((await request(reportUrl)).status, 401);
+  assert.equal(
+    (await request(tokenUrl, { method: "POST", body: { action: "rotate" } }))
+      .status,
+    401,
+  );
+  const tokenResponse = await request(tokenUrl, {
+    method: "POST",
+    cookie: ownerCookie,
+    body: { action: "rotate" },
+  });
+  assert.equal(tokenResponse.status, 200);
+  const { token } = await tokenResponse.json();
+  const payload = {
+    siteId: target.id,
+    id: "crawl-1",
+    url: "https://bots.example/robots.txt?secret=hide",
+    userAgent: "ChatGPT-User/1.0",
+    statusCode: 404,
+  };
+  const send = (body = payload, credential = token) =>
+    request("/bot-traffic", {
+      method: "POST",
+      body,
+      headers: { Authorization: `Bearer ${credential}` },
+    });
+  assert.equal((await send(payload, "invalid")).status, 401);
+  assert.equal((await send({ ...payload, siteId: site.id })).status, 401);
+  assert.equal(
+    (await send({ ...payload, url: "https://other.example/" })).status,
+    403,
+  );
+  assert.equal((await send({ ...payload, statusCode: 999 })).status, 400);
+  assert.equal((await send()).status, 202);
+  assert.equal((await send()).status, 202);
+  assert.deepEqual(
+    await (
+      await send({
+        ...payload,
+        id: "human",
+        userAgent: "Mozilla/5.0 Chrome/130.0",
+      })
+    ).json(),
+    { ignored: true },
+  );
+  assert.deepEqual(
+    await (
+      await send({
+        ...payload,
+        id: "asset",
+        url: "https://bots.example/style.css",
+      })
+    ).json(),
+    { ignored: true },
+  );
+  const browser = await request("/ingest", {
+    method: "POST",
+    requestOrigin: "https://bots.example",
+    headers: { "User-Agent": "Claude-User/1.0" },
+    body: {
+      version: 1,
+      siteId: target.id,
+      id: "browser-bot",
+      name: "pageview",
+      path: "/pricing?private=1",
+    },
+  });
+  assert.equal(browser.status, 202);
+  assert.deepEqual(await browser.json(), { ignored: "bot" });
+  const report = await (
+    await request(reportUrl, { cookie: ownerCookie })
+  ).json();
+  assert.equal(Number(report.totals.requests), 2);
+  assert.equal(Number(report.totals.errors), 1);
+  assert.equal(report.token, undefined);
+  assert.equal(
+    report.recent.some((row) => row.path.includes("?")),
+    false,
+  );
+  assert.equal(
+    report.recent.every((row) => row.detection === "user_agent"),
+    true,
+  );
+  assert.equal(
+    report.recent.find((row) => row.source === "browser").path,
+    "/pricing",
+  );
+  const filtered = await (
+    await request(reportUrl + "?category=ai_answers&botSource=server", {
+      cookie: ownerCookie,
+    })
+  ).json();
+  assert.equal(Number(filtered.totals.requests), 1);
+  assert.equal(
+    (await request(reportUrl + "?category=unknown", { cookie: ownerCookie }))
+      .status,
+    400,
+  );
+  const normalEvents = await db
+    .prepare("SELECT count(*) AS n FROM events WHERE site_id=?")
+    .bind(target.id)
+    .first();
+  assert.equal(Number(normalEvents.n), 0);
+  const rotated = await (
+    await request(tokenUrl, {
+      method: "POST",
+      cookie: ownerCookie,
+      body: { action: "rotate" },
+    })
+  ).json();
+  assert.notEqual(rotated.token, token);
+  assert.equal((await send()).status, 401);
+  assert.equal(
+    (await send({ ...payload, id: "crawl-2" }, rotated.token)).status,
+    202,
+  );
+  assert.equal(
+    (
+      await request(tokenUrl, {
+        method: "POST",
+        cookie: ownerCookie,
+        body: { action: "revoke" },
+      })
+    ).status,
+    200,
+  );
+  assert.equal((await send(payload, rotated.token)).status, 401);
+  const now = Date.now();
+  await db
+    .prepare("UPDATE bot_requests SET received_at=? WHERE site_id=? AND id=?")
+    .bind(now - 91 * 86400000, target.id, "s:crawl-1")
+    .run();
+  await db
+    .prepare("UPDATE bot_requests SET received_at=? WHERE site_id=? AND id=?")
+    .bind(now - 31 * 86400000, target.id, "s:crawl-2")
+    .run();
+  const worker = await mf.getWorker();
+  await worker.scheduled({ cron: "17 * * * *" });
+  const botCount = async () =>
+    Number(
+      (
+        await db
+          .prepare("SELECT count(*) AS n FROM bot_requests WHERE site_id=?")
+          .bind(target.id)
+          .first()
+      ).n,
+    );
+  assert.equal(await botCount(), 2);
+  await request(`/api/sites/${target.id}/operations`, {
+    method: "PATCH",
+    cookie: ownerCookie,
+    body: {
+      eventRetentionDays: 30,
+      paymentRetentionDays: 0,
+      excludeBots: true,
+    },
+  });
+  await worker.scheduled({ cron: "17 * * * *" });
+  assert.equal(await botCount(), 1);
+});
+
+test("homepage server tracking observes crawlers without JavaScript and excludes private paths and other hosts", async () => {
+  await db
+    .prepare(
+      "INSERT INTO sites (id,owner_id,workspace_id,name,origin,created_at) SELECT ?,owner_id,workspace_id,?,?,? FROM sites WHERE id=?",
+    )
+    .bind("homepage-bot-fixture", "Homepage bots", origin, Date.now(), site.id)
+    .run();
+  const count = async () =>
+    Number(
+      (
+        await db
+          .prepare("SELECT count(*) AS n FROM bot_requests WHERE site_id=?")
+          .bind("homepage-bot-fixture")
+          .first()
+      ).n,
+    );
+  const crawled = await request("/?private=not-stored", {
+    headers: { "user-agent": "ChatGPT-User/1.0" },
+  });
+  assert.equal(crawled.status, 200);
+  await eventually(async () => (await count()) === 1);
+  const row = await db
+    .prepare("SELECT * FROM bot_requests WHERE site_id=?")
+    .bind("homepage-bot-fixture")
+    .first();
+  assert.equal(row.path, "/");
+  assert.equal(row.name, "ChatGPT-User");
+  assert.equal(row.source, "server");
+  assert.equal(row.status_code, 200);
+  assert.equal(row.detection, "user_agent");
+  await request("/", {
+    headers: { "user-agent": "Mozilla/5.0 Chrome/130.0 Safari/537.36" },
+  });
+  await request("/health", { headers: { "user-agent": "GPTBot/1.0" } });
+  await request("/app", { headers: { "user-agent": "GPTBot/1.0" } });
+  await mf.dispatchFetch("https://other.example/", {
+    headers: { "user-agent": "GPTBot/1.0" },
+  });
+  // dispatchFetch completes the response; give background collection a turn.
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  assert.equal(await count(), 1);
+  assert.equal(
+    Number(
+      (
+        await db
+          .prepare("SELECT count(*) AS n FROM events WHERE site_id=?")
+          .bind("homepage-bot-fixture")
+          .first()
+      ).n,
+    ),
+    0,
+  );
 });
 
 test("operations settings enforce ownership and bot filtering; queue counters distinguish replay and failures", async () => {

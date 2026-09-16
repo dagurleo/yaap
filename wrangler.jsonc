@@ -12,9 +12,11 @@
   "assets": {
     "binding": "ASSETS",
     "run_worker_first": [
+      "/",
       "/api/*",
       "/payments/*",
       "/ingest",
+      "/bot-traffic",
       "/health",
       "/mcp",
       "/oauth/*",

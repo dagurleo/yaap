@@ -1,0 +1,101 @@
+---
+title: Bot traffic
+description: Separate AI crawlers, search engines, and other automation from your visitors.
+---
+
+Bot traffic has its own report under **Bot traffic** in the website navigation. Browser pageviews recognized as automation appear here automatically. Keep **Exclude bots** enabled in collection settings to prevent those events from entering normal visitor, revenue attribution, and conversion reports. Turning exclusion off deliberately allows browser bot events into those reports.
+
+Most crawlers do not execute JavaScript. Install server tracking on the website being measured to see their requests, including requests to `robots.txt`, `llms.txt`, sitemaps, and Markdown pages. Tracking cannot see requests blocked before they reach your middleware.
+
+## Install
+
+Use a client release containing the `@yaap/client/server` export. When developing from this repository, run `npm run build:client` and install the built `packages/client` package in your website. Publishing the updated client is a separate release step.
+
+1. Open your website’s **Bot traffic → Install server tracking** section.
+2. Create a token as the website owner and save it as `YAAP_BOT_TOKEN` on your server.
+3. Add a tracking call once per incoming request.
+
+Tokens are site-specific. They allow bot ingestion only, cannot read reports, and are stored hashed. A replacement immediately invalidates the previous token. Revoking it disables server collection; it does not delete history or disable browser detection.
+
+### Next.js proxy / middleware
+
+```ts
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
+import { trackBotRequest } from "@yaap/client/server";
+
+export function proxy(request: NextRequest, event: NextFetchEvent) {
+  trackBotRequest(request, {
+    siteId: "YOUR_SITE_ID",
+    endpoint: "https://YOUR_ANALYTICS_HOST/bot-traffic",
+    token: process.env.YAAP_BOT_TOKEN!,
+  }, event);
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+On older Next.js versions, use `middleware.ts` and name the function `middleware`. The context’s `waitUntil` keeps tracking alive after the response is returned. No status code is known at this point.
+
+### Cloudflare Workers and standard Request / Response servers
+
+```ts
+import { trackBotRequest } from "@yaap/client/server";
+
+export default {
+  async fetch(request, env, context) {
+    const response = await handleRequest(request);
+    trackBotRequest(request, {
+      siteId: env.YAAP_SITE_ID,
+      endpoint: "https://YOUR_ANALYTICS_HOST/bot-traffic",
+      token: env.YAAP_BOT_TOKEN,
+      // Optional when the backend sees an internal hostname:
+      // publicOrigin: "https://example.com",
+    }, context, response);
+    return response;
+  },
+};
+```
+
+Passing the response adds its HTTP status. For a long-lived server without `waitUntil`, await the returned promise if you need guaranteed completion before the handler ends. Tracking failures resolve without throwing; use `onError` for your own delivery monitoring. Calls time out after three seconds and are not automatically retried. The helper sends only detected bots on GET/HEAD requests and skips API routes and static assets.
+
+## HTTP API
+
+Any backend can send a JSON POST to `/bot-traffic`:
+
+```json
+{
+  "siteId": "YOUR_SITE_ID",
+  "id": "unique-request-id",
+  "url": "https://example.com/docs/get-started",
+  "userAgent": "ChatGPT-User/1.0",
+  "statusCode": 200
+}
+```
+
+Send `Authorization: Bearer YOUR_BOT_TOKEN` and `Content-Type: application/json`. `statusCode` is optional; the other fields are required. Reuse `id` when retrying a request: a website/request pair is stored only once. The server validates the page origin against the website’s allowed domains and honors its excluded paths and hostnames. The endpoint allows up to 600 submissions per minute per sender IP. Hosted workspaces with paused collection cannot submit bot traffic.
+
+## Reading the report
+
+Filter by the last 7, 30, or 90 calendar days in the website’s timezone, category, and collection source. The report shows total detections, crawler types, HTTP errors (400–599), top crawlers, top requested paths, and the latest 50 detections. Browser detections have an unknown status.
+
+- **AI answers:** user-triggered fetches from ChatGPT, Claude, or Perplexity
+- **Indexing:** recognized search crawlers
+- **Training:** recognized GPTBot and ClaudeBot requests
+- **Other automation:** generic crawlers, previews, headless browsers, and scripted clients
+
+Counts describe detections, not unique bots or visitors. A crawler that also executes the browser tracker can appear once from each source; filter to **Server requests** for server-only counts. Existing excluded-bot counters cannot be backfilled into detailed history.
+
+Crawler names and categories are based on user-agent claims and stated purposes, not proof of how content was used. The report explicitly labels those matches **unverified**. Cloudflare’s verified-bot signal is accepted only on requests directly received by the browser ingest endpoint; it does not verify the claimed provider. Forwarded verification flags are never trusted. IP-range verification is not implemented. Bots using ordinary browser user agents may go undetected.
+
+The classifier follows the documented tokens from [OpenAI](https://developers.openai.com/api/docs/bots), [Anthropic](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler), and [Perplexity](https://docs.perplexity.ai/docs/resources/perplexity-crawlers). Google-Extended is a robots.txt control token, not a separate HTTP user agent, so the report does not infer training from Googlebot requests.
+
+Bot records never contain raw user agents, IP addresses, query strings, cookies, or visitor/session identifiers. Paths can still contain sensitive information; configure path exclusions where needed. History is deleted by scheduled cleanup after 90 days, or the website’s shorter event retention setting. Bot requests are separate from browser billable event counts.
+
+## Track this installation’s own homepage
+
+Operators can set `YAAP_SELF_TRACKING_SITE_ID` during the build, or set the Worker environment variable `YAAP_SELF_TRACKING_SITE_ID` to the site ID whose primary origin matches this installation (for example, `https://yaap.sh`). The Worker records detected GET/HEAD requests to `/` in the background, with the final response status. Query strings are discarded. Private routes, other paths, and alternate hostnames are excluded.
+
+Because the homepage and analytics backend share a Worker, this uses the same bot storage directly, without an HTTP request or bot token. It honors path exclusions and hosted collection availability. Remove the variable to disable it. This is independent of the browser homepage tracker’s `VITE_YAAP_SITE_ID` build setting; use the same site ID for both.
